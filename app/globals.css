@@ -280,7 +280,7 @@ body {
 /* Main Content */
 .main-content {
   margin-top: 80px;
-  min-height: calc(100vh - 80px);
+  min-height: auto;
 }
 
 .container {
@@ -421,9 +421,9 @@ body {
 
 /* Home Tab Styles */
 .hero {
-  padding: 4rem 0;
+  padding: 4rem 2rem;
   background: var(--gradient-hero);
-  border-radius: 20px;
+  border-radius: 24px;
   margin: 2rem 0;
   position: relative;
   overflow: hidden;
@@ -457,12 +457,13 @@ body {
 .hero-text h1 {
   font-size: 3.5rem;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.2;
   margin-bottom: 1.5rem;
   background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  padding-bottom: 0.15em;
 }
 
 .hero-description {
@@ -483,7 +484,7 @@ body {
 }
 
 .stat-number {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
   color: var(--accent);
   display: block;
@@ -523,6 +524,17 @@ body {
   background: var(--gradient-accent);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Ensure SVG tech icons inherit accent gradient look */
+.tech-card .tech-icon {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.5rem;
+  color: transparent;
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
   background-clip: text;
 }
 
@@ -754,7 +766,7 @@ body {
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .form-group label {
@@ -768,7 +780,7 @@ body {
 .form-group textarea,
 .form-group select {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   border: 2px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
@@ -785,7 +797,7 @@ body {
 }
 
 .form-group textarea {
-  min-height: 100px;
+  min-height: 90px;
   resize: vertical;
 }
 
@@ -794,7 +806,7 @@ body {
   max-width: 800px;
   margin: 0 auto;
   background: var(--surface);
-  padding: 3rem;
+  padding: 1.75rem;
   border-radius: 20px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
@@ -803,8 +815,38 @@ body {
 .contact-form h2 {
   text-align: center;
   color: var(--primary);
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   font-size: 2rem;
+}
+
+/* Contact Grid */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1rem;
+}
+
+.col-span-2 { grid-column: span 2; }
+
+/* Input group with icons */
+.input-group {
+  position: relative;
+}
+
+.input-group .input-icon {
+  position: absolute;
+  left: 12px;
+  top: 40px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.input-group input {
+  padding-left: 40px;
+}
+
+.form-actions {
+  margin-top: 0.25rem;
 }
 
 /* News Tab Styles */
@@ -843,62 +885,79 @@ body {
   color: white;
 }
 
-.news-table {
+/* News Card Grid */
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.news-card {
   background: var(--surface);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.news-table table {
-  width: 100%;
-  border-collapse: collapse;
+.news-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md-val);
 }
 
-.news-table th {
-  background: var(--gradient-accent);
+.news-card-header {
+  background: var(--surface-variant);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.news-badge {
+  background: var(--accent);
   color: white;
-  padding: 1rem;
-  text-align: left;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
-.news-table td {
+.news-card-body {
   padding: 1rem;
-  border-bottom: 1px solid var(--border);
-  vertical-align: top;
-}
-
-.news-table tr:hover {
-  background: var(--surface-hover);
 }
 
 .news-title {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary);
   text-decoration: none;
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
-.news-title:hover {
-  color: var(--accent);
-}
+.news-title:hover { color: var(--accent); }
 
-.news-source {
-  background: var(--accent);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
+.news-meta {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
 }
 
 .news-summary {
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  min-height: 60px;
+}
+
+.news-card-footer {
+  padding: 0.75rem 1rem 1rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* Loading States */
@@ -954,6 +1013,11 @@ body {
 .footer-section h4 {
   margin-bottom: 1rem;
   color: var(--accent-secondary);
+}
+
+.footer-intro {
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .footer-section a {
@@ -1105,6 +1169,12 @@ body {
   .login-card {
     padding: 2rem 1rem;
   }
+
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .col-span-2 { grid-column: span 1; }
 
   .login-title {
     font-size: 1.5rem;
