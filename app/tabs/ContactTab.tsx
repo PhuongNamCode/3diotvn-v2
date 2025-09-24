@@ -1,26 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { useContacts } from "@/lib/hooks/useData";
 
 export default function ContactTab() {
+  const { createContact } = useContacts();
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(formData: FormData) {
     const payload = {
-      fullName: String(formData.get("fullName") || ""),
+      name: String(formData.get("fullName") || ""),
       email: String(formData.get("email") || ""),
       phone: String(formData.get("phone") || ""),
-      organization: String(formData.get("organization") || ""),
+      company: String(formData.get("organization") || ""),
+      role: "Contact",
       message: String(formData.get("details") || ""),
+      type: "partnership" as const,
+      status: "new" as const,
+      priority: "medium" as const,
+      notes: []
     };
     setSubmitting(true);
     setSuccess(false);
     setError(null);
     try {
-      const res = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error("Gửi thất bại");
+      await createContact(payload);
       setSuccess(true);
     } catch (e: any) {
       setError(e?.message || "Có lỗi xảy ra");

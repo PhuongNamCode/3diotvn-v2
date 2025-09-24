@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useEvents, useRegistrations } from "@/lib/hooks/useData";
 import type { EventItem } from "@/data/events";
 
 type RegistrationPayload = {
@@ -14,38 +15,64 @@ type RegistrationPayload = {
 };
 
 export default function EventsTab() {
+  const { events: apiEvents, loading: apiLoading, refetch: fetchEvents } = useEvents();
+  const { createRegistration } = useRegistrations();
   const [items, setItems] = useState<EventItem[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<EventItem | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
+  const [showEventDetails, setShowEventDetails] = useState<boolean>(false);
+  const [selectedEventDetails, setSelectedEventDetails] = useState<EventItem | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/events", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load events");
-        const data = await res.json();
-        if (!cancelled) setItems(data.items as EventItem[]);
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message || "Có lỗi xảy ra");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    // Use API data if available, otherwise fallback to static data
+    if (apiEvents && apiEvents.length > 0) {
+      // Convert API events to EventItem format
+      const convertedEvents: EventItem[] = apiEvents.map(event => ({
+        id: parseInt(event.id),
+        title: event.title,
+        description: event.description,
+        date: event.date,
+        time: event.time,
+        location: event.location,
+        capacity: event.capacity,
+        price: event.price,
+        speakers: event.speakers,
+        requirements: event.requirements,
+        agenda: event.agenda,
+        image: event.image || "",
+        category: event.category,
+        status: event.status === 'cancelled' ? 'past' : event.status,
+        registrations: event.registrations,
+        registered: event.registrations, // Use actual registration count
+        actualParticipants: event.actualParticipants // Include actual participants for past events
+      }));
+      setItems(convertedEvents);
+      setLoading(false);
+    } else if (!apiLoading) {
+      // Fallback to static data if API is not loading and no data
+      setItems([]);
+      setLoading(false);
     }
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  }, [apiEvents, apiLoading]);
 
   const now = useMemo(() => new Date(), []);
 
   function formatDate(dateString: string) {
     const d = new Date(dateString);
     return d.toLocaleDateString("vi-VN", { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+  }
+
+  function handleViewEventDetails(event: EventItem) {
+    setSelectedEventDetails(event);
+    setShowEventDetails(true);
+  }
+
+  function handleCloseEventDetails() {
+    setShowEventDetails(false);
+    setSelectedEventDetails(null);
   }
 
   async function submitRegistration(formData: FormData) {
@@ -61,13 +88,26 @@ export default function EventsTab() {
     };
     setSubmitting(true);
     setSuccess(false);
+    setError(null);
     try {
-      const res = await fetch("/api/registrations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error("Đăng ký thất bại");
+      const registrationData = {
+        eventId: payload.eventId.toString(),
+        fullName: payload.fullName,
+        email: payload.email,
+        phone: payload.phone || "",
+        organization: payload.organization || "",
+        experience: payload.experience || "",
+        expectation: payload.expectation || "",
+        status: "pending" as const
+      };
+      
+      await createRegistration(registrationData);
       setSuccess(true);
-    } catch (e) {
-      setSuccess(false);
-      alert("Đăng ký thất bại. Vui lòng thử lại.");
+      
+      // Refresh events data to update registration counts
+      await fetchEvents();
+    } catch (e: any) {
+      setError(e?.message || "Có lỗi xảy ra");
     } finally {
       setSubmitting(false);
     }
@@ -89,11 +129,20 @@ export default function EventsTab() {
           {(items || []).map(event => {
             const eventDate = new Date(event.date);
             const isUpcoming = eventDate > now;
-            const progress = Math.min((event.registered / event.capacity) * 100, 100);
+            const progress = Math.min(
+              (event.status === 'past' && event.actualParticipants !== undefined 
+                ? event.actualParticipants 
+                : event.registered) / event.capacity * 100, 
+              100
+            );
             return (
               <div className="event-card" key={event.id}>
                 <div className="event-image">
-                  <i className={event.image}></i>
+                  {event.image ? (
+                    <img src={event.image} alt={event.title} />
+                  ) : (
+                    <i className="fas fa-calendar-alt"></i>
+                  )}
                   <div className={`event-status ${isUpcoming ? "upcoming" : "past"}`}>{isUpcoming ? "Sắp diễn ra" : "Đã diễn ra"}</div>
                 </div>
                 <div className="event-content">
@@ -101,13 +150,30 @@ export default function EventsTab() {
                   <div className="event-date"><i className="fas fa-calendar"></i>{formatDate(event.date)} | {event.time}</div>
                   <div className="event-location"><i className="fas fa-map-marker-alt"></i>{event.location}</div>
                   <p className="event-description">{event.description}</p>
-                  <div className="event-participants">
-                    <span className="participant-count">{event.registered}/{event.capacity}</span>
-                    <div className="participant-progress"><div className="participant-progress-bar" style={{ width: `${Math.round(progress)}%` }}></div></div>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{Math.round(progress)}%</span>
+                  <div 
+                    className="event-participants"
+                    data-type={event.status === 'past' && event.actualParticipants !== undefined ? 'actual' : 'registration'}
+                  >
+                    <div className="participant-info">
+                      <span className="participant-label">
+                        {event.status === 'past' && event.actualParticipants !== undefined 
+                          ? 'Đã tham gia:' 
+                          : 'Đã đăng ký:'
+                        }
+                      </span>
+                      <span className="participant-count">
+                        {event.status === 'past' && event.actualParticipants !== undefined 
+                          ? `${event.actualParticipants}/${event.capacity}` 
+                          : `${event.registered}/${event.capacity}`
+                        }
+                      </span>
+                    </div>
+                    <div className="participant-progress">
+                      <div className="participant-progress-bar" style={{ width: `${Math.round(progress)}%` }}></div>
+                    </div>
                   </div>
                   {isUpcoming && (
-                    <button className="btn-register" onClick={() => { setSelected(event); setSuccess(false); }}>
+                    <button className="btn-register" onClick={() => handleViewEventDetails(event)}>
                       <i className="fas fa-user-plus"></i> Đăng ký tham gia
                     </button>
                   )}
@@ -115,6 +181,106 @@ export default function EventsTab() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Event Details Modal */}
+      {showEventDetails && selectedEventDetails && (
+        <div className="modal" style={{ display: "block" }} onClick={(e) => { if (e.target === e.currentTarget) handleCloseEventDetails(); }}>
+          <div className="modal-content event-details-modal">
+            <div className="modal-header">
+              <span className="close" onClick={handleCloseEventDetails}>&times;</span>
+              <h2>Chi tiết sự kiện</h2>
+            </div>
+            <div className="modal-body">
+              <div className="event-details-content">
+                {selectedEventDetails.image && (
+                  <div className="event-details-image">
+                    <img src={selectedEventDetails.image} alt={selectedEventDetails.title} />
+                  </div>
+                )}
+                
+                <div className="event-details-info">
+                  <h2 className="event-details-title">{selectedEventDetails.title}</h2>
+                  
+                  <div className="event-details-meta">
+                    <div className="meta-item">
+                      <span className="meta-label">Thời gian: </span>
+                      <span className="meta-value">{formatDate(selectedEventDetails.date)} | {selectedEventDetails.time}</span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-label">Địa điểm: </span>
+                      <span className="meta-value">{selectedEventDetails.location}</span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-label">
+                        {selectedEventDetails.status === 'past' && selectedEventDetails.actualParticipants !== undefined 
+                          ? 'Số người đã tham gia: ' 
+                          : 'Số người đã đăng ký: '
+                        }
+                      </span>
+                      <span className="meta-value">
+                        {selectedEventDetails.status === 'past' && selectedEventDetails.actualParticipants !== undefined 
+                          ? `${selectedEventDetails.actualParticipants}/${selectedEventDetails.capacity} người`
+                          : `${selectedEventDetails.registered}/${selectedEventDetails.capacity} người`
+                        }
+                      </span>
+                    </div>
+                    {selectedEventDetails.price > 0 && (
+                      <div className="meta-item">
+                        <span className="meta-label">Giá vé: </span>
+                        <span className="meta-value">{selectedEventDetails.price.toLocaleString('vi-VN')} VNĐ</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="event-details-description">
+                    <h3>Mô tả sự kiện </h3>
+                    <p>{selectedEventDetails.description}</p>
+                  </div>
+
+                  {selectedEventDetails.speakers && selectedEventDetails.speakers.length > 0 && (
+                    <div className="event-details-speakers">
+                      <h3>Diễn giả </h3>
+                      <ul>
+                        {selectedEventDetails.speakers.map((speaker, index) => (
+                          <li key={index}><i className="fas fa-user"></i> {speaker}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedEventDetails.requirements && (
+                    <div className="event-details-requirements">
+                      <h3>Yêu cầu tham gia </h3>
+                      <p>{selectedEventDetails.requirements}</p>
+                    </div>
+                  )}
+
+                  {selectedEventDetails.agenda && (
+                    <div className="event-details-agenda">
+                      <h3>Chương trình</h3>
+                      <pre>{selectedEventDetails.agenda}</pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+              <button 
+                className="btn btn-primary"
+                style={{ margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={() => {
+                  setSelected(selectedEventDetails);
+                  setSuccess(false);
+                  setShowEventDetails(false);
+                }}
+              >
+                <i className="fas fa-user-plus"></i>
+                Đăng ký tham gia
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

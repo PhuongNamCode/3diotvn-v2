@@ -4,11 +4,11 @@ import { getDataManager } from '@/lib/data-manager';
 export async function GET() {
   try {
     const dataManager = getDataManager();
-    const news = dataManager.getNews();
-    return NextResponse.json({ success: true, data: news });
+    const users = dataManager.getUsers();
+    return NextResponse.json({ success: true, data: users });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch news' },
+      { success: false, error: 'Failed to fetch users' },
       { status: 500 }
     );
   }
@@ -18,11 +18,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const dataManager = getDataManager();
-    const news = dataManager.createNews(body);
-    return NextResponse.json({ success: true, data: news }, { status: 201 });
+    const user = dataManager.createUser(body);
+    return NextResponse.json({ success: true, data: user }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: 'Failed to create news' },
+      { success: false, error: 'Failed to create user' },
       { status: 500 }
     );
   }

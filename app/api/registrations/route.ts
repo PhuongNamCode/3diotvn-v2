@@ -1,24 +1,32 @@
-import { prisma } from "@/app/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getDataManager } from '@/lib/data-manager';
 
-export async function POST(request: Request) {
-  const data = await request.json().catch(() => null);
-  if (!data || !data.eventId || !data.fullName || !data.email) {
-    return new Response(JSON.stringify({ error: "Invalid payload" }), { status: 400 });
-  }
+export async function GET() {
   try {
-    const rec = await prisma.registration.create({ data: {
-      eventId: Number(data.eventId),
-      fullName: data.fullName,
-      email: data.email,
-      phone: data.phone || null,
-      organization: data.organization || null,
-      experience: data.experience || null,
-      expectation: data.expectation || null,
-    }});
-    return new Response(JSON.stringify({ ok: true, id: rec.id }), { status: 200, headers: { "Content-Type": "application/json" } });
-  } catch {
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+    const dataManager = getDataManager();
+    const registrations = dataManager.getRegistrations();
+    return NextResponse.json({ success: true, data: registrations });
+  } catch (error) {
+    console.error('Error fetching registrations:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch registrations' },
+      { status: 500 }
+    );
   }
 }
 
-
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    console.log('Creating registration with data:', body);
+    const dataManager = getDataManager();
+    const registration = dataManager.createRegistration(body);
+    return NextResponse.json({ success: true, data: registration }, { status: 201 });
+  } catch (error) {
+    console.error('Error creating registration:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to create registration' },
+      { status: 500 }
+    );
+  }
+}
