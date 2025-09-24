@@ -39,10 +39,20 @@ export default function AdminSettingsTab() {
   };
 
   const handleRefreshNews = () => {
-    (window as any).showNotification('Đang cập nhật tin tức từ API...', 'info');
-    setTimeout(() => {
-      (window as any).showNotification('Đã cập nhật 5 tin tức mới!', 'success');
-    }, 3000);
+    (async () => {
+      (window as any).showNotification('Đang cập nhật tin tức từ Perplexity...', 'info');
+      try {
+        const resp = await fetch('/api/news/refresh', { method: 'POST' });
+        const data = await resp.json();
+        if (resp.ok && data?.success) {
+          (window as any).showNotification(`Đã nhập ${data.ingested} tin, bỏ qua ${data.skipped}.`, 'success');
+        } else {
+          (window as any).showNotification(data?.error || 'Cập nhật thất bại.', 'error');
+        }
+      } catch (e) {
+        (window as any).showNotification('Không thể gọi API /api/news/refresh', 'error');
+      }
+    })();
   };
 
   const handlePublishNews = () => {

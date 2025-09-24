@@ -10,6 +10,9 @@ Tạo cả `.env.local` (Next) và `.env` (Prisma):
 ```bash
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"
 NEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"
+# Perplexity API (for news refresh)
+PERPLEXITY_API_KEY="<your_perplexity_api_key>"
+PERPLEXITY_MODEL="pplx-70b-online" # optional; defaults to pplx-70b-online
 ```
 
 ### Start PostgreSQL (localhost:5432)
@@ -54,6 +57,8 @@ curl -sS -X POST http://localhost:3000/api/events -H 'Content-Type: application/
 curl -sS -X POST http://localhost:3000/api/contacts -H 'Content-Type: application/json' -d '{"name":"FromTest","email":"from@test.com","message":"Hi","type":"partnership","status":"new","priority":"medium"}' | cat
 curl -sS -X POST http://localhost:3000/api/users -H 'Content-Type: application/json' -d '{"name":"FromLogin","email":"fromlogin@test.com"}' | cat
 curl -sS http://localhost:3000/api/stats | cat
+# Trigger a Perplexity-powered news refresh (requires PERPLEXITY_API_KEY)
+curl -sS -X POST http://localhost:3000/api/news/refresh | cat
 ```
 
 ### Lỗi thường gặp (và cách xử lý)
@@ -93,7 +98,7 @@ npm run db:restore
 ```bash
 # 1) Env
 printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\n' > .env
-printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nNEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"\n' > .env.local
+printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nNEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"\nPERPLEXITY_API_KEY="<your_perplexity_api_key>"\nPERPLEXITY_MODEL="pplx-70b-online"\n' > .env.local
 
 # 2) DB
 docker rm -f pg-3diot || true

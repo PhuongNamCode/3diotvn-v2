@@ -19,6 +19,19 @@ export default function NewsTab() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const weekRange = useMemo(() => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun,1=Mon,...6=Sat
+    const diffToMonday = (day + 6) % 7; // days since Monday
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    const fmt = (d: Date) => d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return `${fmt(monday)} - ${fmt(sunday)}`;
+  }, []);
 
   useEffect(() => {
     // Use API data if available, otherwise fallback to static data
@@ -52,8 +65,9 @@ export default function NewsTab() {
 
   const filtered = useMemo(() => {
     if (!items) return [] as NewsItem[];
-    if (filter === "all") return items;
-    return items.filter(n => n.category === filter);
+    const base = filter === "all" ? items : items.filter(n => n.category === filter);
+    // sort newest first by date
+    return [...base].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [items, filter]);
 
   function formatDate(dateString: string) {
@@ -64,14 +78,14 @@ export default function NewsTab() {
   return (
     <div className="container">
       <div className="news-header">
-        <h2>📰 Tin tức công nghệ IoT</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Cập nhật những tin tức hot nhất về IoT, embedded systems và công nghệ</p>
+        <h2>📰 Bản tin công nghệ tuần {weekRange}</h2>
+        <p style={{ color: 'var(--text-secondary)' }}>Cập nhật những tin tức mới nhất từ các trang báo uy tín</p>
       </div>
 
       <div className="news-filters">
-        {(["all", "iot", "embedded", "ai", "hardware"])?.map(key => (
+        {(["all", "Communications", "IoT", "Embedded", "AI", "Hardware"])?.map(key => (
           <button key={key} className={`filter-btn ${filter === key ? 'active' : ''}`} onClick={() => setFilter(key)}>
-            {key === 'all' ? 'Tất cả' : key.toUpperCase()}
+            {key === 'all' ? 'Tất cả' : String(key).toUpperCase()}
           </button>
         ))}
       </div>

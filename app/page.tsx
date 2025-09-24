@@ -328,8 +328,8 @@ export default function Home() {
             <div className="nav-tabs" id="navTabs">
               <button className="nav-tab active" data-tab="home"><i className="fas fa-home"></i> Trang chủ</button>
               <button className="nav-tab" data-tab="events"><i className="fas fa-calendar-alt"></i> Sự kiện</button>
-              <button className="nav-tab" data-tab="contact"><i className="fas fa-handshake"></i> Liên hệ hợp tác</button>
               <button className="nav-tab" data-tab="news"><i className="fas fa-newspaper"></i> Tin tức</button>
+              <button className="nav-tab" data-tab="contact"><i className="fas fa-handshake"></i> Liên hệ</button>
               <button className="nav-tab" data-tab="login"><i className="fas fa-sign-in-alt"></i> Đăng nhập</button>
             </div>
           </div>
