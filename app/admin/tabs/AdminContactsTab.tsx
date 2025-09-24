@@ -35,7 +35,7 @@ export default function AdminContactsTab() {
   useEffect(() => {
     if (contacts.length > lastContactCount && lastContactCount > 0) {
       const newContactsCount = contacts.length - lastContactCount;
-      window.showNotification?.(`Có ${newContactsCount} liên hệ mới!`, 'success');
+      (window as any).showNotification?.(`Có ${newContactsCount} liên hệ mới!`, 'success');
     }
     setLastContactCount(contacts.length);
   }, [contacts.length, lastContactCount]);
@@ -56,9 +56,9 @@ export default function AdminContactsTab() {
   const handleUpdateStatus = async (contactId: string, newStatus: string) => {
     try {
       await updateContact(contactId, { status: newStatus });
-      window.showNotification?.(`Trạng thái đã cập nhật thành ${newStatus}`, 'success');
+      (window as any).showNotification?.(`Trạng thái đã cập nhật thành ${newStatus}`, 'success');
     } catch (error) {
-      window.showNotification?.('Có lỗi xảy ra khi cập nhật trạng thái', 'error');
+      (window as any).showNotification?.('Có lỗi xảy ra khi cập nhật trạng thái', 'error');
     }
   };
 
@@ -68,13 +68,13 @@ export default function AdminContactsTab() {
       try {
         const result = await deleteContact(contactId);
         if (result && result.success) {
-          window.showNotification?.('Liên hệ đã được xóa thành công', 'success');
+          (window as any).showNotification?.('Liên hệ đã được xóa thành công', 'success');
         } else {
-          window.showNotification?.('Có lỗi xảy ra khi xóa liên hệ', 'error');
+          (window as any).showNotification?.('Có lỗi xảy ra khi xóa liên hệ', 'error');
         }
       } catch (error) {
         console.error('Delete contact error:', error);
-        window.showNotification?.('Có lỗi xảy ra khi xóa liên hệ', 'error');
+        (window as any).showNotification?.('Có lỗi xảy ra khi xóa liên hệ', 'error');
       } finally {
         setDeletingContactId(null);
       }
@@ -91,7 +91,7 @@ export default function AdminContactsTab() {
         contact.company,
         contact.type,
         contact.status,
-        new Date(contact.createdAt).toLocaleDateString('vi-VN')
+        contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('vi-VN') : ''
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -222,7 +222,7 @@ export default function AdminContactsTab() {
                   <td>{contact.company}</td>
                   <td>{getTypeBadge(contact.type)}</td>
                   <td>{getStatusBadge(contact.status)}</td>
-                  <td>{new Date(contact.createdAt).toLocaleDateString('vi-VN')}</td>
+                  <td>{contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('vi-VN') : ''}</td>
                   <td>
                     <div className="action-buttons">
                       <button

@@ -7,8 +7,7 @@ import ContactTab from "./tabs/ContactTab";
 import NewsTab from "./tabs/NewsTab";
 import LoginTab from "./tabs/LoginTab";
 import { jwtDecode } from "jwt-decode";
-import { eventsData as eventsDataStatic } from "@/data/events";
-import { newsData as newsDataStatic } from "@/data/news";
+// Removed static data fallbacks; data now comes from DB via API/hooks
 import Link from "next/link";
 
 type GoogleJwt = {
@@ -74,7 +73,7 @@ export default function Home() {
     }
 
     // Notification system
-    function showNotification(message: string, type: 'success'|'error'|'info' = 'success') {
+    function showNotification(message: string, type: 'success'|'error'|'info'|'warning' = 'success') {
       const notification = document.createElement('div');
       notification.style.cssText = `
         position: fixed; top: 100px; right: 20px; background: var(--${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'accent'});
@@ -88,6 +87,8 @@ export default function Home() {
         setTimeout(() => notification.remove(), 300);
       }, 4000);
     }
+    // Expose notification globally for tabs/components
+    (window as any).showNotification = showNotification;
 
     // Attach theme toggle
     const themeToggle = document.getElementById('themeToggle');
@@ -128,10 +129,7 @@ export default function Home() {
       applyLoggedOutUI();
     }
 
-    // Data (sample)
-    const eventsData = eventsDataStatic;
-
-    const newsData = newsDataStatic;
+    // Data now loaded in-tabs via hooks; no static samples
 
     // Helpers
     function formatDate(dateString: string) {
@@ -150,6 +148,9 @@ export default function Home() {
     }
     tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab || 'home')));
 
+    // Expose tab switcher globally for components
+    (window as any).switchToTab = (tabName: string) => switchTab(tabName);
+
     // Events and News are now handled inside their respective tabs as React components
 
     // Header scroll effect
@@ -166,9 +167,17 @@ export default function Home() {
     if (themeToggleEl) themeToggleEl.title = 'Alt + T để chuyển đổi theme';
 
     // Google Sign-In (GSI)
-    function handleSuccessfulLogin(user: User) {
+    async function handleSuccessfulLogin(user: User) {
       try { localStorage.setItem('user', JSON.stringify(user)); } catch {}
       setCurrentUser(user);
+      // Upsert minimal user record in DB (name, email)
+      try {
+        await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: user.name, email: user.email })
+        });
+      } catch {}
       applyLoggedInUI(user);
       // Update login tab content
       const loginTab = document.getElementById('login');
@@ -339,9 +348,7 @@ export default function Home() {
               <span className="user-name" id="userName">User Name</span>
               <button className="logout-btn" id="logoutBtn" title="Đăng xuất"><i className="fas fa-sign-out-alt"></i></button>
             </div>
-            <Link href="/admin" className="btn-secondary" style={{ marginRight: '1rem' }}>
-              <i className="fas fa-shield-alt"></i> Admin
-            </Link>
+            
             <a href="https://www.facebook.com/groups/3diot.laptrinhnhungiot" className="btn-primary" id="joinBtn" target="_blank" rel="noopener noreferrer"><i className="fas fa-rocket"></i> Tham gia ngay</a>
             <button className="mobile-menu-btn" id="mobileMenuBtn"><i className="fas fa-bars"></i></button>
           </div>

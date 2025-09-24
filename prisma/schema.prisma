@@ -3,57 +3,96 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// Keep IDs as String to match current API shapes (dataManager uses string IDs)
+// Use JSON for small arrays (speakers, tags, notes) to minimize refactors
+
 model Event {
-  id          Int      @id @default(autoincrement())
+  id                 String   @id @default(cuid())
+  title              String
+  description        String
+  date               DateTime
+  time               String
+  location           String
+  capacity           Int
+  price              Int       @default(0)
+  speakers           Json?
+  requirements       String?
+  agenda             String?
+  image              String?
+  category           String
+  status             String    // 'upcoming' | 'past' | 'cancelled'
+  registrationsCount Int       @default(0) // denormalized for fast UI (optional)
+  actualParticipants Int?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  registrations      Registration[]
+}
+
+model News {
+  id          String   @id @default(cuid())
   title       String
-  date        DateTime
-  time        String
-  location    String
-  description String
-  registered  Int      @default(0)
-  capacity    Int
-  image       String
-  status      String
+  content     String
+  excerpt     String
+  author      String
+  source      String
+  category    String
+  importance  String   // 'high' | 'medium' | 'low'
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  image       String?
+  tags        Json?
+  link        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-model News {
-  id        Int      @id @default(autoincrement())
-  date      DateTime
-  title     String
-  source    String
-  category  String
-  summary   String
-  link      String
+model Contact {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  company   String
+  role      String
+  message   String
+  type      String   // 'partnership' | 'collaboration' | 'sponsorship' | 'general'
+  status    String   // 'new' | 'contacted' | 'in_negotiation' | 'partnered' | 'rejected'
+  priority  String   // 'high' | 'medium' | 'low'
+  notes     Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Contact {
-  id           Int      @id @default(autoincrement())
-  fullName     String
-  email        String
-  phone        String?
-  organization String
-  message      String
-  createdAt    DateTime @default(now())
+model User {
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  phone      String
+  company    String
+  role       String
+  status     String   // 'active' | 'inactive'
+  joinDate   DateTime
+  lastActive String   // keep as string to match current UI text (e.g., '2 giờ trước')
 }
 
 model Registration {
-  id           Int      @id @default(autoincrement())
-  eventId      Int
-  fullName     String
-  email        String
-  phone        String?
-  organization String?
-  experience   String?
-  expectation  String?
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  eventId       String
+  fullName      String
+  email         String
+  phone         String?
+  organization  String?
+  experience    String?
+  expectation   String?
+  status        String   // 'pending' | 'confirmed' | 'cancelled'
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
 }

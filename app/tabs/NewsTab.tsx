@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useNews } from "@/lib/hooks/useData";
-import type { NewsItem } from "@/data/news";
+
+type NewsItem = {
+  id: string | number;
+  date: string;
+  title: string;
+  source: string;
+  category: string;
+  summary: string;
+  link: string;
+};
 
 export default function NewsTab() {
   const { news: apiNews, loading: apiLoading } = useNews();
@@ -16,7 +25,7 @@ export default function NewsTab() {
     if (apiNews && apiNews.length > 0) {
       // Convert API news to NewsItem format
       const convertedNews: NewsItem[] = apiNews.map(news => ({
-        id: parseInt(news.id),
+        id: news.id,
         title: news.title,
         content: news.content,
         excerpt: news.excerpt,
@@ -28,9 +37,9 @@ export default function NewsTab() {
         publishedAt: news.publishedAt,
         image: news.image || "",
         tags: news.tags,
-        date: news.publishedAt || news.createdAt,
+        date: news.publishedAt || news.createdAt || new Date().toISOString(),
         summary: news.excerpt,
-        link: "#"
+        link: news.link || "#"
       }));
       setItems(convertedNews);
       setLoading(false);

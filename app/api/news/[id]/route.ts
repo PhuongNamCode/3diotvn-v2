@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDataManager } from '@/lib/data-manager';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
@@ -7,8 +7,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const dataManager = getDataManager();
-    const news = dataManager.getNewsById(id);
+    const news = await prisma.news.findUnique({ where: { id } });
     if (!news) {
       return NextResponse.json(
         { success: false, error: 'News not found' },
@@ -31,8 +30,23 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const dataManager = getDataManager();
-    const news = dataManager.updateNews(id, body);
+    const news = await prisma.news.update({
+      where: { id },
+      data: {
+        title: body.title,
+        content: body.content,
+        excerpt: body.excerpt,
+        author: body.author,
+        source: body.source,
+        category: body.category,
+        importance: body.importance,
+        published: body.published,
+        publishedAt: body.publishedAt ? new Date(body.publishedAt) : null,
+        image: body.image,
+        tags: Array.isArray(body.tags) ? body.tags : undefined,
+        link: body.link,
+      },
+    });
     if (!news) {
       return NextResponse.json(
         { success: false, error: 'News not found' },
@@ -54,8 +68,8 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    const dataManager = getDataManager();
-    const success = dataManager.deleteNews(id);
+    await prisma.news.delete({ where: { id } });
+    const success = true;
     if (!success) {
       return NextResponse.json(
         { success: false, error: 'News not found' },

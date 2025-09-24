@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useUsers } from "@/lib/hooks/useData";
 
 export default function AdminUsersTab() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -8,70 +9,67 @@ export default function AdminUsersTab() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  const users = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      email: "nguyenvana@email.com",
-      phone: "0123456789",
-      company: "FPT Software",
-      role: "Developer",
-      status: "active",
-      joinDate: "20/09/2025",
-      lastActive: "2 giờ trước"
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      email: "tranthib@email.com",
-      phone: "0987654321",
-      company: "Viettel",
-      role: "Engineer",
-      status: "active",
-      joinDate: "21/09/2025",
-      lastActive: "1 ngày trước"
-    },
-    {
-      id: 3,
-      name: "Lê Văn C",
-      email: "levanc@email.com",
-      phone: "0555666777",
-      company: "VNPT",
-      role: "Student",
-      status: "inactive",
-      joinDate: "22/09/2025",
-      lastActive: "1 tuần trước"
-    }
-  ];
+  const { users, loading, error, createUser, updateUser, deleteUser, refetch } = useUsers();
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !filterStatus || user.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredUsers = useMemo(() => {
+    const list = Array.isArray(users) ? users : [];
+    return list.filter((user: any) => {
+      const name = String(user.name || "").toLowerCase();
+      const email = String(user.email || "").toLowerCase();
+      const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
+      const matchesStatus = !filterStatus || user.status === filterStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [users, searchTerm, filterStatus]);
 
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
     setShowUserModal(true);
   };
 
-  const handleToggleUserStatus = (userId: number, currentStatus: string) => {
+  const handleToggleUserStatus = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    (window as any).showNotification(
-      `Người dùng đã được ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hóa'}!`, 
-      'success'
-    );
-  };
-
-  const handleDeleteUser = (userId: number) => {
-    if (confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
-      (window as any).showNotification('Người dùng đã được xóa!', 'success');
+    try {
+      await updateUser(String(userId), { status: newStatus });
+      (window as any).showNotification(
+        `Người dùng đã được ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hóa'}!`, 
+        'success'
+      );
+    } catch (e: any) {
+      (window as any).showNotification(`Lỗi cập nhật trạng thái: ${e?.message || 'Unknown'}`, 'error');
     }
   };
 
-  const handleSendEmail = (userId: number) => {
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa người dùng này?')) return;
+    try {
+      await deleteUser(String(userId));
+      (window as any).showNotification('Người dùng đã được xóa!', 'success');
+      await refetch();
+    } catch (e: any) {
+      (window as any).showNotification(`Lỗi xóa người dùng: ${e?.message || 'Unknown'}`, 'error');
+    }
+  };
+
+  const handleSendEmail = (userId: string) => {
     (window as any).showNotification('Email đã được gửi!', 'success');
+  };
+
+  const handleCreateUser = async () => {
+    const name = prompt('Tên người dùng:');
+    if (!name) return;
+    const email = prompt('Email:');
+    if (!email) return;
+    const phone = prompt('Số điện thoại:') || '';
+    const company = prompt('Công ty:') || '';
+    const role = prompt('Vai trò (vd: Developer):') || 'Member';
+    try {
+      await createUser({ name, email, phone, company, role, status: 'active', joinDate: new Date().toISOString(), lastActive: 'vừa xong' });
+      (window as any).showNotification('Tạo người dùng thành công!', 'success');
+      await refetch();
+    } catch (e: any) {
+      (window as any).showNotification(`Lỗi tạo người dùng: ${e?.message || 'Unknown'}`, 'error');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -109,17 +107,28 @@ export default function AdminUsersTab() {
               <option value="active">Hoạt động</option>
               <option value="inactive">Không hoạt động</option>
             </select>
-            <button className="btn btn-success">
-              <i className="fas fa-file-excel"></i>
-              Export Excel
-            </button>
+            {/* Users are created on successful Google login; manual add kept optional */}
           </div>
         </div>
         <div className="table-content">
+          {loading && (
+            <div className="loading" style={{ padding: '1rem' }}>
+              <i className="fas fa-spinner fa-spin"></i> Đang tải dữ liệu người dùng...
+            </div>
+          )}
+          {error && (
+            <div style={{ color: 'var(--danger)', padding: '1rem' }}>
+              Không thể tải người dùng: {String(error)}
+            </div>
+          )}
+          {!loading && !error && filteredUsers.length === 0 && (
+            <div style={{ padding: '1rem', color: 'var(--text-secondary)' }}>
+              Chưa có người dùng nào.
+            </div>
+          )}
           <table className="data-table">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Họ tên</th>
                 <th>Email</th>
                 <th>SĐT</th>
@@ -132,16 +141,15 @@ export default function AdminUsersTab() {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => (
+              {filteredUsers.map((user: any) => (
                 <tr key={user.id}>
-                  <td>{user.id}</td>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
                   <td>{user.phone}</td>
                   <td>{user.company}</td>
                   <td>{user.role}</td>
                   <td>{getStatusBadge(user.status)}</td>
-                  <td>{user.joinDate}</td>
+                  <td>{new Date(user.joinDate).toLocaleDateString('vi-VN')}</td>
                   <td>{user.lastActive}</td>
                   <td>
                     <div className="action-buttons">
@@ -228,7 +236,7 @@ export default function AdminUsersTab() {
                   </div>
                   <div className="detail-item">
                     <label>Ngày tham gia:</label>
-                    <span>{selectedUser.joinDate}</span>
+                    <span>{new Date(selectedUser.joinDate).toLocaleDateString('vi-VN')}</span>
                   </div>
                   <div className="detail-item">
                     <label>Hoạt động cuối:</label>

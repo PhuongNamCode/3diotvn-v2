@@ -156,7 +156,7 @@ export default function AdminDashboard() {
     (window as any).showNotification('Đã đăng xuất admin!', 'info');
   };
 
-  const switchTab = (tabName: 'overview' | 'analytics' | 'events' | 'registrations' | 'users' | 'settings') => {
+  const switchTab = (tabName: 'overview' | 'analytics' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings') => {
     setCurrentTab(tabName);
     // Close mobile menu if open
     const sidebar = document.getElementById('sidebar');

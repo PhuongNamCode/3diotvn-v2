@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDataManager } from '@/lib/data-manager';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
@@ -7,8 +7,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const dataManager = getDataManager();
-    const contact = dataManager.getContact(id);
+    const contact = await prisma.contact.findUnique({ where: { id } });
     if (!contact) {
       return NextResponse.json(
         { success: false, error: 'Contact not found' },
@@ -31,8 +30,21 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const dataManager = getDataManager();
-    const contact = dataManager.updateContact(id, body);
+    const contact = await prisma.contact.update({
+      where: { id },
+      data: {
+        name: body.name,
+        email: body.email,
+        phone: body.phone,
+        company: body.company,
+        role: body.role,
+        message: body.message,
+        type: body.type,
+        status: body.status,
+        priority: body.priority,
+        notes: Array.isArray(body.notes) ? body.notes : undefined,
+      },
+    });
     if (!contact) {
       return NextResponse.json(
         { success: false, error: 'Contact not found' },
@@ -54,8 +66,8 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    const dataManager = getDataManager();
-    const success = dataManager.deleteContact(id);
+    await prisma.contact.delete({ where: { id } });
+    const success = true;
     if (!success) {
       return NextResponse.json(
         { success: false, error: 'Contact not found' },

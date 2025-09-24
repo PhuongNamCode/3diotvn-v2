@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDataManager } from '@/lib/data-manager';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
@@ -7,8 +7,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const dataManager = getDataManager();
-    const user = dataManager.getUser(id);
+    const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
@@ -31,8 +30,19 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const dataManager = getDataManager();
-    const user = dataManager.updateUser(id, body);
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        name: body.name,
+        email: body.email,
+        phone: body.phone,
+        company: body.company,
+        role: body.role,
+        status: body.status,
+        joinDate: body.joinDate ? new Date(body.joinDate) : undefined,
+        lastActive: body.lastActive,
+      },
+    });
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
@@ -54,8 +64,8 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    const dataManager = getDataManager();
-    const success = dataManager.deleteUser(id);
+    await prisma.user.delete({ where: { id } });
+    const success = true;
     if (!success) {
       return NextResponse.json(
         { success: false, error: 'User not found' },

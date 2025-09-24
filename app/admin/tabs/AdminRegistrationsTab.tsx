@@ -10,9 +10,10 @@ export default function AdminRegistrationsTab() {
   const { events } = useEvents();
 
   const filteredRegistrations = registrations.filter(reg => {
+    const org = (reg.organization || '').toLowerCase();
     const matchesSearch = reg.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reg.organization.toLowerCase().includes(searchTerm.toLowerCase());
+                         org.includes(searchTerm.toLowerCase());
     const matchesEvent = selectedEvent === "all" || reg.eventId === selectedEvent;
     return matchesSearch && matchesEvent;
   });
@@ -117,7 +118,6 @@ export default function AdminRegistrationsTab() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Sự kiện</th>
                 <th>Họ tên</th>
                 <th>Email</th>
@@ -144,13 +144,12 @@ export default function AdminRegistrationsTab() {
               ) : (
                 filteredRegistrations.map((registration) => (
                   <tr key={registration.id}>
-                    <td>{registration.id}</td>
                     <td>{getEventTitle(registration.eventId)}</td>
                     <td>{registration.fullName}</td>
                     <td>{registration.email}</td>
                     <td>{registration.phone}</td>
                     <td>{registration.organization}</td>
-                    <td>{formatDate(registration.registeredAt)}</td>
+                    <td>{registration.registeredAt ? formatDate(registration.registeredAt) : ''}</td>
                     <td>{getStatusBadge(registration.status)}</td>
                     <td>
                       <div className="action-buttons">

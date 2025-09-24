@@ -7,10 +7,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
     ],
   },
-  experimental: {
-    turbo: {
-      rules: {},
-    },
+  turbopack: {
+    // place turbopack config here if needed
   },
   reactStrictMode: true,
 };

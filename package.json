@@ -8,7 +8,9 @@
     "start": "next start",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:seed": "node prisma/seed.cjs || true"
+    "prisma:seed": "node prisma/seed.cjs || true",
+    "db:backup": "pg_dump --format=c --no-owner --no-privileges --dbname=\"$DATABASE_URL\" -f backup.dump",
+    "db:restore": "pg_restore --clean --if-exists --no-owner --no-privileges --dbname=\"$DATABASE_URL\" backup.dump"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

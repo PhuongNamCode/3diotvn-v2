@@ -1,13 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDataManager } from '@/lib/data-manager';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // Force refresh all data before returning events
-    const dataManager = getDataManager();
-    dataManager.forceRefresh();
-    const events = dataManager.getEvents();
-    return NextResponse.json({ success: true, data: events });
+    const events = await prisma.event.findMany({
+      include: {
+        registrations: {
+          where: { status: { not: 'cancelled' } },
+          select: { id: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const mapped = events.map((e) => ({
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      date: e.date,
+      time: e.time,
+      location: e.location,
+      capacity: e.capacity,
+      price: e.price,
+      speakers: (e.speakers as any) || [],
+      requirements: e.requirements || '',
+      agenda: e.agenda || '',
+      image: e.image || '',
+      category: e.category,
+      status: e.status,
+      registrations: e.registrations.length,
+      actualParticipants: e.actualParticipants ?? undefined,
+      createdAt: e.createdAt,
+      updatedAt: e.updatedAt,
+    }));
+
+    return NextResponse.json({ success: true, data: mapped });
   } catch (error) {
     console.error('Error fetching events:', error);
     return NextResponse.json(
@@ -20,10 +47,68 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('Creating event with data:', body);
-    const dataManager = getDataManager();
-    const event = dataManager.createEvent(body);
-    return NextResponse.json({ success: true, data: event }, { status: 201 });
+    // Basic validation for required fields
+    if (!body?.title || !body?.date || !body?.time || !body?.location) {
+      return NextResponse.json({ success: false, error: 'Thiếu trường bắt buộc (title, date, time, location)' }, { status: 400 });
+    }
+    // Sanitize numeric fields
+    const capacityVal = Number.isFinite(Number(body.capacity)) ? Number(body.capacity) : 0;
+    const priceVal = Number.isFinite(Number(body.price)) ? Number(body.price) : 0;
+    const actualParticipantsVal =
+      body.actualParticipants !== undefined && Number.isFinite(Number(body.actualParticipants))
+        ? Number(body.actualParticipants)
+        : null;
+
+    // Sanitize arrays
+    const speakersVal = Array.isArray(body.speakers)
+      ? (body.speakers as any[]).map((s) => String(s)).filter((s) => s.trim().length > 0)
+      : typeof body.speakers === 'string'
+        ? String(body.speakers).split(',').map((s) => s.trim()).filter((s) => s.length > 0)
+        : [];
+
+    const created = await prisma.event.create({
+      data: {
+        // If no id provided, use a timestamp string to remain compatible with legacy numeric parsing
+        id: String(body.id || Date.now().toString()),
+        title: body.title || '',
+        description: body.description || '',
+        date: body.date && !isNaN(new Date(body.date).getTime()) ? new Date(body.date) : new Date(),
+        time: body.time || '',
+        location: body.location || '',
+        capacity: capacityVal,
+        price: priceVal,
+        speakers: speakersVal,
+        requirements: body.requirements || null,
+        agenda: body.agenda || null,
+        image: body.image || null,
+        category: body.category || 'workshop',
+        status: body.status || 'upcoming',
+        actualParticipants: actualParticipantsVal,
+      },
+    });
+
+    const mapped = {
+      id: created.id,
+      title: created.title,
+      description: created.description,
+      date: created.date,
+      time: created.time,
+      location: created.location,
+      capacity: created.capacity,
+      price: created.price,
+      speakers: (created.speakers as any) || [],
+      requirements: created.requirements || '',
+      agenda: created.agenda || '',
+      image: created.image || '',
+      category: created.category,
+      status: created.status,
+      registrations: 0,
+      actualParticipants: created.actualParticipants ?? undefined,
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt,
+    };
+
+    return NextResponse.json({ success: true, data: mapped }, { status: 201 });
   } catch (error) {
     console.error('Error creating event:', error);
     return NextResponse.json(

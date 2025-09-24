@@ -2,10 +2,28 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useEvents, useRegistrations } from "@/lib/hooks/useData";
-import type { EventItem } from "@/data/events";
+
+type EventItem = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  registered: number;
+  capacity: number;
+  image?: string;
+  status: "upcoming" | "past" | string;
+  actualParticipants?: number;
+  price?: number;
+  speakers?: string[];
+  requirements?: string;
+  agenda?: string;
+  category?: string;
+};
 
 type RegistrationPayload = {
-  eventId: number;
+  eventId: string;
   fullName: string;
   email: string;
   phone?: string;
@@ -31,7 +49,7 @@ export default function EventsTab() {
     if (apiEvents && apiEvents.length > 0) {
       // Convert API events to EventItem format
       const convertedEvents: EventItem[] = apiEvents.map(event => ({
-        id: parseInt(event.id),
+        id: String(event.id),
         title: event.title,
         description: event.description,
         date: event.date,
@@ -65,7 +83,27 @@ export default function EventsTab() {
     return d.toLocaleDateString("vi-VN", { weekday: "short", year: "numeric", month: "short", day: "numeric" });
   }
 
+  function getCurrentUser() {
+    try {
+      const raw = localStorage.getItem('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function ensureLoggedInOrRedirect(): boolean {
+    const user = getCurrentUser();
+    if (!user) {
+      (window as any).showNotification?.('Bạn vui lòng đăng nhập để đăng ký tham gia!', 'warning');
+      (window as any).switchToTab?.('login');
+      return false;
+    }
+    return true;
+  }
+
   function handleViewEventDetails(event: EventItem) {
+    if (!ensureLoggedInOrRedirect()) return;
     setSelectedEventDetails(event);
     setShowEventDetails(true);
   }
@@ -226,7 +264,7 @@ export default function EventsTab() {
                         }
                       </span>
                     </div>
-                    {selectedEventDetails.price > 0 && (
+                    {typeof selectedEventDetails.price === 'number' && selectedEventDetails.price > 0 && (
                       <div className="meta-item">
                         <span className="meta-label">Giá vé: </span>
                         <span className="meta-value">{selectedEventDetails.price.toLocaleString('vi-VN')} VNĐ</span>
@@ -271,6 +309,7 @@ export default function EventsTab() {
                 className="btn btn-primary"
                 style={{ margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onClick={() => {
+                  if (!ensureLoggedInOrRedirect()) return;
                   setSelected(selectedEventDetails);
                   setSuccess(false);
                   setShowEventDetails(false);

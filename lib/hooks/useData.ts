@@ -1,5 +1,86 @@
 import { useState, useEffect } from 'react';
-import { dataManager, Event, News, Contact, User, Registration } from '@/lib/data-manager';
+
+// Types aligned with API responses (DB-backed)
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  capacity: number;
+  price: number;
+  speakers?: string[];
+  requirements?: string;
+  agenda?: string;
+  image?: string | null;
+  category: string;
+  status: 'upcoming' | 'past' | 'cancelled' | string;
+  registrations: number;
+  actualParticipants?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface News {
+  id: string;
+  title: string;
+  content: string;
+  excerpt: string;
+  author: string;
+  source: string;
+  category: string;
+  importance: 'high' | 'medium' | 'low' | string;
+  published: boolean;
+  publishedAt?: string | null;
+  image?: string | null;
+  tags?: string[];
+  link?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Contact {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  role: string;
+  message: string;
+  type: string;
+  status: string;
+  priority: string;
+  notes?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  role?: string;
+  status?: 'active' | 'inactive' | string;
+  joinDate: string;
+  lastActive: string;
+}
+
+export interface Registration {
+  id: string;
+  eventId: string;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  organization?: string | null;
+  experience?: string | null;
+  expectation?: string | null;
+  status: 'pending' | 'confirmed' | 'cancelled' | string;
+  registeredAt?: string;
+  updatedAt?: string;
+}
 
 // Custom hook for events
 export function useEvents() {

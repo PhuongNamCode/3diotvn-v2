@@ -191,7 +191,6 @@ export default function AdminEventsTab() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Tên sự kiện</th>
                 <th>Ngày</th>
                 <th>Địa điểm</th>
@@ -216,7 +215,6 @@ export default function AdminEventsTab() {
               ) : (
                 filteredEvents.map((event) => (
                   <tr key={event.id}>
-                    <td>{event.id}</td>
                     <td>{event.title}</td>
                     <td>{formatDate(event.date)}</td>
                     <td>{event.location}</td>
