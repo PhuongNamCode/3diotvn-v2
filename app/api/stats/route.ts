@@ -3,14 +3,19 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
+    // Calculate current month range (most recent month)
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
     const [totalEvents, upcomingEvents, totalRegistrations, totalNews, publishedNews, totalContacts, newContacts, totalUsers, activeUsers] = await Promise.all([
-      prisma.event.count(),
-      prisma.event.count({ where: { status: 'upcoming' } }),
-      prisma.registration.count({ where: { status: { not: 'cancelled' } } }),
-      prisma.news.count(),
-      prisma.news.count({ where: { published: true } }),
-      prisma.contact.count(),
-      prisma.contact.count({ where: { status: 'new' } }),
+      prisma.event.count({ where: { createdAt: { gte: monthStart, lt: nextMonthStart } } }),
+      prisma.event.count({ where: { status: 'upcoming', createdAt: { gte: monthStart, lt: nextMonthStart } } }),
+      prisma.registration.count({ where: { status: { not: 'cancelled' }, createdAt: { gte: monthStart, lt: nextMonthStart } } }),
+      prisma.news.count({ where: { createdAt: { gte: monthStart, lt: nextMonthStart } } }),
+      prisma.news.count({ where: { published: true, createdAt: { gte: monthStart, lt: nextMonthStart } } }),
+      prisma.contact.count({ where: { createdAt: { gte: monthStart, lt: nextMonthStart } } }),
+      prisma.contact.count({ where: { status: 'new', createdAt: { gte: monthStart, lt: nextMonthStart } } }),
       prisma.user.count(),
       prisma.user.count({ where: { status: 'active' } }),
     ]);
@@ -25,6 +30,7 @@ export async function GET() {
       newContacts,
       totalUsers,
       activeUsers,
+      range: { from: monthStart.toISOString(), to: nextMonthStart.toISOString() }
     };
     return NextResponse.json({ success: true, data: stats });
   } catch (error) {

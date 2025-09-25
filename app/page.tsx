@@ -101,6 +101,76 @@ export default function Home() {
     mobileMenuBtn?.addEventListener('click', toggleMobileMenu);
 
     // Helpers to apply UI state for login/logout
+    function isValidUrl(maybeUrl: string | undefined | null) {
+      if (!maybeUrl || typeof maybeUrl !== 'string') return false;
+      try {
+        const u = new URL(maybeUrl);
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    }
+
+    async function tryLoadImage(url: string): Promise<boolean> {
+      return new Promise((resolve) => {
+        const testImg = new Image();
+        // Some providers can reject hotlinking if referrer present
+        (testImg as any).referrerPolicy = 'no-referrer';
+        testImg.onload = () => resolve(true);
+        testImg.onerror = () => resolve(false);
+        testImg.src = url;
+      });
+    }
+
+    async function setUserAvatarImage(imgEl: HTMLImageElement, user: User) {
+      const fallback = '/default-avatar.png';
+      const candidates: string[] = [];
+      if (isValidUrl(user.picture)) candidates.push(user.picture!);
+      candidates.push(fallback);
+
+      for (const candidate of candidates) {
+        const ok = await tryLoadImage(candidate);
+        if (ok) {
+          imgEl.onerror = null;
+          imgEl.src = candidate;
+          // Ensure broken cache state is cleared
+          if (imgEl.complete && imgEl.naturalWidth === 0) {
+            continue;
+          }
+          return;
+        }
+      }
+      // As a last resort, draw initials placeholder via data URL
+      const initials = (user.name || 'User')
+        .split(' ')
+        .map((s) => s.charAt(0))
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+      try {
+        const canvas = document.createElement('canvas');
+        const size = 80;
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#3b82f6';
+          ctx.beginPath();
+          ctx.arc(size/2, size/2, size/2, 0, Math.PI*2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 28px system-ui, -apple-system, "Segoe UI", Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(initials, size/2, size/2);
+          imgEl.src = canvas.toDataURL('image/png');
+        } else {
+          imgEl.src = fallback;
+        }
+      } catch {
+        imgEl.src = fallback;
+      }
+    }
+
     function applyLoggedInUI(user: User) {
       const userProfile = document.getElementById('userProfile');
       const joinBtn = document.getElementById('joinBtn');
@@ -110,7 +180,12 @@ export default function Home() {
       if (userProfile) (userProfile as HTMLElement).style.display = 'flex';
       if (joinBtn) (joinBtn as HTMLElement).style.display = 'none';
       if (userName) userName.textContent = user.name;
-      if (userAvatar) userAvatar.src = user.picture;
+      if (userAvatar) {
+        try { (userAvatar as any).referrerPolicy = 'no-referrer'; } catch {}
+        userAvatar.decoding = 'async';
+        userAvatar.loading = 'eager';
+        setUserAvatarImage(userAvatar, user);
+      }
       if (loginNavBtn) loginNavBtn.style.display = 'none';
     }
     function applyLoggedOutUI() {
@@ -191,7 +266,7 @@ export default function Home() {
                 </div>
                 <div class="login-content">
                   <div style="margin:2rem 0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                    <img src="${user.picture}" alt="User Avatar" style="width:80px;height:80px;border-radius:50%;display:block;margin:0 auto 1rem;border:3px solid var(--accent);" />
+                    <img id="loginAvatarImg" src="${user.picture}" alt="User Avatar" style="width:80px;height:80px;border-radius:50%;display:block;margin:0 auto 1rem;border:3px solid var(--accent);" />
                     <h3 style="color:var(--primary);margin-bottom:0.5rem;">${user.name}</h3>
                     <p style="color:var(--text-secondary);">${user.email}</p>
                   </div>
@@ -214,6 +289,14 @@ export default function Home() {
           </div>`;
         document.getElementById('goEvents')?.addEventListener('click', () => switchTab('events'));
         document.getElementById('logoutInline')?.addEventListener('click', signOut);
+        // Apply robust avatar fallback for the login tab preview avatar as well
+        const loginAvatarImg = document.getElementById('loginAvatarImg') as HTMLImageElement | null;
+        if (loginAvatarImg) {
+          try { (loginAvatarImg as any).referrerPolicy = 'no-referrer'; } catch {}
+          loginAvatarImg.decoding = 'async';
+          loginAvatarImg.loading = 'eager';
+          setUserAvatarImage(loginAvatarImg, user);
+        }
       }
       showNotification(`🎉 Đăng nhập thành công! Chào mừng ${user.name}`, 'success');
       // Events list handled by EventsTab now

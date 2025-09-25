@@ -4,6 +4,40 @@
 - Node.js 18+
 - PostgreSQL instance (local or cloud)
 
+### Quickstart (Step-by-step)
+1) Khởi chạy PostgreSQL bằng Docker (khuyến nghị cho dev):
+```bash
+docker rm -f pg-3diot || true
+docker run --name pg-3diot -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=web -p 5432:5432 -d postgres:16
+until docker exec -i pg-3diot pg_isready -U postgres -d web; do sleep 1; done
+```
+
+2) Tạo file môi trường:
+```bash
+cd /home/phuongnam/web
+printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\n' > .env
+printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nNEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"\nPERPLEXITY_API_KEY="<your_perplexity_api_key>"\nPERPLEXITY_MODEL="pplx-70b-online"\n' > .env.local
+```
+
+3) Cài dependencies và generate Prisma Client + migrate DB:
+```bash
+npm ci
+npm run prisma:generate
+npx prisma migrate dev --name init | cat
+```
+
+4) Chạy môi trường dev và mở http://localhost:3000:
+```bash
+npm run dev
+```
+
+5) Test nhanh API (tùy chọn):
+```bash
+curl -sS http://localhost:3000/api/events | cat
+curl -sS -X POST http://localhost:3000/api/events -H 'Content-Type: application/json' -d '{"title":"Valid","description":"D","date":"2025-12-20","time":"09:00 - 11:00","location":"Hanoi","capacity":100,"price":0,"speakers":"A, B","category":"workshop","status":"upcoming"}' | cat
+curl -sS -X POST http://localhost:3000/api/users -H 'Content-Type: application/json' -d '{"name":"FromLogin","email":"fromlogin@test.com"}' | cat
+```
+
 ### Environment
 Tạo cả `.env.local` (Next) và `.env` (Prisma):
 
@@ -59,6 +93,20 @@ curl -sS -X POST http://localhost:3000/api/users -H 'Content-Type: application/j
 curl -sS http://localhost:3000/api/stats | cat
 # Trigger a Perplexity-powered news refresh (requires PERPLEXITY_API_KEY)
 curl -sS -X POST http://localhost:3000/api/news/refresh | cat
+```
+
+### Build & chạy Production (cục bộ)
+- Áp dụng khi muốn chạy build production trên máy dev (DB vẫn là local hoặc managed DB).
+
+1) Áp dụng migration trên môi trường production:
+```bash
+npx prisma migrate deploy | cat
+```
+
+2) Build và start production:
+```bash
+npm run build
+npm start
 ```
 
 ### Lỗi thường gặp (và cách xử lý)

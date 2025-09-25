@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useEvents, useRegistrations } from "@/lib/hooks/useData";
 
 type EventItem = {
@@ -156,7 +157,20 @@ export default function EventsTab() {
       <div className="events-banner"><h2>🎯 Sự kiện sắp diễn ra</h2><p>Tham gia các workshop, seminar và hackathon cùng cộng đồng 3DIoT</p></div>
 
       {loading && (
-        <div className="events-grid"><div className="loading"><i className="fas fa-spinner"></i><p>Đang tải sự kiện...</p></div></div>
+        <div className="events-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div className="event-card" key={`sk-${i}`} aria-hidden="true">
+              <div className="event-image skeleton" />
+              <div className="event-content">
+                <div className="skeleton h-6 w-3/4" style={{ height: 24, width: '75%', borderRadius: 8 }} />
+                <div className="skeleton h-4 w-1/2" style={{ height: 16, width: '50%', marginTop: 10, borderRadius: 6 }} />
+                <div className="skeleton h-4 w-2/3" style={{ height: 16, width: '66%', marginTop: 8, borderRadius: 6 }} />
+                <div className="skeleton h-16 w-full" style={{ height: 64, width: '100%', marginTop: 12, borderRadius: 10 }} />
+                <div className="skeleton h-10 w-full" style={{ height: 40, width: '100%', marginTop: 12, borderRadius: 8 }} />
+              </div>
+            </div>
+          ))}
+        </div>
       )}
       {error && (
         <div className="events-grid"><p style={{ color: "var(--danger)" }}>{error}</p></div>
@@ -177,7 +191,7 @@ export default function EventsTab() {
               <div className="event-card" key={event.id}>
                 <div className="event-image">
                   {event.image ? (
-                    <img src={event.image} alt={event.title} />
+                    <Image src={event.image} alt={event.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" style={{ objectFit: 'cover' }} />
                   ) : (
                     <i className="fas fa-calendar-alt"></i>
                   )}
@@ -233,8 +247,8 @@ export default function EventsTab() {
             <div className="modal-body">
               <div className="event-details-content">
                 {selectedEventDetails.image && (
-                  <div className="event-details-image">
-                    <img src={selectedEventDetails.image} alt={selectedEventDetails.title} />
+                  <div className="event-details-image" style={{ position: 'relative', width: '100%', height: 220 }}>
+                    <Image src={selectedEventDetails.image} alt={selectedEventDetails.title} fill sizes="100vw" style={{ objectFit: 'cover', borderRadius: 12 }} />
                   </div>
                 )}
                 

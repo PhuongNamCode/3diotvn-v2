@@ -7,7 +7,6 @@ import AdminEventsTab from "./tabs/AdminEventsTab";
 import AdminUsersTab from "./tabs/AdminUsersTab";
 import AdminRegistrationsTab from "./tabs/AdminRegistrationsTab";
 import AdminContactsTab from "./tabs/AdminContactsTab";
-import AdminAnalyticsTab from "./tabs/AdminAnalyticsTab";
 import AdminSettingsTab from "./tabs/AdminSettingsTab";
 import { websocketManager } from "@/lib/websocket";
 import RealTimeStatus from "../components/RealTimeStatus";
@@ -23,8 +22,9 @@ type AdminUser = {
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
-  const [currentTab, setCurrentTab] = useState<'overview' | 'analytics' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings'>('overview');
+  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings'>('overview');
   const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   // Check authentication on mount
   useEffect(() => {
@@ -45,36 +45,12 @@ export default function AdminDashboard() {
     checkAuth();
   }, []);
 
-  // Theme management
+  // Theme management (use global 'theme' key for consistency) and reliable React handler
   useEffect(() => {
-    let currentTheme = localStorage.getItem('adminTheme') || 'light';
-    document.documentElement.setAttribute('data-theme', currentTheme);
-
-    const lightIcon = document.getElementById('lightIcon');
-    const darkIcon = document.getElementById('darkIcon');
-    
-    function updateThemeIcons() {
-      if (!lightIcon || !darkIcon) return;
-      if (currentTheme === 'light') {
-        lightIcon.classList.add('active');
-        darkIcon.classList.remove('active');
-      } else {
-        darkIcon.classList.add('active');
-        lightIcon.classList.remove('active');
-      }
-    }
-    updateThemeIcons();
-
-    function toggleTheme() {
-      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', currentTheme);
-      localStorage.setItem('adminTheme', currentTheme);
-      updateThemeIcons();
-    }
-
-    // Attach theme toggle
-    const themeToggle = document.getElementById('themeToggle');
-    themeToggle?.addEventListener('click', toggleTheme);
+    const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const initialTheme = stored === 'dark' ? 'dark' : 'light';
+    setTheme(initialTheme);
+    document.documentElement.setAttribute('data-theme', initialTheme);
 
     // Mobile menu toggle
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -125,22 +101,33 @@ export default function AdminDashboard() {
     (window as any).websocketManager = websocketManager;
 
     // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
+    const keydownHandler = (e: KeyboardEvent) => {
       if (e.altKey && e.key === 't') {
         e.preventDefault();
-        toggleTheme();
+        const next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch {}
+        setTheme(next);
       }
       if (e.key === 'Escape') {
         closeMobileMenu();
       }
-    });
+    };
+    document.addEventListener('keydown', keydownHandler);
 
     return () => {
-      themeToggle?.removeEventListener('click', toggleTheme);
+      document.removeEventListener('keydown', keydownHandler);
       mobileMenuBtn?.removeEventListener('click', toggleMobileMenu);
       overlay?.removeEventListener('click', closeMobileMenu);
     };
   }, []);
+
+  const handleToggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch {}
+    setTheme(next);
+  };
 
   const handleLogin = (adminData: AdminUser) => {
     setCurrentAdmin(adminData);
@@ -156,7 +143,7 @@ export default function AdminDashboard() {
     (window as any).showNotification('Đã đăng xuất admin!', 'info');
   };
 
-  const switchTab = (tabName: 'overview' | 'analytics' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings') => {
+  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings') => {
     setCurrentTab(tabName);
     // Close mobile menu if open
     const sidebar = document.getElementById('sidebar');
@@ -204,13 +191,7 @@ export default function AdminDashboard() {
                 <i className="fas fa-chart-line"></i>
                 <span>Tổng quan</span>
               </button>
-              <button 
-                className={`nav-item ${currentTab === 'analytics' ? 'active' : ''}`}
-                onClick={() => switchTab('analytics')}
-              >
-                <i className="fas fa-chart-pie"></i>
-                <span>Phân tích</span>
-              </button>
+              
             </div>
 
             <div className="nav-section">
@@ -272,7 +253,6 @@ export default function AdminDashboard() {
               <div>
                 <h1 className="page-title">
                   {currentTab === 'overview' && 'Tổng quan'}
-                  {currentTab === 'analytics' && 'Phân tích chi tiết'}
                   {currentTab === 'events' && 'Quản lý sự kiện'}
                   {currentTab === 'users' && 'Quản lý người dùng'}
                   {currentTab === 'settings' && 'Cài đặt hệ thống'}
@@ -282,11 +262,11 @@ export default function AdminDashboard() {
             </div>
 
             <div className="top-bar-right">
-              <div className="theme-toggle" id="themeToggle" title="Chuyển đổi theme">
-                <div className="theme-icon active" id="lightIcon">
+              <div className="theme-toggle" id="themeToggle" title="Chuyển đổi theme" onClick={handleToggleTheme}>
+                <div className={`theme-icon ${theme === 'light' ? 'active' : ''}`} id="lightIcon">
                   <i className="fas fa-sun"></i>
                 </div>
-                <div className="theme-icon" id="darkIcon">
+                <div className={`theme-icon ${theme === 'dark' ? 'active' : ''}`} id="darkIcon">
                   <i className="fas fa-moon"></i>
                 </div>
               </div>
@@ -313,7 +293,6 @@ export default function AdminDashboard() {
           {/* Dashboard Content */}
           <div className="admin-dashboard-content">
             {currentTab === 'overview' && <AdminOverviewTab />}
-            {currentTab === 'analytics' && <AdminAnalyticsTab />}
             {currentTab === 'events' && <AdminEventsTab />}
             {currentTab === 'registrations' && <AdminRegistrationsTab />}
             {currentTab === 'contacts' && <AdminContactsTab />}
