@@ -631,6 +631,27 @@
   align-items: center;
 }
 
+/* Filters in table header - ensure readable in dark mode */
+.table-actions select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.table-actions select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+.table-actions select option {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
 .search-box {
   position: relative;
 }
@@ -1939,8 +1960,8 @@
 }
 
 .detail-section {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -1948,9 +1969,9 @@
 .detail-section h4 {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--primary);
   margin-bottom: 1rem;
-  border-bottom: 2px solid #3b82f6;
+  border-bottom: 2px solid var(--accent);
   padding-bottom: 0.5rem;
 }
 
@@ -1968,18 +1989,18 @@
 
 .detail-item label {
   font-weight: 600;
-  color: #374151;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .detail-item span {
-  color: #1f2937;
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
 .message-content {
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem;
   margin-top: 0.5rem;
@@ -1988,7 +2009,7 @@
 .message-content p {
   margin: 0;
   line-height: 1.6;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .notes-list {
@@ -1998,16 +2019,16 @@
 }
 
 .note-item {
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.75rem;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--accent);
 }
 
 .note-item p {
   margin: 0;
-  color: #374151;
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
@@ -2019,9 +2040,25 @@
 }
 
 .contact-info strong {
-  color: #1f2937;
+  color: var(--text-primary);
   font-weight: 600;
 }
+
+/* Generic badges for contacts tab (dark-friendly) */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-primary { background: rgba(59,130,246,0.15); color: var(--accent); }
+.badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+.badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+.badge-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+.badge-info { background: rgba(59,130,246,0.15); color: var(--accent); }
+.badge-secondary { background: var(--surface-hover); color: var(--text-secondary); }
 
 /* Responsive */
 @media (max-width: 768px) {

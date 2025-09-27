@@ -1,57 +1,144 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AdminSettingsTab() {
-  const [systemSettings, setSystemSettings] = useState({
-    siteName: "3DIoT Community",
-    contactEmail: "hello@3diot.vn",
-    siteDescription: "Cộng đồng lập trình nhúng và IoT hàng đầu Việt Nam"
-  });
-
   const [integrationSettings, setIntegrationSettings] = useState({
     googleAnalytics: "",
     googleClientId: "",
     smtpHost: "",
-    smtpUsername: ""
+    smtpUsername: "",
+    perplexityApiKey: "",
+    perplexityModel: "pplx-70b-online"
   });
 
   const [newsSettings, setNewsSettings] = useState({
-    newsApiKey: "",
     autoPublish: false,
-    updateFrequency: "daily"
+    updateFrequency: "weekly",
+    lastRefreshAt: ""
   });
 
-  const handleSystemSave = () => {
-    (window as any).showNotification('Cài đặt hệ thống đã được lưu!', 'success');
+  const [saving, setSaving] = useState(false); // deprecated with Integration removal; kept to preserve minimal diff if referenced
+  const [refreshing, setRefreshing] = useState(false);
+  const [showNewsConfig, setShowNewsConfig] = useState(false);
+  const [savingGoogle, setSavingGoogle] = useState(false);
+  const [savingSmtp, setSavingSmtp] = useState(false);
+
+  // Load existing settings
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await fetch('/api/settings', { cache: 'no-store' });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const s = data?.data || {};
+        setIntegrationSettings((prev) => ({
+          ...prev,
+          googleAnalytics: s['integrations.gaId'] || prev.googleAnalytics,
+          googleClientId: s['integrations.googleClientId'] || prev.googleClientId,
+          smtpHost: s['integrations.smtpHost'] || prev.smtpHost,
+          smtpUsername: s['integrations.smtpUsername'] || prev.smtpUsername,
+          perplexityApiKey: s['perplexity.apiKey'] || prev.perplexityApiKey,
+          perplexityModel: s['perplexity.model'] || prev.perplexityModel,
+        }));
+        setNewsSettings((prev) => ({
+          ...prev,
+          autoPublish: Boolean(s['news.autoPublish'] ?? prev.autoPublish),
+          updateFrequency: s['news.updateFrequency'] || prev.updateFrequency,
+          lastRefreshAt: s['news.lastRefreshAt'] || '',
+        }));
+        // Fallback to localStorage if API key is absent
+        if (!(s['perplexity.apiKey'])) {
+          try {
+            const lsKey = localStorage.getItem('perplexity.apiKey') || '';
+            const lsModel = localStorage.getItem('perplexity.model') || '';
+            if (lsKey) {
+              setIntegrationSettings((prev) => ({ ...prev, perplexityApiKey: lsKey, perplexityModel: (lsModel || prev.perplexityModel) }));
+              // Best-effort sync back to server
+              fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ 'perplexity.apiKey': lsKey, 'perplexity.model': (lsModel || integrationSettings.perplexityModel) }) }).catch(() => {});
+            }
+          } catch {}
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // Integration section removed - settings are now configured inline under News
+  const handleSaveGoogle = () => {
+    (async () => {
+      setSavingGoogle(true);
+      try {
+        const payload: Record<string, any> = {
+          'integrations.gaId': integrationSettings.googleAnalytics,
+          'integrations.googleClientId': integrationSettings.googleClientId,
+        };
+        const resp = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!resp.ok) throw new Error('Save failed');
+        (window as any).showNotification('Đã lưu Google settings', 'success');
+      } catch {
+        (window as any).showNotification('Lưu Google settings thất bại', 'error');
+      } finally {
+        setSavingGoogle(false);
+      }
+    })();
   };
 
-  const handleIntegrationSave = () => {
-    (window as any).showNotification('Cài đặt tích hợp đã được lưu!', 'success');
+  const handleSaveSmtp = () => {
+    (async () => {
+      setSavingSmtp(true);
+      try {
+        const payload: Record<string, any> = {
+          'integrations.smtpHost': integrationSettings.smtpHost,
+          'integrations.smtpUsername': integrationSettings.smtpUsername,
+        };
+        const resp = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!resp.ok) throw new Error('Save failed');
+        (window as any).showNotification('Đã lưu SMTP settings', 'success');
+      } catch {
+        (window as any).showNotification('Lưu SMTP settings thất bại', 'error');
+      } finally {
+        setSavingSmtp(false);
+      }
+    })();
   };
 
   const handleNewsSetup = () => {
-    const apiKey = prompt('Nhập API key cho tin tức (ví dụ: NewsAPI, Perplexity):');
-    if (apiKey) {
-      setNewsSettings(prev => ({ ...prev, newsApiKey: apiKey }));
-      (window as any).showNotification('Đã cấu hình News API thành công!', 'success');
-    }
+    setShowNewsConfig(true);
   };
 
   const handleRefreshNews = () => {
     (async () => {
+      if (!integrationSettings.perplexityApiKey?.trim()) {
+        // Try localStorage as a last resort
+        try {
+          const lsKey = localStorage.getItem('perplexity.apiKey') || '';
+          const lsModel = localStorage.getItem('perplexity.model') || '';
+          if (lsKey) {
+            setIntegrationSettings((prev) => ({ ...prev, perplexityApiKey: lsKey, perplexityModel: (lsModel || prev.perplexityModel) }));
+          }
+        } catch {}
+      }
+      if (!integrationSettings.perplexityApiKey?.trim()) {
+        (window as any).showNotification('Chưa có PERPLEXITY_API_KEY. Vui lòng cấu hình trước khi cập nhật.', 'warning');
+        setShowNewsConfig(true);
+        return;
+      }
+      setRefreshing(true);
       (window as any).showNotification('Đang cập nhật tin tức từ Perplexity...', 'info');
       try {
         const resp = await fetch('/api/news/refresh', { method: 'POST' });
         const data = await resp.json();
         if (resp.ok && data?.success) {
           (window as any).showNotification(`Đã nhập ${data.ingested} tin, bỏ qua ${data.skipped}.`, 'success');
+          // persist last refresh time
+          try { await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ 'news.lastRefreshAt': new Date().toISOString() }) }); } catch {}
+          setNewsSettings(prev => ({ ...prev, lastRefreshAt: new Date().toISOString() }));
         } else {
           (window as any).showNotification(data?.error || 'Cập nhật thất bại.', 'error');
         }
       } catch (e) {
         (window as any).showNotification('Không thể gọi API /api/news/refresh', 'error');
-      }
+      } finally { setRefreshing(false); }
     })();
   };
 
@@ -66,50 +153,12 @@ export default function AdminSettingsTab() {
 
   return (
     <div className="admin-settings">
+      {/* Google & SMTP Settings (split panels) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        {/* System Settings */}
+        {/* Google Settings */}
         <div className="table-container">
           <div className="table-header">
-            <h3 className="table-title">Cài đặt hệ thống</h3>
-          </div>
-          <div style={{ padding: '1.5rem' }}>
-            <div className="form-group">
-              <label>Tên website</label>
-              <input
-                type="text"
-                value={systemSettings.siteName}
-                onChange={(e) => setSystemSettings(prev => ({ ...prev, siteName: e.target.value }))}
-                placeholder="Tên website"
-              />
-            </div>
-            <div className="form-group">
-              <label>Email liên hệ</label>
-              <input
-                type="email"
-                value={systemSettings.contactEmail}
-                onChange={(e) => setSystemSettings(prev => ({ ...prev, contactEmail: e.target.value }))}
-                placeholder="Email liên hệ"
-              />
-            </div>
-            <div className="form-group">
-              <label>Mô tả website</label>
-              <textarea
-                value={systemSettings.siteDescription}
-                onChange={(e) => setSystemSettings(prev => ({ ...prev, siteDescription: e.target.value }))}
-                placeholder="Mô tả ngắn về website"
-              ></textarea>
-            </div>
-            <button className="btn btn-primary" onClick={handleSystemSave}>
-              <i className="fas fa-save"></i>
-              Lưu cài đặt
-            </button>
-          </div>
-        </div>
-
-        {/* Integration Settings */}
-        <div className="table-container">
-          <div className="table-header">
-            <h3 className="table-title">Tích hợp</h3>
+            <h3 className="table-title">Google Settings</h3>
           </div>
           <div style={{ padding: '1.5rem' }}>
             <div className="form-group">
@@ -130,120 +179,178 @@ export default function AdminSettingsTab() {
                 placeholder="Client ID cho Google Sign-in"
               />
             </div>
+            <button className="btn btn-primary" onClick={handleSaveGoogle} disabled={savingGoogle}>
+              <i className={`fas ${savingGoogle ? 'fa-spinner fa-spin' : 'fa-save'}`}></i>
+              {savingGoogle ? ' Đang lưu...' : ' Lưu Google settings'}
+            </button>
+          </div>
+        </div>
+
+        {/* SMTP Settings */}
+        <div className="table-container">
+          <div className="table-header">
+            <h3 className="table-title">SMTP Settings</h3>
+          </div>
+          <div style={{ padding: '1.5rem' }}>
             <div className="form-group">
-              <label>SMTP Settings</label>
+              <label>SMTP Host</label>
               <input
                 type="text"
                 value={integrationSettings.smtpHost}
                 onChange={(e) => setIntegrationSettings(prev => ({ ...prev, smtpHost: e.target.value }))}
                 placeholder="smtp.gmail.com"
-                style={{ marginBottom: '0.5rem' }}
               />
+            </div>
+            <div className="form-group">
+              <label>SMTP Username</label>
               <input
                 type="text"
                 value={integrationSettings.smtpUsername}
                 onChange={(e) => setIntegrationSettings(prev => ({ ...prev, smtpUsername: e.target.value }))}
-                placeholder="Email username"
+                placeholder="email@domain.com"
               />
             </div>
-            <button className="btn btn-primary" onClick={handleIntegrationSave}>
-              <i className="fas fa-save"></i>
-              Lưu tích hợp
+            <button className="btn btn-primary" onClick={handleSaveSmtp} disabled={savingSmtp}>
+              <i className={`fas ${savingSmtp ? 'fa-spinner fa-spin' : 'fa-save'}`}></i>
+              {savingSmtp ? ' Đang lưu...' : ' Lưu SMTP settings'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* News Management */}
+      {/* News Management (always visible) */}
       <div className="table-container" style={{ marginTop: '2rem' }}>
         <div className="table-header">
-          <h3 className="table-title">Quản lý tin tức</h3>
+          <h3 className="table-title">Tin tức IoT/Tech mới nhất</h3>
           <div className="table-actions">
-            <button className="btn btn-primary" onClick={handleNewsSetup}>
-              <i className="fas fa-cog"></i>
-              Cấu hình News API
+            <div className="form-group" style={{ margin: 0 }}>
+              <label style={{ marginBottom: 4 }}>Tần suất cập nhật</label>
+              <select
+                value={newsSettings.updateFrequency}
+                onChange={async (e) => {
+                  const v = e.target.value;
+                  setNewsSettings(prev => ({ ...prev, updateFrequency: v }));
+                  try { await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ 'news.updateFrequency': v }) }); } catch {}
+                  (window as any).showNotification('Đã lưu tần suất cập nhật', 'success');
+                }}
+              >
+                <option value="manual">Thủ công</option>
+                <option value="daily">Hàng ngày</option>
+                <option value="weekly">Hàng tuần (mặc định sáng thứ 2)</option>
+                <option value="monthly">Hàng tháng</option>
+              </select>
+            </div>
+            <button className="btn btn-primary" onClick={handleRefreshNews} disabled={refreshing}>
+              <i className={`fas ${refreshing ? 'fa-spinner fa-spin' : 'fa-sync-alt'}`}></i>
+              {refreshing ? ' Đang cập nhật...' : ' Cập nhật tin tức'}
             </button>
           </div>
         </div>
         <div className="table-content">
-          <div className="empty-state">
-            <i className="fas fa-newspaper"></i>
-            <h3>Quản lý tin tức</h3>
-            <p>Tính năng này sẽ cho phép bạn tự động thu thập và quản lý tin tức từ các nguồn IoT/Tech hàng đầu</p>
-            <div className="news-actions">
-              <button className="btn btn-primary" onClick={handleNewsSetup}>
-                <i className="fas fa-cog"></i>
-                Cấu hình News API
-              </button>
+          {(!integrationSettings.perplexityApiKey?.trim() || showNewsConfig) && (
+            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Perplexity API Key</label>
+                  <input
+                    type="password"
+                    value={integrationSettings.perplexityApiKey}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setIntegrationSettings(prev => ({ ...prev, perplexityApiKey: v }));
+                      try { localStorage.setItem('perplexity.apiKey', v || ''); } catch {}
+                    }}
+                    placeholder="PERPLEXITY_API_KEY"
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Perplexity Model</label>
+                  <input
+                    type="text"
+                    value={integrationSettings.perplexityModel}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setIntegrationSettings(prev => ({ ...prev, perplexityModel: v }));
+                      try { localStorage.setItem('perplexity.model', v || ''); } catch {}
+                    }}
+                    placeholder="pplx-70b-online"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button className="btn btn-primary" onClick={async () => {
+                  try {
+                    await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+                      'perplexity.apiKey': integrationSettings.perplexityApiKey,
+                      'perplexity.model': integrationSettings.perplexityModel,
+                    }) });
+                    (window as any).showNotification('Đã lưu cấu hình Perplexity', 'success');
+                    setShowNewsConfig(false);
+                  } catch {
+                    (window as any).showNotification('Lưu cấu hình thất bại', 'error');
+                  }
+                }}>
+                  <i className="fas fa-save"></i>
+                  Lưu cấu hình
+                </button>
+                <button className="btn btn-secondary" onClick={() => setShowNewsConfig(false)}>
+                  <i className="fas fa-times"></i>
+                  Đóng
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+          {newsSettings.lastRefreshAt && (
+            <div style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}>
+              Lần cập nhật gần nhất: {new Date(newsSettings.lastRefreshAt).toLocaleString('vi-VN')}
+            </div>
+          )}
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Ngày</th>
+                <th>Tiêu đề</th>
+                <th>Nguồn</th>
+                <th>Danh mục</th>
+                <th>Độ quan trọng</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>24/09/2025</td>
+                <td>Breakthrough in Edge AI Processing</td>
+                <td>IEEE Spectrum</td>
+                <td><span className="status-badge status-confirmed">AI/ML</span></td>
+                <td><span className="status-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }}>Cao</span></td>
+                <td>
+                  <button className="btn btn-sm btn-primary">
+                    <i className="fas fa-edit"></i>
+                  </button>
+                  <button className="btn btn-sm btn-success">
+                    <i className="fas fa-check"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>24/09/2025</td>
+                <td>New RISC-V IoT Chip Architecture</td>
+                <td>Electronics Weekly</td>
+                <td><span className="status-badge status-pending">Hardware</span></td>
+                <td><span className="status-badge status-confirmed">Trung bình</span></td>
+                <td>
+                  <button className="btn btn-sm btn-primary">
+                    <i className="fas fa-edit"></i>
+                  </button>
+                  <button className="btn btn-sm btn-success">
+                    <i className="fas fa-check"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-
-      {/* News Table (shown after API setup) */}
-      {newsSettings.newsApiKey && (
-        <div className="table-container" style={{ marginTop: '2rem' }}>
-          <div className="table-header">
-            <h3 className="table-title">Tin tức IoT/Tech mới nhất</h3>
-            <div className="table-actions">
-              <button className="btn btn-primary" onClick={handleRefreshNews}>
-                <i className="fas fa-sync-alt"></i>
-                Cập nhật tin tức
-              </button>
-              <button className="btn btn-success" onClick={handlePublishNews}>
-                <i className="fas fa-globe"></i>
-                Đăng lên website
-              </button>
-            </div>
-          </div>
-          <div className="table-content">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Ngày</th>
-                  <th>Tiêu đề</th>
-                  <th>Nguồn</th>
-                  <th>Danh mục</th>
-                  <th>Độ quan trọng</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>24/09/2025</td>
-                  <td>Breakthrough in Edge AI Processing</td>
-                  <td>IEEE Spectrum</td>
-                  <td><span className="status-badge status-confirmed">AI/ML</span></td>
-                  <td><span className="status-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }}>Cao</span></td>
-                  <td>
-                    <button className="btn btn-sm btn-primary">
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button className="btn btn-sm btn-success">
-                      <i className="fas fa-check"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>24/09/2025</td>
-                  <td>New RISC-V IoT Chip Architecture</td>
-                  <td>Electronics Weekly</td>
-                  <td><span className="status-badge status-pending">Hardware</span></td>
-                  <td><span className="status-badge status-confirmed">Trung bình</span></td>
-                  <td>
-                    <button className="btn btn-sm btn-primary">
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button className="btn btn-sm btn-success">
-                      <i className="fas fa-check"></i>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* System Status */}
       <div className="table-container" style={{ marginTop: '2rem' }}>

@@ -18,13 +18,32 @@ type IngestNewsItem = {
 
 const ALLOWED_CATEGORIES = ['Communications', 'IoT', 'Embedded', 'AI', 'Hardware'] as const;
 
+async function getSettings() {
+  try {
+    const [apiKeyRow, modelRow] = await Promise.all([
+      (prisma as any).setting.findUnique({ where: { key: 'perplexity.apiKey' } }),
+      (prisma as any).setting.findUnique({ where: { key: 'perplexity.model' } }),
+    ]);
+    return {
+      apiKey: (apiKeyRow?.value || process.env.PERPLEXITY_API_KEY || '').trim(),
+      model: (modelRow?.value || process.env.PERPLEXITY_MODEL || 'pplx-70b-online').trim(),
+    };
+  } catch {
+    // Fallback when settings table does not exist yet
+    return {
+      apiKey: (process.env.PERPLEXITY_API_KEY || '').trim(),
+      model: (process.env.PERPLEXITY_MODEL || 'pplx-70b-online').trim(),
+    };
+  }
+}
+
 async function callPerplexity(prompt: string): Promise<any> {
-  const apiKey = process.env.PERPLEXITY_API_KEY;
+  const { apiKey, model } = await getSettings();
   if (!apiKey) {
     throw new Error('Missing PERPLEXITY_API_KEY');
   }
   // Model fallback order based on current Perplexity docs
-  const preferred = process.env.PERPLEXITY_MODEL;
+  const preferred = model;
   const fallbackModels = [
     ...(preferred ? [preferred] : []),
     'sonar',
@@ -253,6 +272,15 @@ export async function POST(request: NextRequest) {
       ingested++;
       createdItems.push(String(created.id));
     }
+
+    // Persist last refresh timestamp if settings table exists
+    try {
+      await (prisma as any).setting.upsert({
+        where: { key: 'news.lastRefreshAt' },
+        create: { key: 'news.lastRefreshAt', value: new Date().toISOString() },
+        update: { value: new Date().toISOString() },
+      });
+    } catch {}
 
     return NextResponse.json({ success: true, ingested, skipped, ids: createdItems });
   } catch (error: any) {

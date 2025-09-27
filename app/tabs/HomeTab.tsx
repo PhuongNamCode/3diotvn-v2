@@ -11,9 +11,9 @@ export default function HomeTab() {
             </h1>
             <p className="hero-description">🚀 3DIoT - Cộng đồng lập trình nhúng và IoT hàng đầu Việt Nam. Đồng hành cùng bạn trên hành trình khám phá và làm chủ công nghệ tương lai.</p>
             <div className="hero-stats">
-              <div className="stat-item"><span className="stat-number">5K+</span><span className="stat-label">Thành viên</span></div>
-              <div className="stat-item"><span className="stat-number">200+</span><span className="stat-label">Dự án</span></div>
-              <div className="stat-item"><span className="stat-number">50+</span><span className="stat-label">Khóa học</span></div>
+              <div className="stat-item"><span className="stat-number">30K+</span><span className="stat-label">Thành viên</span></div>
+              <div className="stat-item"><span className="stat-number">20+</span><span className="stat-label">Sự kiện</span></div>
+              <div className="stat-item"><span className="stat-number">1200+</span><span className="stat-label">Tài liệu kỹ thuật</span></div>
             </div>
           </div>
           <div className="hero-visual">

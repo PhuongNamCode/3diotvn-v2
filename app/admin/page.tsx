@@ -45,9 +45,9 @@ export default function AdminDashboard() {
     checkAuth();
   }, []);
 
-  // Theme management (use global 'theme' key for consistency) and reliable React handler
+  // Theme management (use admin-specific key to avoid affecting public site)
   useEffect(() => {
-    const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const stored = localStorage.getItem('adminTheme') as 'light' | 'dark' | null;
     const initialTheme = stored === 'dark' ? 'dark' : 'light';
     setTheme(initialTheme);
     document.documentElement.setAttribute('data-theme', initialTheme);
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
         e.preventDefault();
         const next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
-        try { localStorage.setItem('theme', next); } catch {}
+        try { localStorage.setItem('adminTheme', next); } catch {}
         setTheme(next);
       }
       if (e.key === 'Escape') {
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
   const handleToggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    try { localStorage.setItem('theme', next); } catch {}
+    try { localStorage.setItem('adminTheme', next); } catch {}
     setTheme(next);
   };
 

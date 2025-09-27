@@ -457,7 +457,7 @@ export default function Home() {
           <div className="footer-content">
             <div className="footer-section">
               <h4>🚀 3DIoT Community</h4>
-              <p className="footer-intro" style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '1rem' }}>Kết nối đam mê, chia sẻ tri thức và đồng hành cùng bạn trên hành trình khám phá & làm chủ công nghệ IoT.</p>
+              <p className="footer-intro" style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '1rem' }}>Kết nối đam mê, chia sẻ tri thức và đồng hành cùng bạn trên hành trình khám phá & làm chủ công nghệ.</p>
               <div style={{ marginTop: '1rem' }}>
                 <strong style={{ color: 'var(--accent-secondary)' }}>📧 Contact:</strong><br />
                 <a href="mailto:contact.3diot@gmail.com">contact.3diot@gmail.com</a><br />
@@ -465,8 +465,8 @@ export default function Home() {
               </div>
             </div>
             <div className="footer-section"><h4>Học tập</h4><a href="#">Arduino Cơ bản</a><a href="#">ESP32 Advanced</a><a href="#">IoT với Cloud</a><a href="#">Embedded AI</a><a href="#">PCB Design</a><a href="#">Robotics</a></div>
-            <div className="footer-section"><h4>Cộng đồng</h4><a href="#">Discord Server</a><a href="#">Facebook Group</a><a href="#">GitHub Repos</a><a href="#">YouTube Channel</a><a href="#">Telegram Group</a><a href="#">LinkedIn Page</a></div>
-            <div className="footer-section"><h4>Về chúng tôi</h4><a href="#">Câu chuyện</a><a href="#">Team</a><a href="#">Partners</a><a href="#">Blog</a><a href="#">Events</a><a href="#">Press Kit</a></div>
+            <div className="footer-section"><h4>Cộng đồng</h4><a href="#">Facebook Group</a><a href="#">TikTok</a><a href="#">GitHub Repos</a><a href="#">YouTube Channel</a><a href="#">Zalo Group</a><a href="#">LinkedIn Page</a></div>
+            <div className="footer-section"><h4>Về chúng tôi</h4><a href="#">Câu chuyện</a><a href="#">Cộng tác viên</a><a href="#">Partners</a><a href="#">Blog</a><a href="#">Events</a><a href="#">Liên hệ</a></div>
           </div>
           <div className="footer-bottom">
             <div className="social-links">
@@ -474,8 +474,8 @@ export default function Home() {
               <a href="https://www.tiktok.com/@3diot_laptrinhnhungiot" target="_blank" rel="noopener noreferrer" title="TikTok"><i className="fab fa-tiktok"></i></a>
               <a href="https://www.youtube.com/@3DIoT.LapTrinhNhungIoT" target="_blank" rel="noopener noreferrer" title="YouTube"><i className="fab fa-youtube"></i></a>
             </div>
-            <p>© 2025 3DIoT Community. Made with ❤️ for IoT developers in Vietnam.</p>
-            <p>🌟 Proudly supporting the next generation of embedded engineers</p>
+            <p>© 2025 3DIoT Community.</p>
+            <p>🌟 Proudly supporting the next generation of Embedded & IoT engineers</p>
           </div>
         </div>
       </footer>

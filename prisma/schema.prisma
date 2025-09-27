@@ -98,3 +98,11 @@ model Registration {
 }
 
 
+model Setting {
+  key       String   @id
+  value     String?
+  json      Json?
+  updatedAt DateTime @updatedAt
+}
+
+
