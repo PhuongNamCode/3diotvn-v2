@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useNewsManagement } from '@/lib/hooks/useData';
 
 export default function AdminSettingsTab() {
   const [integrationSettings, setIntegrationSettings] = useState({
@@ -23,6 +24,34 @@ export default function AdminSettingsTab() {
   const [showNewsConfig, setShowNewsConfig] = useState(false);
   const [savingGoogle, setSavingGoogle] = useState(false);
   const [savingSmtp, setSavingSmtp] = useState(false);
+  
+  // News management states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingNews, setDeletingNews] = useState<string | null>(null);
+  const [schedulerInfo, setSchedulerInfo] = useState<{
+    frequency: string;
+    lastRefreshAt: string | null;
+    nextUpdate: string;
+    shouldUpdate: boolean;
+  } | null>(null);
+  const [cleanupInfo, setCleanupInfo] = useState<{
+    totalNews: number;
+    oldNewsCount: number;
+    cutoffDate: string;
+    daysOld: number;
+    willKeep: number;
+  } | null>(null);
+  
+  // Use news management hook
+  const { news, loading: newsLoading, error: newsError, pagination, deleteNews, deleteAllNews } = useNewsManagement({
+    page: currentPage,
+    limit: 10,
+    category: selectedCategory === "all" ? undefined : selectedCategory,
+    search: searchTerm || undefined,
+  });
 
   // Load existing settings
   useEffect(() => {
@@ -61,6 +90,43 @@ export default function AdminSettingsTab() {
         }
       } catch {}
     })();
+  }, []);
+
+  // Load scheduler info
+  useEffect(() => {
+    const loadSchedulerInfo = async () => {
+      try {
+        const response = await fetch('/api/news/scheduler');
+        const data = await response.json();
+        if (data.success) {
+          setSchedulerInfo(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to load scheduler info:', error);
+      }
+    };
+    
+    loadSchedulerInfo();
+    // Refresh scheduler info every 30 seconds
+    const interval = setInterval(loadSchedulerInfo, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Load cleanup info
+  useEffect(() => {
+    const loadCleanupInfo = async () => {
+      try {
+        const response = await fetch('/api/news/cleanup');
+        const data = await response.json();
+        if (data.success) {
+          setCleanupInfo(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to load cleanup info:', error);
+      }
+    };
+    
+    loadCleanupInfo();
   }, []);
 
   // Integration section removed - settings are now configured inline under News
@@ -148,6 +214,62 @@ export default function AdminSettingsTab() {
       setTimeout(() => {
         (window as any).showNotification('Đã đăng 3 tin tức lên website!', 'success');
       }, 2000);
+    }
+  };
+
+  // News management functions
+  const handleDeleteNews = async (id: string) => {
+    setDeletingNews(id);
+    try {
+      const result = await deleteNews(id);
+      if (result.success) {
+        (window as any).showNotification(result.message, 'success');
+      } else {
+        (window as any).showNotification(result.error || 'Lỗi xóa tin tức', 'error');
+      }
+    } catch (error) {
+      (window as any).showNotification('Lỗi xóa tin tức', 'error');
+    } finally {
+      setDeletingNews(null);
+    }
+  };
+
+  const handleDeleteAllNews = async () => {
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
+      return;
+    }
+    
+    try {
+      const result = await deleteAllNews();
+      if (result.success) {
+        (window as any).showNotification(result.message, 'success');
+        setShowDeleteConfirm(false);
+      } else {
+        (window as any).showNotification(result.error || 'Lỗi xóa tất cả tin tức', 'error');
+      }
+    } catch (error) {
+      (window as any).showNotification('Lỗi xóa tất cả tin tức', 'error');
+    }
+  };
+
+  const handleCleanupOldNews = async () => {
+    try {
+      const response = await fetch('/api/news/cleanup', { method: 'POST' });
+      const data = await response.json();
+      if (data.success) {
+        (window as any).showNotification(data.message, 'success');
+        // Reload cleanup info
+        const cleanupResponse = await fetch('/api/news/cleanup');
+        const cleanupData = await cleanupResponse.json();
+        if (cleanupData.success) {
+          setCleanupInfo(cleanupData.data);
+        }
+      } else {
+        (window as any).showNotification(data.error || 'Lỗi dọn dẹp tin tức cũ', 'error');
+      }
+    } catch (error) {
+      (window as any).showNotification('Lỗi dọn dẹp tin tức cũ', 'error');
     }
   };
 
@@ -247,149 +369,353 @@ export default function AdminSettingsTab() {
           </div>
         </div>
         <div className="table-content">
-          {(!integrationSettings.perplexityApiKey?.trim() || showNewsConfig) && (
-            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Perplexity API Key</label>
-                  <input
-                    type="password"
-                    value={integrationSettings.perplexityApiKey}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setIntegrationSettings(prev => ({ ...prev, perplexityApiKey: v }));
-                      try { localStorage.setItem('perplexity.apiKey', v || ''); } catch {}
-                    }}
-                    placeholder="PERPLEXITY_API_KEY"
-                  />
+          {/* API Key Configuration Section */}
+          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Cấu hình Perplexity AI</h4>
+              {integrationSettings.perplexityApiKey?.trim() && !showNewsConfig && (
+                <button 
+                  className="btn btn-sm btn-secondary" 
+                  onClick={() => setShowNewsConfig(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <i className="fas fa-edit"></i>
+                  Chỉnh sửa
+                </button>
+              )}
+            </div>
+            
+            {integrationSettings.perplexityApiKey?.trim() && !showNewsConfig ? (
+              // Display current configuration
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Perplexity API Key
+                  </label>
+                  <div style={{ 
+                    padding: '0.75rem', 
+                    backgroundColor: 'var(--surface-variant)', 
+                    borderRadius: '8px', 
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem',
+                    color: 'var(--text-primary)',
+                    wordBreak: 'break-all'
+                  }}>
+                    {integrationSettings.perplexityApiKey.substring(0, 20)}...{integrationSettings.perplexityApiKey.substring(integrationSettings.perplexityApiKey.length - 10)}
+                  </div>
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Perplexity Model</label>
-                  <input
-                    type="text"
-                    value={integrationSettings.perplexityModel}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setIntegrationSettings(prev => ({ ...prev, perplexityModel: v }));
-                      try { localStorage.setItem('perplexity.model', v || ''); } catch {}
-                    }}
-                    placeholder="pplx-70b-online"
-                  />
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Model
+                  </label>
+                  <div style={{ 
+                    padding: '0.75rem', 
+                    backgroundColor: 'var(--surface-variant)', 
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    color: 'var(--text-primary)'
+                  }}>
+                    {integrationSettings.perplexityModel}
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button className="btn btn-primary" onClick={async () => {
-                  try {
-                    await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-                      'perplexity.apiKey': integrationSettings.perplexityApiKey,
-                      'perplexity.model': integrationSettings.perplexityModel,
-                    }) });
-                    (window as any).showNotification('Đã lưu cấu hình Perplexity', 'success');
-                    setShowNewsConfig(false);
-                  } catch {
-                    (window as any).showNotification('Lưu cấu hình thất bại', 'error');
-                  }
+            ) : (
+              // Edit configuration form
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Perplexity API Key</label>
+                    <input
+                      type="password"
+                      value={integrationSettings.perplexityApiKey}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setIntegrationSettings(prev => ({ ...prev, perplexityApiKey: v }));
+                        try { localStorage.setItem('perplexity.apiKey', v || ''); } catch {}
+                      }}
+                      placeholder="PERPLEXITY_API_KEY"
+                    />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Perplexity Model</label>
+                    <input
+                      type="text"
+                      value={integrationSettings.perplexityModel}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setIntegrationSettings(prev => ({ ...prev, perplexityModel: v }));
+                        try { localStorage.setItem('perplexity.model', v || ''); } catch {}
+                      }}
+                      placeholder="pplx-70b-online"
+                    />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button className="btn btn-primary" onClick={async () => {
+                    try {
+                      await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+                        'perplexity.apiKey': integrationSettings.perplexityApiKey,
+                        'perplexity.model': integrationSettings.perplexityModel,
+                      }) });
+                      (window as any).showNotification('Đã lưu cấu hình Perplexity', 'success');
+                      setShowNewsConfig(false);
+                    } catch {
+                      (window as any).showNotification('Lưu cấu hình thất bại', 'error');
+                    }
+                  }}>
+                    <i className="fas fa-save"></i>
+                    Lưu cấu hình
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setShowNewsConfig(false)}>
+                    <i className="fas fa-times"></i>
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Scheduler Status */}
+          <div style={{ padding: '0.75rem 1.5rem', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--surface-variant)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                  Tần suất hiện tại
+                </label>
+                <div style={{ 
+                  padding: '0.5rem', 
+                  backgroundColor: 'var(--surface)', 
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-primary)'
                 }}>
-                  <i className="fas fa-save"></i>
-                  Lưu cấu hình
-                </button>
-                <button className="btn btn-secondary" onClick={() => setShowNewsConfig(false)}>
-                  <i className="fas fa-times"></i>
-                  Đóng
-                </button>
+                  {newsSettings.updateFrequency === 'manual' ? 'Thủ công' :
+                   newsSettings.updateFrequency === 'daily' ? 'Hàng ngày' :
+                   newsSettings.updateFrequency === 'weekly' ? 'Hàng tuần' :
+                   newsSettings.updateFrequency === 'monthly' ? 'Hàng tháng' : 'Không xác định'}
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                  Lần cập nhật gần nhất
+                </label>
+                <div style={{ 
+                  padding: '0.5rem', 
+                  backgroundColor: 'var(--surface)', 
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-primary)'
+                }}>
+                  {newsSettings.lastRefreshAt ? 
+                    new Date(newsSettings.lastRefreshAt).toLocaleString('vi-VN') : 
+                    'Chưa có'
+                  }
+                </div>
               </div>
             </div>
-          )}
-          {newsSettings.lastRefreshAt && (
-            <div style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}>
-              Lần cập nhật gần nhất: {new Date(newsSettings.lastRefreshAt).toLocaleString('vi-VN')}
+            {schedulerInfo && (
+              <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: 'var(--surface)', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-primary)' }}>
+                    Lịch cập nhật tự động
+                  </span>
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    padding: '0.25rem 0.5rem', 
+                    borderRadius: '4px',
+                    backgroundColor: schedulerInfo.shouldUpdate ? 'var(--warning)' : 'var(--success)',
+                    color: 'white'
+                  }}>
+                    {schedulerInfo.shouldUpdate ? 'Cần cập nhật' : 'Đã cập nhật'}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  Cập nhật tiếp theo: {schedulerInfo.nextUpdate ? new Date(schedulerInfo.nextUpdate).toLocaleString('vi-VN') : 'Không xác định'}
+                </div>
+              </div>
+            )}
+            
+            {cleanupInfo && (
+              <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: 'var(--surface)', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-primary)' }}>
+                    Dọn dẹp tin tức cũ
+                  </span>
+                  <button 
+                    className="btn btn-sm btn-warning"
+                    onClick={handleCleanupOldNews}
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <i className="fas fa-broom"></i> Dọn dẹp ngay
+                  </button>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  Tổng tin tức: {cleanupInfo.totalNews} | Tin cũ (&gt;7 ngày): {cleanupInfo.oldNewsCount} | Sẽ giữ lại: {cleanupInfo.willKeep}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Tin tức cũ hơn {cleanupInfo.daysOld} ngày sẽ được xóa tự động khi cập nhật tin mới
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* News Management Controls */}
+          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ margin: 0, minWidth: '200px' }}>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm tin tức..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  style={{ margin: 0 }}
+                />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  style={{ margin: 0 }}
+                >
+                  <option value="all">Tất cả danh mục</option>
+                  <option value="Communications">Communications</option>
+                  <option value="IoT">IoT</option>
+                  <option value="Embedded">Embedded</option>
+                  <option value="AI">AI</option>
+                  <option value="Hardware">Hardware</option>
+                </select>
+              </div>
+              <button
+                className="btn btn-danger"
+                onClick={handleDeleteAllNews}
+                style={{ marginLeft: 'auto' }}
+              >
+                <i className="fas fa-trash"></i>
+                {showDeleteConfirm ? 'Xác nhận xóa tất cả' : 'Xóa tất cả'}
+              </button>
             </div>
+          </div>
+
+          {/* News Table */}
+          {newsLoading ? (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <i className="fas fa-spinner fa-spin"></i>
+              <p>Đang tải tin tức...</p>
+            </div>
+          ) : newsError ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--danger)' }}>
+              <i className="fas fa-exclamation-triangle"></i>
+              <p>Lỗi tải tin tức: {newsError}</p>
+            </div>
+          ) : news.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <i className="fas fa-newspaper"></i>
+              <p>Chưa có tin tức nào</p>
+            </div>
+          ) : (
+            <>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Ngày</th>
+                    <th>Tiêu đề</th>
+                    <th>Nguồn</th>
+                    <th>Danh mục</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {news.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                      <td style={{ maxWidth: '300px', wordWrap: 'break-word' }}>
+                        <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{item.title}</div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                          {item.excerpt?.substring(0, 100)}...
+                        </div>
+                      </td>
+                      <td>{item.source}</td>
+                      <td>
+                        <span className="status-badge status-confirmed">{item.category}</span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button 
+                            className="btn btn-sm btn-primary"
+                            onClick={() => item.link && window.open(item.link, '_blank')}
+                            title="Xem bài gốc"
+                          >
+                            <i className="fas fa-external-link-alt"></i>
+                          </button>
+                          <button 
+                            className="btn btn-sm btn-danger"
+                            onClick={() => {
+                              if (confirm('Bạn có chắc muốn xóa tin tức này?')) {
+                                handleDeleteNews(item.id);
+                              }
+                            }}
+                            disabled={deletingNews === item.id}
+                            title="Xóa tin tức"
+                          >
+                            <i className={`fas ${deletingNews === item.id ? 'fa-spinner fa-spin' : 'fa-trash'}`}></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Pagination */}
+              {pagination && pagination.pages > 1 && (
+                <div style={{ padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ color: 'var(--text-secondary)' }}>
+                    Hiển thị {((currentPage - 1) * 10) + 1} - {Math.min(currentPage * 10, pagination.total)} trong {pagination.total} tin tức
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <i className="fas fa-chevron-left"></i> Trước
+                    </button>
+                    <span style={{ padding: '0.5rem 1rem', color: 'var(--text-secondary)' }}>
+                      Trang {currentPage} / {pagination.pages}
+                    </span>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => setCurrentPage(prev => Math.min(pagination.pages, prev + 1))}
+                      disabled={currentPage === pagination.pages}
+                    >
+                      Sau <i className="fas fa-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Ngày</th>
-                <th>Tiêu đề</th>
-                <th>Nguồn</th>
-                <th>Danh mục</th>
-                <th>Độ quan trọng</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>24/09/2025</td>
-                <td>Breakthrough in Edge AI Processing</td>
-                <td>IEEE Spectrum</td>
-                <td><span className="status-badge status-confirmed">AI/ML</span></td>
-                <td><span className="status-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }}>Cao</span></td>
-                <td>
-                  <button className="btn btn-sm btn-primary">
-                    <i className="fas fa-edit"></i>
-                  </button>
-                  <button className="btn btn-sm btn-success">
-                    <i className="fas fa-check"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>24/09/2025</td>
-                <td>New RISC-V IoT Chip Architecture</td>
-                <td>Electronics Weekly</td>
-                <td><span className="status-badge status-pending">Hardware</span></td>
-                <td><span className="status-badge status-confirmed">Trung bình</span></td>
-                <td>
-                  <button className="btn btn-sm btn-primary">
-                    <i className="fas fa-edit"></i>
-                  </button>
-                  <button className="btn btn-sm btn-success">
-                    <i className="fas fa-check"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
 
-      {/* System Status */}
-      <div className="table-container" style={{ marginTop: '2rem' }}>
-        <div className="table-header">
-          <h3 className="table-title">Trạng thái hệ thống</h3>
-        </div>
-        <div className="table-content">
-          <div className="system-status">
-            <div className="status-item">
-              <div className="status-indicator online"></div>
-              <div className="status-info">
-                <h4>Database</h4>
-                <p>Hoạt động bình thường</p>
-              </div>
-            </div>
-            <div className="status-item">
-              <div className="status-indicator online"></div>
-              <div className="status-info">
-                <h4>API Services</h4>
-                <p>Phản hồi nhanh</p>
-              </div>
-            </div>
-            <div className="status-item">
-              <div className="status-indicator warning"></div>
-              <div className="status-info">
-                <h4>Email Service</h4>
-                <p>Cần cấu hình SMTP</p>
-              </div>
-            </div>
-            <div className="status-item">
-              <div className="status-indicator offline"></div>
-              <div className="status-info">
-                <h4>News API</h4>
-                <p>Chưa được cấu hình</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

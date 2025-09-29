@@ -18,6 +18,20 @@ type IngestNewsItem = {
 
 const ALLOWED_CATEGORIES = ['Communications', 'IoT', 'Embedded', 'AI', 'Hardware'] as const;
 
+// Helper function to detect Vietnamese sources
+function isVietnameseSource(source: string): boolean {
+  const vietnamesePatterns = [
+    'vnexpress', 'genk', 'tinhte', 'ictnews', 'tuoitre', 'thanhnien', 
+    'vietnamplus', 'vtv', 'cafebiz', 'cafef', 'chinhphu', 'nhandan',
+    'sansukien', 'vietnamexhibition', 'topdev', 'tapchicongthuong',
+    'dantri', 'vietnamnet', 'zing', 'kenh14', 'soha', 'tienphong',
+    'laodong', 'nguoiduatin', 'vietnam', 'vn', 'viet'
+  ];
+  
+  const sourceLower = source.toLowerCase();
+  return vietnamesePatterns.some(pattern => sourceLower.includes(pattern));
+}
+
 async function getSettings() {
   try {
     const [apiKeyRow, modelRow] = await Promise.all([
@@ -85,15 +99,14 @@ async function callPerplexity(prompt: string): Promise<any> {
 
 async function callPerplexityForCategory(category: typeof ALLOWED_CATEGORIES[number]): Promise<IngestNewsItem[]> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const sources = [
-    // Global/research/manufacturer
-    'IEEE Spectrum', 'ACM TechNews', 'Electronics Weekly', 'Hackaday', 'SemiAnalysis',
-    'ARM', 'RISC-V International', 'Espressif', 'Raspberry Pi', 'NVIDIA Jetson',
-    'Edge Impulse', 'Qualcomm', 'NXP', 'STMicroelectronics', 'Texas Instruments', 'Analog Devices',
-    // Vietnam reputable tech/business outlets
-    'VnExpress Số Hóa', 'VnExpress', 'Tuổi Trẻ', 'Thanh Niên', 'VietnamPlus', 'VTV Digital',
-    'Vietcetera', 'GenK', 'Tinhte', 'ICTNews', 'CafeBiz', 'CafeF'
-  ];
+  // Optimized sources list - top 20 most relevant per category
+  const sources: Record<string, string[]> = {
+    Communications: ['Vodafone', 'Telefonica', 'Verizon', 'AT&T', 'Ericsson', 'Nokia', 'Cisco', '3GPP', 'ITU', 'GSMA', 'Light Reading', 'Fierce Telecom', 'RCR Wireless', 'Mobile World Live', 'Network World', 'IEEE Spectrum', 'Ars Technica', 'TechCrunch', 'Wired', 'MIT Technology Review', 'VnExpress', 'GenK', 'Tinhte', 'ICTNews'],
+    IoT: ['AWS IoT', 'Microsoft Azure IoT', 'Google Cloud IoT', 'Siemens', 'Bosch', 'Honeywell', 'Espressif', 'Arduino', 'Particle', 'Nordic Semiconductor', 'LoRa Alliance', 'Zigbee Alliance', 'Thread Group', 'Edge Impulse', 'Raspberry Pi', 'IEEE Spectrum', 'Hackaday', 'Electronics Weekly', 'Ars Technica', 'TechCrunch', 'VnExpress', 'GenK', 'Tinhte', 'ICTNews'],
+    Embedded: ['Intel', 'ARM', 'NVIDIA', 'Qualcomm', 'AMD', 'STMicroelectronics', 'Texas Instruments', 'Microchip', 'Silicon Labs', 'NXP', 'Cypress', 'Atmel', 'Digi-Key', 'Mouser Electronics', 'Arrow Electronics', 'IEEE Spectrum', 'Hackaday', 'Electronics Weekly', 'EDN Network', 'EE Times', 'VnExpress', 'GenK', 'Tinhte', 'ICTNews'],
+    AI: ['NVIDIA', 'Intel', 'AMD', 'Qualcomm', 'Google', 'Apple', 'Amazon', 'TensorFlow', 'PyTorch', 'MIT', 'Stanford', 'Berkeley', 'Google AI', 'Microsoft Research', 'Edge Impulse', 'IEEE Spectrum', 'Ars Technica', 'TechCrunch', 'Wired', 'MIT Technology Review', 'VnExpress', 'GenK', 'Tinhte', 'ICTNews'],
+    Hardware: ['Intel', 'AMD', 'ARM', 'NVIDIA', 'Qualcomm', 'Broadcom', 'MediaTek', 'STMicroelectronics', 'Texas Instruments', 'NXP', 'RISC-V International', 'Open Compute Project', 'PCI-SIG', 'USB-IF', 'IEEE Spectrum', 'Hackaday', 'Electronics Weekly', 'EDN Network', 'EE Times', 'Ars Technica', 'VnExpress', 'GenK', 'Tinhte', 'ICTNews']
+  };
   const taxHints: Record<string, string[]> = {
     Communications: ['5G', '6G', 'Wi‑Fi', 'Bluetooth', 'LPWAN', 'LoRa', 'NB‑IoT', 'satellite IoT', 'edge networking'],
     IoT: ['IoT platform', 'device management', 'sensor networks', 'smart home', 'industrial IoT', 'IIoT'],
@@ -102,18 +115,24 @@ async function callPerplexityForCategory(category: typeof ALLOWED_CATEGORIES[num
     Hardware: ['SoC', 'silicon', 'RISC‑V', 'ARM', 'chip', 'board', 'reference design']
   };
 
-  const prompt = `Bạn là biên tập viên kỹ thuật, viết tiếng Việt tự nhiên. Hãy thu thập tin tức chất lượng cao thuộc danh mục "${category}" trong phạm vi 7 ngày gần đây (kể từ ${since}).
-Yêu cầu nghiêm ngặt:
-- Chỉ lấy từ nguồn uy tín quốc tế VÀ Việt Nam (ví dụ: ${sources.join(', ')}), ưu tiên press release/bài chính thức/sự kiện lớn.
-- Mỗi mục phải có liên kết (link) CHÍNH XÁC của bài viết gốc; KHÔNG nhận tóm tắt không có link.
-- Tất cả nội dung (title, content, excerpt) đều phải bằng tiếng Việt.
-- Excerpt phải dài khoảng 50–60 từ (không ngắn hơn 45, không dài hơn 70).
-- Phải thuộc danh mục chính xác: category = "${category}" và thêm tags phù hợp (${taxHints[category].join(', ')}).
-- publishedAt (ISO) bắt buộc nằm trong 7 ngày gần đây.
- - Trường source PHẢI là tên nhà xuất bản/website (ví dụ: "VnExpress", "IEEE Spectrum"), KHÔNG được là URL. URL chỉ để ở trường link.
-Định dạng trả về: CHỈ một mảng JSON các object có các trường:
-title, content (tóm tắt 4–6 câu), excerpt (50–60 từ), author, source, category, importance (high|medium|low), publishedAt (ISO), image, tags (mảng chuỗi), link (URL gốc, đầy đủ).
-Không thêm lời giải thích, không kèm markdown, không bọc trong code block.`;
+  const prompt = `Find recent ${category} tech news (last 7 days, since ${since}). 
+
+REQUIREMENTS:
+- Sources: ${sources[category].join(', ')}
+- RATIO: 60% international sources, 40% Vietnam sources
+- Content in Vietnamese
+- Excerpt: 80-100 words (66-100)
+- Category: "${category}" with tags: ${taxHints[category].join(', ')}
+- Published within last 7 days
+- Source = publisher name
+
+PRIORITY: International sources first, then Vietnam sources
+Include both international and Vietnamese sources as needed
+
+FORMAT: JSON array with fields:
+title, content (4-6 sentences), excerpt (80-100 words), author, source, category, importance (high|medium|low), publishedAt (ISO), image, tags (array), link (URL).
+
+No explanations, no markdown.`;
 
   const data = await callPerplexity(prompt);
   const content: string | undefined = data?.choices?.[0]?.message?.content;
@@ -179,6 +198,12 @@ export async function POST(request: NextRequest) {
     let ingested = 0;
     let skipped = 0;
     const createdItems: string[] = [];
+    
+    // Track source ratio for 60/40 balance
+    let internationalCount = 0;
+    let vietnamCount = 0;
+    const maxInternational = Math.ceil(10 * 0.6); // 60% of 10 items
+    const maxVietnam = Math.floor(10 * 0.4); // 40% of 10 items
 
     for (const item of incoming) {
       const title = item.title?.trim();
@@ -202,17 +227,11 @@ export async function POST(request: NextRequest) {
     if (!looksVietnamese) { skipped++; continue; }
       const words = baseExcerpt.split(' ');
       let excerpt = baseExcerpt;
-      if (words.length < 45) {
-        excerpt = baseExcerpt; // keep as-is if too short; we already requested 50–60 via prompt
-      } else if (words.length > 70) {
-        excerpt = words.slice(0, 60).join(' ');
+      if (words.length < 66) {
+        excerpt = baseExcerpt; // keep as-is if too short; we already requested 80-100 via prompt
+      } else if (words.length > 100) {
+        excerpt = words.slice(0, 100).join(' ');
       }
-
-      // Basic dedupe: by link if present, else by lowercased title
-      const existing = await prisma.news.findFirst({
-        where: linkVal ? { link: linkVal } : { title }
-      });
-      if (existing) { skipped++; continue; }
 
       // Derive clean source name from link if source is missing or looks like URL
       let sourceClean = (item.source || '').trim();
@@ -223,36 +242,181 @@ export async function POST(request: NextRequest) {
           const host = u.hostname.replace(/^www\./, '');
           // Map common hosts to brand names
           const hostMap: Record<string, string> = {
-            'vnexpress.net': 'VnExpress',
-            'sohoa.vnexpress.net': 'VnExpress Số Hóa',
-            'tuoitre.vn': 'Tuổi Trẻ',
-            'thanhnien.vn': 'Thanh Niên',
-            'vietnamplus.vn': 'VietnamPlus',
-            'vtv.vn': 'VTV',
-            'genk.vn': 'GenK',
-            'tinhte.vn': 'Tinhte',
-            'ictnews.vietnamnet.vn': 'ICTNews',
-            'cafebiz.vn': 'CafeBiz',
-            'cafef.vn': 'CafeF',
+            // Global tech magazines & research
             'spectrum.ieee.org': 'IEEE Spectrum',
             'acm.org': 'ACM',
             'hackaday.com': 'Hackaday',
             'electronicsweekly.com': 'Electronics Weekly',
             'semianalysis.com': 'SemiAnalysis',
+            'arstechnica.com': 'Ars Technica',
+            'theverge.com': 'The Verge',
+            'techcrunch.com': 'TechCrunch',
+            'wired.com': 'Wired',
+            'technologyreview.com': 'MIT Technology Review',
+            'nature.com': 'Nature Electronics',
+            'edn.com': 'EDN Network',
+            'eetimes.com': 'EE Times',
+            'electronicdesign.com': 'Electronic Design',
+            'designnews.com': 'Design News',
+            'fierceelectronics.com': 'Fierce Electronics',
+            
+            // Major chip/hardware manufacturers
+            'intel.com': 'Intel',
+            'amd.com': 'AMD',
             'arm.com': 'ARM',
-            'riscv.org': 'RISC-V International',
-            'espressif.com': 'Espressif',
-            'raspberrypi.com': 'Raspberry Pi',
-            'developer.nvidia.com': 'NVIDIA',
-            'edgeimpulse.com': 'Edge Impulse',
-            'nxp.com': 'NXP',
+            'nvidia.com': 'NVIDIA',
+            'qualcomm.com': 'Qualcomm',
+            'broadcom.com': 'Broadcom',
+            'mediatek.com': 'MediaTek',
+            'infineon.com': 'Infineon',
+            'microchip.com': 'Microchip',
+            'silabs.com': 'Silicon Labs',
             'st.com': 'STMicroelectronics',
             'ti.com': 'Texas Instruments',
-            'analog.com': 'Analog Devices'
+            'analog.com': 'Analog Devices',
+            'nxp.com': 'NXP',
+            'renesas.com': 'Renesas',
+            'cypress.com': 'Cypress',
+            'atmel.com': 'Atmel',
+            'nordicsemi.com': 'Nordic Semiconductor',
+            'semtech.com': 'Semtech',
+            'dialog-semiconductor.com': 'Dialog Semiconductor',
+            'onsemi.com': 'ON Semiconductor',
+            'maximintegrated.com': 'Maxim Integrated',
+            
+            // IoT/Embedded companies
+            'espressif.com': 'Espressif',
+            'arduino.cc': 'Arduino',
+            'particle.io': 'Particle',
+            'raspberrypi.com': 'Raspberry Pi',
+            'developer.nvidia.com': 'NVIDIA Jetson',
+            'edgeimpulse.com': 'Edge Impulse',
+            'aws.amazon.com': 'AWS IoT',
+            'azure.microsoft.com': 'Microsoft Azure IoT',
+            'cloud.google.com': 'Google Cloud IoT',
+            'ibm.com': 'IBM Watson IoT',
+            'siemens.com': 'Siemens',
+            'bosch.com': 'Bosch',
+            'honeywell.com': 'Honeywell',
+            'se.com': 'Schneider Electric',
+            'abb.com': 'ABB',
+            'rockwellautomation.com': 'Rockwell Automation',
+            
+            // Communications & Telecom
+            'vodafone.com': 'Vodafone',
+            'telefonica.com': 'Telefonica',
+            'telekom.com': 'Deutsche Telekom',
+            'orange.com': 'Orange',
+            't-mobile.com': 'T-Mobile',
+            'verizon.com': 'Verizon',
+            'att.com': 'AT&T',
+            'sprint.com': 'Sprint',
+            'softbank.com': 'SoftBank',
+            'ntt.com': 'NTT',
+            'sktelecom.com': 'SK Telecom',
+            'kt.com': 'KT Corporation',
+            'lguplus.co.kr': 'LG Uplus',
+            'ericsson.com': 'Ericsson',
+            'nokia.com': 'Nokia',
+            'huawei.com': 'Huawei',
+            'zte.com.cn': 'ZTE',
+            'cisco.com': 'Cisco',
+            'juniper.net': 'Juniper Networks',
+            'ciena.com': 'Ciena',
+            '3gpp.org': '3GPP',
+            'itu.int': 'ITU',
+            'etsi.org': 'ETSI',
+            'gsma.com': 'GSMA',
+            '5gamericas.org': '5G Americas',
+            '5g-acia.org': '5G-ACIA',
+            'lora-alliance.org': 'LoRa Alliance',
+            'wi-fi.org': 'Wi-Fi Alliance',
+            'bluetooth.com': 'Bluetooth SIG',
+            'zigbee.org': 'Zigbee Alliance',
+            'threadgroup.org': 'Thread Group',
+            
+            // Distributors & Supply Chain
+            'digikey.com': 'Digi-Key',
+            'mouser.com': 'Mouser Electronics',
+            'arrow.com': 'Arrow Electronics',
+            'avnet.com': 'Avnet',
+            'farnell.com': 'Farnell',
+            'rs-online.com': 'RS Components',
+            'newark.com': 'Newark',
+            'futureelectronics.com': 'Future Electronics',
+            'tti.com': 'TTI',
+            'wpg.com': 'WPG Holdings',
+            
+            // Research Institutions
+            'mit.edu': 'MIT',
+            'stanford.edu': 'Stanford',
+            'berkeley.edu': 'Berkeley',
+            'cmu.edu': 'Carnegie Mellon',
+            'gatech.edu': 'Georgia Tech',
+            'caltech.edu': 'Caltech',
+            'ox.ac.uk': 'Oxford',
+            'cam.ac.uk': 'Cambridge',
+            'imperial.ac.uk': 'Imperial College',
+            'ethz.ch': 'ETH Zurich',
+            'tudelft.nl': 'TU Delft',
+            'kaist.ac.kr': 'KAIST',
+            'tsinghua.edu.cn': 'Tsinghua',
+            'pku.edu.cn': 'Peking University',
+            'u-tokyo.ac.jp': 'Tokyo University',
+            
+            // Industry Organizations
+            'riscv.org': 'RISC-V International',
+            'opencompute.org': 'Open Compute Project',
+            'linuxfoundation.org': 'Linux Foundation',
+            'eclipse.org': 'Eclipse Foundation',
+            'apache.org': 'Apache Software Foundation',
+            'mozilla.org': 'Mozilla Foundation',
+            'oshwa.org': 'Open Source Hardware Association',
+            'openhardwaregroup.org': 'Open Hardware Group',
+            
+            // Specialized Tech Publications
+            'lightreading.com': 'Light Reading',
+            'fiercetelecom.com': 'Fierce Telecom',
+            'rcrwireless.com': 'RCR Wireless',
+            'mobileworldlive.com': 'Mobile World Live',
+            'telecoms.com': 'Telecoms.com',
+            'capacitymedia.com': 'Capacity Media',
+            'totaltele.com': 'Total Telecom',
+            'commsbusiness.co.uk': 'Comms Business',
+            'networkworld.com': 'Network World',
+            'computerworld.com': 'Computerworld',
+            'informationweek.com': 'InformationWeek',
+            'zdnet.com': 'ZDNet',
+            'bizjournals.com': 'Silicon Valley Business Journal',
+            'venturebeat.com': 'VentureBeat',
+            'geekwire.com': 'GeekWire',
+            'news.ycombinator.com': 'Hacker News',
+            'reddit.com': 'Reddit'
           };
           sourceClean = hostMap[host] || host;
         } catch {}
       }
+
+      // No filtering - let Perplexity AI decide the sources based on prompt
+      
+      // Check if source is Vietnam or International based on common patterns
+      const isVietnamSource = isVietnameseSource(sourceClean);
+      
+      // Apply 60/40 ratio limit
+      if (isVietnamSource && vietnamCount >= maxVietnam) {
+        skipped++;
+        continue;
+      }
+      if (!isVietnamSource && internationalCount >= maxInternational) {
+        skipped++;
+        continue;
+      }
+
+      // Basic dedupe: by link if present, else by lowercased title
+      const existing = await prisma.news.findFirst({
+        where: linkVal ? { link: linkVal } : { title }
+      });
+      if (existing) { skipped++; continue; }
 
       const data: Record<string, any> = {
         title,
@@ -271,6 +435,13 @@ export async function POST(request: NextRequest) {
       const created = await prisma.news.create({ data: data as any });
       ingested++;
       createdItems.push(String(created.id));
+      
+      // Update counters
+      if (isVietnamSource) {
+        vietnamCount++;
+      } else {
+        internationalCount++;
+      }
     }
 
     // Persist last refresh timestamp if settings table exists

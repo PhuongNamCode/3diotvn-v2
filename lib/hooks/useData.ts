@@ -40,6 +40,49 @@ export interface News {
   updatedAt?: string;
 }
 
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  author: string;
+  category: string;
+  tags?: string[];
+  featured: boolean;
+  published: boolean;
+  publishedAt?: string | null;
+  image?: string | null;
+  views: number;
+  likes: number;
+  readingTime: number;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  comments?: BlogComment[];
+  _count?: {
+    comments: number;
+  };
+}
+
+export interface BlogComment {
+  id: string;
+  postId: string;
+  author: string;
+  email: string;
+  content: string;
+  approved: boolean;
+  parentId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  post?: {
+    title: string;
+    slug: string;
+  };
+  replies?: BlogComment[];
+}
+
 export interface Contact {
   id: string;
   name: string;
@@ -632,4 +675,231 @@ export function useRegistrations() {
     deleteRegistration,
     refetch: fetchRegistrations
   };
+}
+
+// News Management Hooks
+export function useNewsManagement(params?: {
+  page?: number;
+  limit?: number;
+  category?: string;
+  search?: string;
+}) {
+  const [news, setNews] = useState<News[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; pages: number } | null>(null);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        const searchParams = new URLSearchParams();
+        if (params?.page) searchParams.set('page', params.page.toString());
+        if (params?.limit) searchParams.set('limit', params.limit.toString());
+        if (params?.category) searchParams.set('category', params.category);
+        if (params?.search) searchParams.set('search', params.search);
+
+        const response = await fetch(`/api/news?${searchParams.toString()}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setNews(data.data);
+          setPagination(data.pagination);
+        } else {
+          setError(data.error || 'Failed to fetch news');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, [params?.page, params?.limit, params?.category, params?.search]);
+
+  const deleteNews = async (id: string) => {
+    try {
+      const response = await fetch(`/api/news?id=${id}`, { method: 'DELETE' });
+      const data = await response.json();
+      
+      if (data.success) {
+        setNews(prev => prev.filter(item => item.id !== id));
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  };
+
+  const deleteAllNews = async () => {
+    try {
+      const response = await fetch('/api/news?deleteAll=true', { method: 'DELETE' });
+      const data = await response.json();
+      
+      if (data.success) {
+        setNews([]);
+        return { success: true, message: data.message, deletedCount: data.deletedCount };
+      } else {
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  };
+
+  return { news, loading, error, pagination, deleteNews, deleteAllNews };
+}
+
+// Blog Hooks
+export function useBlogPosts(params?: {
+  page?: number;
+  limit?: number;
+  category?: string;
+  tag?: string;
+  search?: string;
+  featured?: boolean;
+  published?: boolean;
+}) {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<{
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const searchParams = new URLSearchParams();
+        
+        if (params?.page) searchParams.set('page', params.page.toString());
+        if (params?.limit) searchParams.set('limit', params.limit.toString());
+        if (params?.category) searchParams.set('category', params.category);
+        if (params?.tag) searchParams.set('tag', params.tag);
+        if (params?.search) searchParams.set('search', params.search);
+        if (params?.featured) searchParams.set('featured', 'true');
+        if (params?.published !== undefined) searchParams.set('published', params.published.toString());
+
+        const response = await fetch(`/api/blog?${searchParams}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          setPosts(result.data);
+          setPagination(result.pagination);
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch blog posts');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [params?.page, params?.limit, params?.category, params?.tag, params?.search, params?.featured, params?.published]);
+
+  return { posts, loading, error, pagination };
+}
+
+export function useBlogPost(slug: string) {
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/blog/${slug}?increment=true`);
+        const result = await response.json();
+        
+        if (result.success) {
+          setPost(result.data);
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch blog post');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (slug) {
+      fetchPost();
+    }
+  }, [slug]);
+
+  return { post, loading, error };
+}
+
+export function useBlogComments(postId?: string) {
+  const [comments, setComments] = useState<BlogComment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchComments = async () => {
+    try {
+      setLoading(true);
+      const searchParams = new URLSearchParams();
+      if (postId) searchParams.set('postId', postId);
+      
+      const response = await fetch(`/api/blog/comments?${searchParams}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setComments(result.data);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch comments');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createComment = async (commentData: {
+    postId: string;
+    author: string;
+    email: string;
+    content: string;
+    parentId?: string;
+  }) => {
+    try {
+      const response = await fetch('/api/blog/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commentData)
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh comments
+        await fetchComments();
+        return result.data;
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create comment');
+      throw err;
+    }
+  };
+
+  useEffect(() => {
+    if (postId) {
+      fetchComments();
+    }
+  }, [postId]);
+
+  return { comments, loading, error, createComment, fetchComments };
 }

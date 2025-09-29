@@ -98,6 +98,46 @@ model Registration {
 }
 
 
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   // Markdown content
+  excerpt     String
+  author      String
+  category    String
+  tags        Json?    // Array of strings
+  featured    Boolean  @default(false)
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  image       String?
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  readingTime Int      @default(5) // minutes
+  seoTitle    String?
+  seoDescription String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  comments    BlogComment[]
+}
+
+model BlogComment {
+  id        String   @id @default(cuid())
+  postId    String
+  author    String
+  email     String
+  content   String
+  approved  Boolean  @default(false)
+  parentId  String?  // For nested comments
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent    BlogComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   BlogComment[] @relation("CommentReplies")
+}
+
 model Setting {
   key       String   @id
   value     String?

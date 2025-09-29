@@ -77,42 +77,140 @@ export default function NewsTab() {
 
   return (
     <div className="container">
-      <div className="news-header">
-        <h2>📰 Bản tin công nghệ tuần {weekRange}</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Cập nhật những tin tức mới nhất từ các trang báo uy tín</p>
-      </div>
+      {/* Hero Banner Section */}
+      <section className="news-hero">
+        <div className="news-hero-content">
+          <div className="news-hero-text">
+            <h1>
+              <span style={{ color: 'var(--accent)' }}>Tin tức</span> công nghệ
+            </h1>
+            <p className="news-hero-description">
+              Cập nhật những tin tức mới nhất từ các trang báo uy tín về IoT, Embedded, AI và công nghệ. 
+              Khám phá xu hướng mới và cơ hội phát triển trong lĩnh vực công nghệ.
+            </p>
+          </div>
+          <div className="news-hero-visual">
+            <div className="news-categories">
+              <div className="category-card">
+                <i className="fas fa-wifi"></i>
+                <h4>IoT</h4>
+                <p>Internet of Things</p>
+              </div>
+              <div className="category-card">
+                <i className="fas fa-microchip"></i>
+                <h4>Embedded</h4>
+                <p>Hệ thống nhúng</p>
+              </div>
+              <div className="category-card">
+                <i className="fas fa-robot"></i>
+                <h4>AI</h4>
+                <p>Trí tuệ nhân tạo</p>
+              </div>
+              <div className="category-card">
+                <i className="fas fa-satellite-dish"></i>
+                <h4>Communications</h4>
+                <p>Viễn thông</p>
+              </div>
+              <div className="category-card">
+                <i className="fas fa-cogs"></i>
+                <h4>Hardware</h4>
+                <p>Phần cứng</p>
+              </div>
+              <div className="category-card">
+                <i className="fas fa-chart-line"></i>
+                <h4>Trends</h4>
+                <p>Xu hướng</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <div className="news-filters">
-        {(["all", "Communications", "IoT", "Embedded", "AI", "Hardware"])?.map(key => (
-          <button key={key} className={`filter-btn ${filter === key ? 'active' : ''}`} onClick={() => setFilter(key)}>
-            {key === 'all' ? 'Tất cả' : String(key).toUpperCase()}
-          </button>
-        ))}
+      {/* News Filter Section */}
+      <div className="news-filter-section">
+        <div className="filter-tabs">
+          {(["all", "Communications", "IoT", "Embedded", "AI", "Hardware"])?.map(key => (
+            <button 
+              key={key} 
+              className={`filter-tab ${filter === key ? 'active' : ''}`} 
+              onClick={() => setFilter(key)}
+            >
+              <i className={`fas ${
+                key === 'all' ? 'fa-globe' :
+                key === 'Communications' ? 'fa-satellite-dish' :
+                key === 'IoT' ? 'fa-wifi' :
+                key === 'Embedded' ? 'fa-microchip' :
+                key === 'AI' ? 'fa-robot' :
+                key === 'Hardware' ? 'fa-cogs' : 'fa-newspaper'
+              }`}></i>
+              {key === 'all' ? 'Tất cả' : String(key).toUpperCase()}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading && (
-        <div className="news-grid"><div className="loading"><i className="fas fa-spinner"></i><p>Đang tải tin tức mới nhất...</p></div></div>
+        <div className="news-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div className="news-card" key={`sk-${i}`} aria-hidden="true">
+              <div className="news-content">
+                <div className="skeleton h-4 w-1/3" style={{ height: 16, width: '33%', borderRadius: 6, marginBottom: 12 }} />
+                <div className="skeleton h-6 w-3/4" style={{ height: 24, width: '75%', borderRadius: 8, marginBottom: 8 }} />
+                <div className="skeleton h-4 w-1/2" style={{ height: 16, width: '50%', borderRadius: 6, marginBottom: 12 }} />
+                <div className="skeleton h-16 w-full" style={{ height: 64, width: '100%', marginTop: 12, borderRadius: 10 }} />
+                <div className="skeleton h-10 w-1/4" style={{ height: 40, width: '25%', marginTop: 12, borderRadius: 8, marginLeft: 'auto' }} />
+              </div>
+            </div>
+          ))}
+        </div>
       )}
       {error && (
-        <div className="news-grid"><p style={{ color: "var(--danger)" }}>{error}</p></div>
+        <div className="news-grid">
+          <div className="news-error">
+            <i className="fas fa-exclamation-triangle"></i>
+            <h3>Lỗi tải tin tức</h3>
+            <p>{error}</p>
+          </div>
+        </div>
       )}
       {!loading && !error && (
         <div className="news-grid">
           {filtered.map((news, idx) => (
             <div className="news-card" data-category={news.category} key={idx}>
-              <div className="news-card-header">
-                <span className="news-meta">{formatDate(news.date)}</span>
-                <span className="news-badge">{news.source}</span>
-              </div>
-              <div className="news-card-body">
-                <a href={news.link} target="_blank" className="news-title" rel="noreferrer">{news.title}</a>
-                <div className="news-summary">{news.summary}</div>
-              </div>
-              <div className="news-card-footer">
-                <span className="news-meta">Chủ đề: {news.category}</span>
-                <a href={news.link} target="_blank" className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.85rem" }} rel="noreferrer">
-                  <i className="fas fa-external-link-alt"></i>
-                </a>
+              <div className="news-content">
+                <div className="news-header">
+                  <div className="news-badges">
+                    <span className="news-category-badge">
+                      {news.category}
+                    </span>
+                    <span className="news-source-badge">
+                      {news.source}
+                    </span>
+                  </div>
+                  <h3 className="news-title">
+                    <a href={news.link} target="_blank" rel="noreferrer">
+                      {news.title}
+                    </a>
+                  </h3>
+                  <div className="news-date">
+                    <i className="fas fa-calendar"></i>
+                    {formatDate(news.date)}
+                  </div>
+                </div>
+                
+                <p className="news-summary">{news.summary}</p>
+                
+                <div className="news-actions">
+                  <a 
+                    href={news.link} 
+                    target="_blank" 
+                    className="btn-read-more" 
+                    rel="noreferrer"
+                  >
+                    <i className="fas fa-external-link-alt"></i>
+                    Đọc thêm
+                  </a>
+                </div>
               </div>
             </div>
           ))}

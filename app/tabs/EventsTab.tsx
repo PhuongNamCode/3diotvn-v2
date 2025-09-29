@@ -154,7 +154,58 @@ export default function EventsTab() {
 
   return (
     <div className="container">
-      <div className="events-banner"><h2>🎯 Sự kiện sắp diễn ra</h2><p>Tham gia các workshop, seminar và hackathon cùng cộng đồng 3DIoT</p></div>
+      {/* Hero Banner Section */}
+      <section className="events-hero">
+        <div className="events-hero-content">
+          <div className="events-hero-text">
+            <h1>
+             <span style={{ color: 'var(--accent)' }}>Sự kiện</span>
+            </h1>
+            <p className="events-hero-description">
+              Tham gia các workshop, seminar và hackathon cùng cộng đồng 3DIoT. 
+              Khám phá công nghệ mới, kết nối với chuyên gia và phát triển kỹ năng của bạn.
+            </p>
+            <div className="events-hero-stats">
+              <div className="stat-item">
+                <span className="stat-number">{items?.filter(e => new Date(e.date) > now).length || 0}</span>
+                <span className="stat-label">Sự kiện sắp tới</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{items?.filter(e => e.status === 'past').length || 0}</span>
+                <span className="stat-label">Đã hoàn thành</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{items?.reduce((sum, e) => sum + e.registered, 0) || 0}</span>
+                <span className="stat-label">Lượt đăng ký</span>
+              </div>
+            </div>
+          </div>
+          <div className="events-hero-visual">
+            <div className="event-categories">
+              <div className="category-card">
+                <i className="fas fa-code"></i>
+                <h4>Workshop</h4>
+                <p>Học thực hành</p>
+              </div>
+              <div className="category-card">
+                <i className="fas fa-users"></i>
+                <h4>Seminar</h4>
+                <p>Chia sẻ kinh nghiệm</p>
+              </div>
+              <div className="category-card">
+                <i className="fas fa-trophy"></i>
+                <h4>Hackathon</h4>
+                <p>Thi đấu sáng tạo</p>
+              </div>
+              <div className="category-card">
+                <i className="fas fa-microchip"></i>
+                <h4>Tech Talk</h4>
+                <p>Xu hướng công nghệ</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {loading && (
         <div className="events-grid">
@@ -177,63 +228,113 @@ export default function EventsTab() {
       )}
 
       {!loading && !error && (
-        <div className="events-grid">
-          {(items || []).map(event => {
-            const eventDate = new Date(event.date);
-            const isUpcoming = eventDate > now;
-            const progress = Math.min(
-              (event.status === 'past' && event.actualParticipants !== undefined 
-                ? event.actualParticipants 
-                : event.registered) / event.capacity * 100, 
-              100
-            );
-            return (
-              <div className="event-card" key={event.id}>
-                <div className="event-image">
-                  {event.image ? (
-                    <Image src={event.image} alt={event.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" style={{ objectFit: 'cover' }} />
-                  ) : (
-                    <i className="fas fa-calendar-alt"></i>
-                  )}
-                  <div className={`event-status ${isUpcoming ? "upcoming" : "past"}`}>{isUpcoming ? "Sắp diễn ra" : "Đã diễn ra"}</div>
-                </div>
-                <div className="event-content">
-                  <h3 className="event-title">{event.title}</h3>
-                  <div className="event-date"><i className="fas fa-calendar"></i>{formatDate(event.date)} | {event.time}</div>
-                  <div className="event-location"><i className="fas fa-map-marker-alt"></i>{event.location}</div>
-                  <p className="event-description">{event.description}</p>
-                  <div 
-                    className="event-participants"
-                    data-type={event.status === 'past' && event.actualParticipants !== undefined ? 'actual' : 'registration'}
-                  >
-                    <div className="participant-info">
-                      <span className="participant-label">
-                        {event.status === 'past' && event.actualParticipants !== undefined 
-                          ? 'Đã tham gia:' 
-                          : 'Đã đăng ký:'
-                        }
-                      </span>
-                      <span className="participant-count">
-                        {event.status === 'past' && event.actualParticipants !== undefined 
-                          ? `${event.actualParticipants}/${event.capacity}` 
-                          : `${event.registered}/${event.capacity}`
-                        }
-                      </span>
+        <>
+          {/* Events Filter Section */}
+          <div className="events-filter-section">
+            <div className="filter-tabs">
+              <button className="filter-tab active">
+                <i className="fas fa-calendar-alt"></i>
+                Tất cả sự kiện
+              </button>
+              <button className="filter-tab">
+                <i className="fas fa-clock"></i>
+                Sắp diễn ra
+              </button>
+              <button className="filter-tab">
+                <i className="fas fa-history"></i>
+                Đã hoàn thành
+              </button>
+            </div>
+          </div>
+
+          {/* Events Grid */}
+          <div className="events-grid">
+            {(items || []).map(event => {
+              const eventDate = new Date(event.date);
+              const isUpcoming = eventDate > now;
+              const progress = Math.min(
+                (event.status === 'past' && event.actualParticipants !== undefined 
+                  ? event.actualParticipants 
+                  : event.registered) / event.capacity * 100, 
+                100
+              );
+              return (
+                <div className="event-card" key={event.id}>
+                  <div className="event-image">
+                    {event.image ? (
+                      <Image src={event.image} alt={event.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" style={{ objectFit: 'cover' }} />
+                    ) : (
+                      <div className="event-image-placeholder">
+                        <i className="fas fa-calendar-alt"></i>
+                      </div>
+                    )}
+                    <div className={`event-status ${isUpcoming ? "upcoming" : "past"}`}>
+                      {isUpcoming ? "Sắp diễn ra" : "Đã diễn ra"}
                     </div>
-                    <div className="participant-progress">
-                      <div className="participant-progress-bar" style={{ width: `${Math.round(progress)}%` }}></div>
-                    </div>
+                    {event.category && (
+                      <div className="event-category-badge">
+                        {event.category}
+                      </div>
+                    )}
                   </div>
-                  {isUpcoming && (
-                    <button className="btn-register" onClick={() => handleViewEventDetails(event)}>
-                      <i className="fas fa-user-plus"></i> Đăng ký tham gia
-                    </button>
-                  )}
+                  <div className="event-content">
+                    <div className="event-header">
+                      <h3 className="event-title">{event.title}</h3>
+                      {event.price && event.price > 0 && (
+                        <div className="event-price">
+                          {event.price.toLocaleString('vi-VN')} VNĐ
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="event-meta">
+                      <div className="event-meta-item">
+                        <i className="fas fa-calendar"></i>
+                        <span>{formatDate(event.date)} | {event.time}</span>
+                      </div>
+                      <div className="event-meta-item">
+                        <i className="fas fa-map-marker-alt"></i>
+                        <span>{event.location}</span>
+                      </div>
+                    </div>
+                    
+                    <p className="event-description">{event.description}</p>
+                    
+                    <div 
+                      className="event-participants"
+                      data-type={event.status === 'past' && event.actualParticipants !== undefined ? 'actual' : 'registration'}
+                    >
+                      <div className="participant-info">
+                        <span className="participant-label">
+                          {event.status === 'past' && event.actualParticipants !== undefined 
+                            ? 'Đã tham gia:' 
+                            : 'Đã đăng ký:'
+                          }
+                        </span>
+                        <span className="participant-count">
+                          {event.status === 'past' && event.actualParticipants !== undefined 
+                            ? `${event.actualParticipants}/${event.capacity}` 
+                            : `${event.registered}/${event.capacity}`
+                          }
+                        </span>
+                      </div>
+                      <div className="participant-progress">
+                        <div className="participant-progress-bar" style={{ width: `${Math.round(progress)}%` }}></div>
+                      </div>
+                    </div>
+                    
+                    {isUpcoming && (
+                      <button className="btn-register" onClick={() => handleViewEventDetails(event)}>
+                        <i className="fas fa-user-plus"></i> 
+                        Đăng ký tham gia
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Event Details Modal */}

@@ -37,31 +37,69 @@ export default function ContactTab() {
 
   return (
     <div className="container">
+      {/* Hero Banner Section */}
+      <section className="contact-hero">
+        <div className="contact-hero-content">
+          <div className="contact-hero-text">
+            <h1>
+              <span style={{ color: 'var(--accent)' }}>Liên hệ</span> hợp tác
+            </h1>
+            <p className="contact-hero-description">
+              Chúng tôi luôn chào đón các đối tác và cơ hội hợp tác để phát triển cộng đồng IoT. 
+              Hãy kết nối với chúng tôi để cùng tạo ra những giá trị tuyệt vời.
+            </p>
+          </div>
+          <div className="contact-hero-visual">
+            <div className="contact-features">
+              <div className="feature-card">
+                <i className="fas fa-handshake"></i>
+                <h4>Hợp tác</h4>
+                <p>Dự án chung</p>
+              </div>
+              <div className="feature-card">
+                <i className="fas fa-users"></i>
+                <h4>Cộng đồng</h4>
+                <p>Kết nối mạng lưới</p>
+              </div>
+              <div className="feature-card">
+                <i className="fas fa-lightbulb"></i>
+                <h4>Đổi mới</h4>
+                <p>Ý tưởng sáng tạo</p>
+              </div>
+              <div className="feature-card">
+                <i className="fas fa-rocket"></i>
+                <h4>Phát triển</h4>
+                <p>Thúc đẩy tăng trưởng</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <form className="contact-form" onSubmit={(e) => { e.preventDefault(); onSubmit(new FormData(e.currentTarget)); }}>
-        <h2>🤝 Liên hệ hợp tác</h2>
-        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '2rem' }}>Chúng tôi luôn chào đón các đối tác và cơ hội hợp tác để phát triển cộng đồng IoT</p>
 
         {!success ? (
           <>
+            <div className="contact-form-header">
+              <h2>📝 Thông tin liên hệ</h2>
+              <p>Vui lòng điền đầy đủ thông tin để chúng tôi có thể liên hệ lại với bạn</p>
+            </div>
+            
             <div className="contact-grid">
-              <div className="form-group input-group">
+              <div className="form-group">
                 <label htmlFor="fullName">Họ và tên *</label>
-                <span className="input-icon"><i className="fas fa-user"></i></span>
                 <input type="text" id="fullName" name="fullName" placeholder="VD: Nguyễn Văn A" required />
               </div>
-              <div className="form-group input-group">
+              <div className="form-group">
                 <label htmlFor="email">Email *</label>
-                <span className="input-icon"><i className="fas fa-envelope"></i></span>
                 <input type="email" id="email" name="email" placeholder="you@company.com" required />
               </div>
-              <div className="form-group input-group">
+              <div className="form-group">
                 <label htmlFor="phone">Số điện thoại *</label>
-                <span className="input-icon"><i className="fas fa-phone"></i></span>
                 <input type="tel" id="phone" name="phone" placeholder="VD: 0901 234 567" required />
               </div>
-              <div className="form-group input-group">
+              <div className="form-group">
                 <label htmlFor="organization">Đơn vị/Tổ chức *</label>
-                <span className="input-icon"><i className="fas fa-building"></i></span>
                 <input type="text" id="organization" name="organization" placeholder="Tên công ty/Trường học" required />
               </div>
               <div className="form-group col-span-2">
@@ -69,18 +107,41 @@ export default function ContactTab() {
                 <textarea id="details" name="details" placeholder="Mô tả mục tiêu, phạm vi, thời gian dự kiến..." required></textarea>
               </div>
             </div>
-            {error && <p style={{ color: 'var(--danger)', marginTop: '0.5rem' }}>{error}</p>}
+            
+            {error && (
+              <div className="error-message">
+                <i className="fas fa-exclamation-triangle"></i>
+                <span>{error}</span>
+              </div>
+            )}
+            
             <div className="form-actions">
-              <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', opacity: submitting ? 0.7 : 1 }} disabled={submitting}>
-                {submitting ? (<><i className="fas fa-spinner fa-spin"></i> Đang gửi...</>) : (<><i className="fas fa-paper-plane"></i> Gửi thông tin hợp tác</>)}
+              <button type="submit" className="btn-submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    Đang gửi...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-paper-plane"></i>
+                    Gửi thông tin hợp tác
+                  </>
+                )}
               </button>
             </div>
           </>
         ) : (
           <div className="success-message">
+            <div className="success-icon">
+              <i className="fas fa-check-circle"></i>
+            </div>
             <h3>🎉 Gửi thành công!</h3>
             <p>Cảm ơn bạn đã liên hệ với chúng tôi. Chúng tôi sẽ phản hồi trong vòng 24 giờ.</p>
-            <button className="btn-primary" onClick={() => setSuccess(false)} style={{ marginTop: '1rem' }}>Gửi yêu cầu khác</button>
+            <button className="btn-primary" onClick={() => setSuccess(false)}>
+              <i className="fas fa-plus"></i>
+              Gửi yêu cầu khác
+            </button>
           </div>
         )}
       </form>
