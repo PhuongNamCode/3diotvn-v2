@@ -82,28 +82,72 @@ export default function AdminContactsTab() {
   };
 
   const handleExportContacts = () => {
-    const csvContent = [
-      ['Tên', 'Email', 'Số điện thoại', 'Công ty', 'Loại', 'Trạng thái', 'Ngày tạo'],
-      ...filteredContacts.map(contact => [
-        contact.name,
-        contact.email,
-        contact.phone,
-        contact.company,
-        contact.type,
-        contact.status,
-        contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('vi-VN') : ''
-      ])
-    ].map(row => row.join(',')).join('\n');
+    try {
+      // Check if XLSX is available
+      if (typeof window === 'undefined' || !(window as any).XLSX) {
+        (window as any).showNotification('Thư viện XLSX chưa được tải. Vui lòng thử lại!', 'error');
+        return;
+      }
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `contacts_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const XLSX = (window as any).XLSX;
+      
+      // Prepare data for export
+      const exportData = filteredContacts.map(contact => ({
+        'Tên': contact.name,
+        'Email': contact.email,
+        'Số điện thoại': contact.phone,
+        'Công ty': contact.company,
+        'Chức vụ': contact.role,
+        'Loại liên hệ': contact.type === 'partnership' ? 'Hợp tác' : 
+                       contact.type === 'sponsorship' ? 'Tài trợ' :
+                       contact.type === 'collaboration' ? 'Cộng tác' : 'Chung',
+        'Trạng thái': contact.status === 'new' ? 'Mới' :
+                     contact.status === 'in-progress' ? 'Đang xử lý' :
+                     contact.status === 'in_negotiation' ? 'Đang thương lượng' :
+                     contact.status === 'resolved' ? 'Đã giải quyết' :
+                     contact.status === 'closed' ? 'Đã đóng' : contact.status,
+        'Độ ưu tiên': contact.priority === 'high' ? 'Cao' :
+                     contact.priority === 'medium' ? 'Trung bình' : 'Thấp',
+        'Nội dung': contact.message,
+        'Ngày tạo': contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('vi-VN') : '',
+        'Ngày cập nhật': contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString('vi-VN') : ''
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      const columnWidths = [
+        { wch: 20 }, // Tên
+        { wch: 25 }, // Email
+        { wch: 15 }, // Số điện thoại
+        { wch: 20 }, // Công ty
+        { wch: 15 }, // Chức vụ
+        { wch: 15 }, // Loại liên hệ
+        { wch: 15 }, // Trạng thái
+        { wch: 12 }, // Độ ưu tiên
+        { wch: 40 }, // Nội dung
+        { wch: 15 }, // Ngày tạo
+        { wch: 15 }  // Ngày cập nhật
+      ];
+      ws['!cols'] = columnWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Danh sách liên hệ');
+
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().split('T')[0];
+      const filename = `danh_sach_lien_he_${currentDate}.xlsx`;
+
+      // Save file
+      XLSX.writeFile(wb, filename);
+      
+      (window as any).showNotification(`Đã xuất ${exportData.length} liên hệ thành công!`, 'success');
+    } catch (error) {
+      console.error('Export error:', error);
+      (window as any).showNotification('Có lỗi xảy ra khi xuất file Excel!', 'error');
+    }
   };
 
   const getStatusBadge = (status: string) => {

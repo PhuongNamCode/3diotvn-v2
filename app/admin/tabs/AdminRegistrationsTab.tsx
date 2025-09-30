@@ -71,10 +71,64 @@ export default function AdminRegistrationsTab() {
   };
 
   const handleExportRegistrations = () => {
-    (window as any).showNotification('Đang xuất danh sách đăng ký...', 'info');
-    setTimeout(() => {
-      (window as any).showNotification('Xuất dữ liệu thành công!', 'success');
-    }, 2000);
+    try {
+      // Check if XLSX is available
+      if (typeof window === 'undefined' || !(window as any).XLSX) {
+        (window as any).showNotification('Thư viện XLSX chưa được tải. Vui lòng thử lại!', 'error');
+        return;
+      }
+
+      const XLSX = (window as any).XLSX;
+      
+      // Prepare data for export
+      const exportData = filteredRegistrations.map(registration => ({
+        'Sự kiện': getEventTitle(registration.eventId),
+        'Họ tên': registration.fullName,
+        'Email': registration.email,
+        'Số điện thoại': registration.phone || '',
+        'Tổ chức': registration.organization || '',
+        'Kinh nghiệm': registration.experience || '',
+        'Mong đợi': registration.expectation || '',
+        'Trạng thái': registration.status === 'confirmed' ? 'Đã xác nhận' : 
+                    registration.status === 'pending' ? 'Chờ xác nhận' : 
+                    registration.status === 'cancelled' ? 'Đã hủy' : 'Chờ xử lý',
+        'Ngày đăng ký': registration.registeredAt ? formatDate(registration.registeredAt) : ''
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      const columnWidths = [
+        { wch: 30 }, // Sự kiện
+        { wch: 20 }, // Họ tên
+        { wch: 25 }, // Email
+        { wch: 15 }, // Số điện thoại
+        { wch: 20 }, // Tổ chức
+        { wch: 25 }, // Kinh nghiệm
+        { wch: 25 }, // Mong đợi
+        { wch: 15 }, // Trạng thái
+        { wch: 20 }  // Ngày đăng ký
+      ];
+      ws['!cols'] = columnWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Danh sách đăng ký');
+
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().split('T')[0];
+      const eventFilter = selectedEvent === "all" ? "tatca" : getEventTitle(selectedEvent).replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `danh_sach_dang_ky_${eventFilter}_${currentDate}.xlsx`;
+
+      // Save file
+      XLSX.writeFile(wb, filename);
+      
+      (window as any).showNotification(`Đã xuất ${exportData.length} đăng ký thành công!`, 'success');
+    } catch (error) {
+      console.error('Export error:', error);
+      (window as any).showNotification('Có lỗi xảy ra khi xuất file Excel!', 'error');
+    }
   };
 
   return (

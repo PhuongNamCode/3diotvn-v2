@@ -59,11 +59,114 @@ export default function AdminEventsTab() {
     (window as any).showNotification('Đang tải danh sách đăng ký...', 'info');
   };
 
-  const handleExportData = (eventId: string) => {
-    (window as any).showNotification('Đang xuất dữ liệu...', 'info');
-    setTimeout(() => {
-      (window as any).showNotification('Xuất dữ liệu thành công!', 'success');
-    }, 2000);
+  const handleExportData = async (eventId: string) => {
+    try {
+      // Check if XLSX is available
+      if (typeof window === 'undefined' || !(window as any).XLSX) {
+        (window as any).showNotification('Thư viện XLSX chưa được tải. Vui lòng thử lại!', 'error');
+        return;
+      }
+
+      const XLSX = (window as any).XLSX;
+      
+      // Find the event
+      const event = events.find(e => e.id === eventId);
+      if (!event) {
+        (window as any).showNotification('Không tìm thấy sự kiện!', 'error');
+        return;
+      }
+
+      (window as any).showNotification('Đang tải dữ liệu đăng ký...', 'info');
+
+      // Fetch registrations for this event
+      const response = await fetch(`/api/registrations?eventId=${eventId}`);
+      const result = await response.json();
+
+      if (!result.success) {
+        (window as any).showNotification('Lỗi khi tải dữ liệu đăng ký!', 'error');
+        return;
+      }
+
+      const registrations = result.data || [];
+
+      // Prepare event data
+      const eventData = [{
+        'Thông tin': 'Tên sự kiện',
+        'Giá trị': event.title
+      }, {
+        'Thông tin': 'Ngày diễn ra',
+        'Giá trị': formatDate(event.date)
+      }, {
+        'Thông tin': 'Thời gian',
+        'Giá trị': event.time
+      }, {
+        'Thông tin': 'Địa điểm',
+        'Giá trị': event.location
+      }, {
+        'Thông tin': 'Sức chứa',
+        'Giá trị': event.capacity.toString()
+      }, {
+        'Thông tin': 'Số lượng đăng ký',
+        'Giá trị': registrations.length.toString()
+      }, {
+        'Thông tin': 'Số lượng tham gia thực tế',
+        'Giá trị': event.actualParticipants?.toString() || 'Chưa cập nhật'
+      }, {
+        'Thông tin': 'Trạng thái',
+        'Giá trị': event.status === 'upcoming' ? 'Sắp diễn ra' : event.status === 'past' ? 'Đã diễn ra' : 'Đã hủy'
+      }];
+
+      // Prepare registrations data
+      const registrationsData = registrations.map((reg: any) => ({
+        'Họ tên': reg.fullName,
+        'Email': reg.email,
+        'Số điện thoại': reg.phone || '',
+        'Tổ chức': reg.organization || '',
+        'Kinh nghiệm': reg.experience || '',
+        'Mong đợi': reg.expectation || '',
+        'Trạng thái': reg.status === 'confirmed' ? 'Đã xác nhận' : 
+                    reg.status === 'pending' ? 'Chờ xác nhận' : 
+                    reg.status === 'cancelled' ? 'Đã hủy' : 'Chờ xử lý',
+        'Ngày đăng ký': reg.createdAt ? new Date(reg.createdAt).toLocaleDateString('vi-VN') : ''
+      }));
+
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+
+      // Add event info sheet
+      const eventWs = XLSX.utils.json_to_sheet(eventData);
+      eventWs['!cols'] = [{ wch: 25 }, { wch: 40 }];
+      XLSX.utils.book_append_sheet(wb, eventWs, 'Thông tin sự kiện');
+
+      // Add registrations sheet
+      if (registrationsData.length > 0) {
+        const regWs = XLSX.utils.json_to_sheet(registrationsData);
+        regWs['!cols'] = [
+          { wch: 20 }, // Họ tên
+          { wch: 25 }, // Email
+          { wch: 15 }, // Số điện thoại
+          { wch: 20 }, // Tổ chức
+          { wch: 25 }, // Kinh nghiệm
+          { wch: 25 }, // Mong đợi
+          { wch: 15 }, // Trạng thái
+          { wch: 20 }  // Ngày đăng ký
+        ];
+        XLSX.utils.book_append_sheet(wb, regWs, 'Danh sách đăng ký');
+      }
+
+      // Generate filename
+      const currentDate = new Date().toISOString().split('T')[0];
+      const eventName = event.title.replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `su_kien_${eventName}_${currentDate}.xlsx`;
+
+      // Save file
+      XLSX.writeFile(wb, filename);
+      
+      (window as any).showNotification(`Đã xuất dữ liệu sự kiện "${event.title}" thành công!`, 'success');
+    } catch (error) {
+      console.error('Export error:', error);
+      (window as any).showNotification('Có lỗi xảy ra khi xuất file Excel!', 'error');
+    }
   };
 
   const handleAddEvent = () => {
@@ -356,6 +459,20 @@ export default function AdminEventsTab() {
                   </div>
                 </div>
 
+                <div className="form-group">
+                  <label htmlFor="eventOnlineLink">Link tham gia online (nếu là sự kiện online)</label>
+                  <input 
+                    type="url" 
+                    id="eventOnlineLink" 
+                    name="onlineLink"
+                    defaultValue={editingEvent?.onlineLink || ''}
+                    placeholder="https://zoom.us/j/... hoặc https://meet.google.com/..."
+                  />
+                  <small style={{ color: '#666', fontSize: '0.9rem' }}>
+                    Chỉ điền nếu sự kiện diễn ra online. Link này sẽ được gửi trong email xác nhận đăng ký.
+                  </small>
+                </div>
+
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="eventPrice">Giá vé (VNĐ)</label>
@@ -511,6 +628,7 @@ export default function AdminEventsTab() {
                       date: formData.get('date') as string,
                       time: formData.get('time') as string,
                       location: formData.get('location') as string,
+                      onlineLink: formData.get('onlineLink') as string || null,
                       capacity: parseInt(formData.get('capacity') as string),
                       price: parseInt(formData.get('price') as string),
                       speakers: (formData.get('speakers') as string).split(',').map(s => s.trim()),

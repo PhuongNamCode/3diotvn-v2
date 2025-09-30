@@ -9,6 +9,7 @@ export default function AdminSettingsTab() {
     googleClientId: "",
     smtpHost: "",
     smtpUsername: "",
+    smtpPassword: "",
     perplexityApiKey: "",
     perplexityModel: "pplx-70b-online"
   });
@@ -67,6 +68,7 @@ export default function AdminSettingsTab() {
           googleClientId: s['integrations.googleClientId'] || prev.googleClientId,
           smtpHost: s['integrations.smtpHost'] || prev.smtpHost,
           smtpUsername: s['integrations.smtpUsername'] || prev.smtpUsername,
+          smtpPassword: s['integrations.smtpPassword'] || prev.smtpPassword,
           perplexityApiKey: s['perplexity.apiKey'] || prev.perplexityApiKey,
           perplexityModel: s['perplexity.model'] || prev.perplexityModel,
         }));
@@ -156,6 +158,7 @@ export default function AdminSettingsTab() {
         const payload: Record<string, any> = {
           'integrations.smtpHost': integrationSettings.smtpHost,
           'integrations.smtpUsername': integrationSettings.smtpUsername,
+          'integrations.smtpPassword': integrationSettings.smtpPassword,
         };
         const resp = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         if (!resp.ok) throw new Error('Save failed');
@@ -330,6 +333,15 @@ export default function AdminSettingsTab() {
                 value={integrationSettings.smtpUsername}
                 onChange={(e) => setIntegrationSettings(prev => ({ ...prev, smtpUsername: e.target.value }))}
                 placeholder="email@domain.com"
+              />
+            </div>
+            <div className="form-group">
+              <label>SMTP Password</label>
+              <input
+                type="password"
+                value={integrationSettings.smtpPassword}
+                onChange={(e) => setIntegrationSettings(prev => ({ ...prev, smtpPassword: e.target.value }))}
+                placeholder="Nhập mật khẩu email"
               />
             </div>
             <button className="btn btn-primary" onClick={handleSaveSmtp} disabled={savingSmtp}>

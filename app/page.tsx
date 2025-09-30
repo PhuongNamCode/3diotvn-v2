@@ -5,7 +5,6 @@ import HomeTab from "./tabs/HomeTab";
 import EventsTab from "./tabs/EventsTab";
 import ContactTab from "./tabs/ContactTab";
 import NewsTab from "./tabs/NewsTab";
-import BlogTab from "./tabs/BlogTab";
 import LoginTab from "./tabs/LoginTab";
 import { jwtDecode } from "jwt-decode";
 // Removed static data fallbacks; data now comes from DB via API/hooks
@@ -413,7 +412,6 @@ export default function Home() {
               <button className="nav-tab active" data-tab="home"><i className="fas fa-home"></i> Trang chủ</button>
               <button className="nav-tab" data-tab="events"><i className="fas fa-calendar-alt"></i> Sự kiện</button>
               <button className="nav-tab" data-tab="news"><i className="fas fa-newspaper"></i> Tin tức</button>
-              <button className="nav-tab" data-tab="blog"><i className="fas fa-blog"></i> Blog</button>
               <button className="nav-tab" data-tab="contact"><i className="fas fa-handshake"></i> Liên hệ</button>
               <button className="nav-tab" data-tab="login"><i className="fas fa-sign-in-alt"></i> Đăng nhập</button>
             </div>
@@ -447,7 +445,6 @@ export default function Home() {
 
         <div className="tab-content" id="events"><EventsTab /></div>
 
-        <div className="tab-content" id="blog"><BlogTab /></div>
 
         <div className="tab-content" id="contact"><ContactTab /></div>
 
@@ -470,7 +467,7 @@ export default function Home() {
             </div>
             <div className="footer-section"><h4>Học tập</h4><a href="#">Arduino Cơ bản</a><a href="#">ESP32 Advanced</a><a href="#">IoT với Cloud</a><a href="#">Embedded AI</a><a href="#">PCB Design</a><a href="#">Robotics</a></div>
             <div className="footer-section"><h4>Cộng đồng</h4><a href="#">Facebook Group</a><a href="#">TikTok</a><a href="#">GitHub Repos</a><a href="#">YouTube Channel</a><a href="#">Zalo Group</a><a href="#">LinkedIn Page</a></div>
-            <div className="footer-section"><h4>Về chúng tôi</h4><a href="#">Câu chuyện</a><a href="#">Cộng tác viên</a><a href="#">Partners</a><a href="#">Blog</a><a href="#">Events</a><a href="#">Liên hệ</a></div>
+            <div className="footer-section"><h4>Về chúng tôi</h4><a href="#">Câu chuyện</a><a href="#">Cộng tác viên</a><a href="#">Partners</a><a href="#">Events</a><a href="#">Liên hệ</a></div>
           </div>
           <div className="footer-bottom">
             <div className="social-links">

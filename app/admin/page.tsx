@@ -8,9 +8,6 @@ import AdminUsersTab from "./tabs/AdminUsersTab";
 import AdminRegistrationsTab from "./tabs/AdminRegistrationsTab";
 import AdminContactsTab from "./tabs/AdminContactsTab";
 import AdminSettingsTab from "./tabs/AdminSettingsTab";
-import BlogManagementTab from "./tabs/BlogManagementTab";
-import BlogCreateTab from "./tabs/BlogCreateTab";
-import TagsManagementTab from "./tabs/TagsManagementTab";
 import { websocketManager } from "@/lib/websocket";
 import RealTimeStatus from "../components/RealTimeStatus";
 import "./admin.css";
@@ -25,7 +22,7 @@ type AdminUser = {
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
-  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings' | 'blog' | 'blog-create' | 'tags'>('overview');
+  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings'>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -146,7 +143,7 @@ export default function AdminDashboard() {
     (window as any).showNotification('Đã đăng xuất admin!', 'info');
   };
 
-  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings' | 'blog' | 'blog-create' | 'tags') => {
+  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings') => {
     setCurrentTab(tabName);
     // Close mobile menu if open
     const sidebar = document.getElementById('sidebar');
@@ -229,23 +226,6 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <div className="nav-section">
-              <div className="nav-section-title">Nội dung</div>
-              <button 
-                className={`nav-item ${currentTab === 'blog' ? 'active' : ''}`}
-                onClick={() => switchTab('blog')}
-              >
-                <i className="fas fa-blog"></i>
-                <span>Quản lý Blog</span>
-              </button>
-              <button 
-                className={`nav-item ${currentTab === 'tags' ? 'active' : ''}`}
-                onClick={() => switchTab('tags')}
-              >
-                <i className="fas fa-tags"></i>
-                <span>Quản lý Tags</span>
-              </button>
-            </div>
 
             <div className="nav-section">
               <div className="nav-section-title">Hệ thống</div>
@@ -276,9 +256,6 @@ export default function AdminDashboard() {
                   {currentTab === 'overview' && 'Tổng quan'}
                   {currentTab === 'events' && 'Quản lý sự kiện'}
                   {currentTab === 'users' && 'Quản lý người dùng'}
-                  {currentTab === 'blog' && 'Quản lý Blog'}
-                  {currentTab === 'blog-create' && 'Tạo bài viết mới'}
-                  {currentTab === 'tags' && 'Quản lý Tags'}
                   {currentTab === 'settings' && 'Cài đặt hệ thống'}
                 </h1>
                 <p className="page-subtitle">Admin Dashboard - 3DIoT Management System</p>
@@ -321,9 +298,6 @@ export default function AdminDashboard() {
             {currentTab === 'registrations' && <AdminRegistrationsTab />}
             {currentTab === 'contacts' && <AdminContactsTab />}
             {currentTab === 'users' && <AdminUsersTab />}
-            {currentTab === 'blog' && <BlogManagementTab onTabChange={(tab) => setCurrentTab(tab)} />}
-            {currentTab === 'blog-create' && <BlogCreateTab onTabChange={(tab) => setCurrentTab(tab)} />}
-            {currentTab === 'tags' && <TagsManagementTab onTabChange={(tab) => setCurrentTab(tab)} />}
             {currentTab === 'settings' && <AdminSettingsTab />}
           </div>
         </div>

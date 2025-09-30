@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { emailService } from '@/lib/email/emailService';
+import { generateRegistrationConfirmEmail } from '@/lib/email/templates/registrationConfirm';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const registrations = await prisma.registration.findMany({ orderBy: { createdAt: 'desc' } });
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get('eventId');
+    
+    const whereClause = eventId ? { eventId: String(eventId) } : {};
+    
+    const registrations = await prisma.registration.findMany({ 
+      where: whereClause,
+      orderBy: { createdAt: 'desc' } 
+    });
+    
     return NextResponse.json({ success: true, data: registrations });
   } catch (error) {
     console.error('Error fetching registrations:', error);
@@ -41,6 +52,36 @@ export async function POST(request: NextRequest) {
     // Update denormalized count for the event
     const count = await prisma.registration.count({ where: { eventId: created.eventId, NOT: { status: 'cancelled' } } });
     await prisma.event.update({ where: { id: created.eventId }, data: { registrationsCount: count } });
+
+    // Send confirmation email
+    try {
+      const emailData = generateRegistrationConfirmEmail({
+        userName: created.fullName,
+        userEmail: created.email,
+        eventTitle: event.title,
+        eventDate: event.date.toISOString(),
+        eventTime: event.time,
+        eventLocation: event.location,
+        eventPrice: event.price,
+        onlineLink: event.onlineLink || undefined
+      });
+
+      const emailSent = await emailService.sendEmail({
+        to: created.email,
+        subject: `🎉 Xác nhận đăng ký: ${event.title}`,
+        html: emailData.html,
+        text: emailData.text
+      });
+
+      if (!emailSent) {
+        console.warn(`Failed to send confirmation email to ${created.email}`);
+      } else {
+        console.log(`Confirmation email sent successfully to ${created.email}`);
+      }
+    } catch (emailError) {
+      console.error('Error sending confirmation email:', emailError);
+      // Don't fail the registration if email fails
+    }
 
     return NextResponse.json({ success: true, data: created }, { status: 201 });
   } catch (error) {
