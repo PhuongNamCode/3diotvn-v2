@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const updateFrequency = settingsMap['news.updateFrequency'] || 'weekly';
     const lastRefreshAt = settingsMap['news.lastRefreshAt'];
     const apiKey = settingsMap['perplexity.apiKey'];
-    const model = settingsMap['perplexity.model'] || 'pplx-70b-online';
+    const model = settingsMap['perplexity.model'] || 'sonar';
 
     if (!apiKey) {
       return NextResponse.json({ 

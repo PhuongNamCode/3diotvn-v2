@@ -40,13 +40,13 @@ async function getSettings() {
     ]);
     return {
       apiKey: (apiKeyRow?.value || process.env.PERPLEXITY_API_KEY || '').trim(),
-      model: (modelRow?.value || process.env.PERPLEXITY_MODEL || 'pplx-70b-online').trim(),
+      model: (modelRow?.value || process.env.PERPLEXITY_MODEL || 'sonar').trim(),
     };
   } catch {
     // Fallback when settings table does not exist yet
     return {
       apiKey: (process.env.PERPLEXITY_API_KEY || '').trim(),
-      model: (process.env.PERPLEXITY_MODEL || 'pplx-70b-online').trim(),
+      model: (process.env.PERPLEXITY_MODEL || 'sonar').trim(),
     };
   }
 }

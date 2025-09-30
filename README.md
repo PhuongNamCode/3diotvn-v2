@@ -16,7 +16,7 @@ until docker exec -i pg-3diot pg_isready -U postgres -d web; do sleep 1; done
 ```bash
 cd /home/phuongnam/web
 printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\n' > .env
-printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nNEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"\nPERPLEXITY_API_KEY="<your_perplexity_api_key>"\nPERPLEXITY_MODEL="pplx-70b-online"\n' > .env.local
+printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nNEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"\nPERPLEXITY_API_KEY="<your_perplexity_api_key>"\nPERPLEXITY_MODEL="sonar"\n' > .env.local
 ```
 
 3) Cài dependencies và generate Prisma Client + migrate DB:
@@ -46,7 +46,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"
 NEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"
 # Perplexity API (for news refresh)
 PERPLEXITY_API_KEY="<your_perplexity_api_key>"
-PERPLEXITY_MODEL="pplx-70b-online" # optional; defaults to pplx-70b-online
+PERPLEXITY_MODEL="sonar" # optional; defaults to sonar
 ```
 
 ### Start PostgreSQL (localhost:5432)
@@ -146,7 +146,7 @@ npm run db:restore
 ```bash
 # 1) Env
 printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\n' > .env
-printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nNEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"\nPERPLEXITY_API_KEY="<your_perplexity_api_key>"\nPERPLEXITY_MODEL="pplx-70b-online"\n' > .env.local
+printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nNEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"\nPERPLEXITY_API_KEY="<your_perplexity_api_key>"\nPERPLEXITY_MODEL="sonar"\n' > .env.local
 
 # 2) DB
 docker rm -f pg-3diot || true

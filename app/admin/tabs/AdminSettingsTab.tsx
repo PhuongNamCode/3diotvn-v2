@@ -11,7 +11,7 @@ export default function AdminSettingsTab() {
     smtpUsername: "",
     smtpPassword: "",
     perplexityApiKey: "",
-    perplexityModel: "pplx-70b-online"
+    perplexityModel: "sonar"
   });
 
   const [newsSettings, setNewsSettings] = useState({
@@ -458,7 +458,7 @@ export default function AdminSettingsTab() {
                         setIntegrationSettings(prev => ({ ...prev, perplexityModel: v }));
                         try { localStorage.setItem('perplexity.model', v || ''); } catch {}
                       }}
-                      placeholder="pplx-70b-online"
+                      placeholder="sonar"
                     />
                   </div>
                 </div>
