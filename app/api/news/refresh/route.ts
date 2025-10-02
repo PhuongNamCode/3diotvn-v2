@@ -110,20 +110,21 @@ async function callPerplexityForCategory(category: typeof ALLOWED_CATEGORIES[num
   
   // Category-specific sources
   const sources: Record<string, string[]> = {
-    Communications: ['AT&T', 'Verizon', 'T-Mobile', 'Vodafone', 'Orange', 'Telefonica', 'China Mobile', 'NTT Docomo', 'SK Telecom', 'Singtel', 'Ericsson', 'Nokia', 'Huawei', 'Cisco', 'IEEE Spectrum', 'TechCrunch', 'Ars Technica', 'Wired', 'Network World', 'Fierce Telecom', 'Light Reading', 'VnExpress', 'GenK', 'Tinhte', 'ICTNews'],
-    IoT: ['talkingiot.io', 'iottechnews', 'iotbusinessnews', 'AWS IoT', 'Microsoft Azure IoT', 'Google Cloud IoT', 'Arduino', 'Raspberry Pi', 'STMicroelectronics', 'Texas Instruments', 'Microchip', 'Espressif', 'IEEE Spectrum', 'TechCrunch', 'Hackaday', 'Electronics Weekly', 'VnExpress', 'GenK', 'Tinhte'],
+    Communications: ['https://www.lightreading.com/','https://tecknexus.com/','https://www.telecoms.com/','vista.gov.vn','3GPP','AT&T', 'Verizon', 'T-Mobile', 'Vodafone', 'Orange', 'Telefonica', 'China Mobile', 'NTT Docomo', 'SK Telecom', 'Singtel', 'Ericsson', 'Nokia', 'Huawei', 'Cisco', 'IEEE Spectrum', 'TechCrunch', 'Ars Technica', 'Wired', 'Network World', 'Fierce Telecom', 'Light Reading', 'VnExpress', 'GenK', 'Tinhte', 'ICTNews','viettel'],
+    IoT: ['talkingiot.io', 'iottechnews', 'iotbusinessnews','iotm2mcouncil', 'Arduino', 'Raspberry Pi', 'STMicroelectronics', 'Texas Instruments', 'Microchip', 'Espressif', 'IEEE Spectrum', 'TechCrunch', 'Bao moi', 'Electronics Weekly', 'VnExpress'],
     Embedded: ['Intel', 'ARM', 'NVIDIA', 'STMicroelectronics', 'Texas Instruments', 'Microchip', 'Espressif', 'Nordic Semiconductor', 'IEEE Spectrum', 'Hackaday', 'Electronics Weekly', 'EDN Network', 'EE Times', 'VnExpress', 'GenK', 'Tinhte'],
     AI: ['NVIDIA', 'Google', 'OpenAI', 'Microsoft', 'Meta', 'Intel AI', 'AMD AI', 'MIT', 'Stanford', 'Berkeley', 'IEEE Spectrum', 'TechCrunch', 'MIT Technology Review', 'VnExpress', 'GenK', 'Tinhte'],
     Hardware: ['Intel', 'AMD', 'ARM', 'NVIDIA', 'Qualcomm', 'Broadcom', 'MediaTek', 'Apple', 'Samsung', 'TSMC', 'IEEE Spectrum', 'Hackaday', 'Electronics Weekly', 'EDN Network', 'EE Times', 'VnExpress', 'GenK']
   };
 
-  const prompt = `Bạn là một chuyên gia tổng hợp và phân tích tin tức.
-Hãy tìm và tổng hợp đầy đủ (tối thiểu 5-8 tin tức) những tin tức mới nhất về ${category} trong 1 tháng qua từ các nguồn báo lớn uy tín chất lượng.
+  const prompt = `Bạn là một chuyên gia tổng hợp và phân tích tin tức. Bạn hãy tìm kiếm tin tức thật cẩn thận.
+Hãy tìm và tổng hợp đầy đủ (tối thiểu 10 tin tức) những tin tức mới nhất về ${category} trong 1 tháng qua từ các nguồn báo lớn uy tín chất lượng quốc tế và trong nước.
 
-Nguồn tin ưu tiên: ${sources[category].join(', ')}
+Hãy tập trung lấy thông tin thật đầy đủ và mới từ các nguồn: ${sources[category].join(', ')}
 
 Yêu cầu:
 1. Chỉ lấy tin **trong vòng 1 tháng qua**.
+2. Ưu tiên các tin tức quốc tế từ các tổ chức công nghệ quốc tế lớn.
 2. Mỗi tin tức phải có **link gốc thật** từ bài báo.
 3. **Tiêu đề và tóm tắt PHẢI bằng tiếng Việt** (có thể có thuật ngữ kỹ thuật tiếng Anh).
 4. Tóm tắt dài 80-100 từ.
