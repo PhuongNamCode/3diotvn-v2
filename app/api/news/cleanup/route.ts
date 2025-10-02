@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const daysOld = parseInt(searchParams.get('days') || '7'); // Default 7 days
+    const daysOld = parseInt(searchParams.get('days') || '30'); // Default 30 days
     
     const cutoffDate = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000);
     
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const daysOld = parseInt(searchParams.get('days') || '7');
+    const daysOld = parseInt(searchParams.get('days') || '30');
     
     const cutoffDate = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000);
     

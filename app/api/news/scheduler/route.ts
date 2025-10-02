@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
       update: { value: now.toISOString() },
     });
 
-    // Clean up old news (older than 7 days)
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    // Clean up old news (older than 30 days)
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const deletedOldNews = await (prisma as any).news.deleteMany({
       where: {
         publishedAt: {
-          lt: sevenDaysAgo
+          lt: thirtyDaysAgo
         }
       }
     });

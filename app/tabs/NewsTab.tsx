@@ -19,6 +19,7 @@ export default function NewsTab() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [timeFilter, setTimeFilter] = useState<string>("all");
   const weekRange = useMemo(() => {
     const now = new Date();
     const day = now.getDay(); // 0=Sun,1=Mon,...6=Sat
@@ -52,7 +53,7 @@ export default function NewsTab() {
         tags: news.tags,
         date: news.publishedAt || news.createdAt || new Date().toISOString(),
         summary: news.excerpt,
-        link: news.link || "#"
+        link: news.link && news.link !== "#" ? news.link : "#"
       }));
       setItems(convertedNews);
       setLoading(false);
@@ -65,10 +66,25 @@ export default function NewsTab() {
 
   const filtered = useMemo(() => {
     if (!items) return [] as NewsItem[];
-    const base = filter === "all" ? items : items.filter(n => n.category === filter);
+    
+    // Filter by category
+    let base = filter === "all" ? items : items.filter(n => n.category === filter);
+    
+    // Filter by time
+    if (timeFilter !== "all") {
+      const now = new Date();
+      const days = parseInt(timeFilter);
+      const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      base = base.filter(n => {
+        const newsDate = new Date(n.date);
+        return newsDate >= cutoffDate;
+      });
+    }
+    
     // sort newest first by date
     return [...base].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [items, filter]);
+  }, [items, filter, timeFilter]);
 
   function formatDate(dateString: string) {
     const d = new Date(dateString);
@@ -128,24 +144,40 @@ export default function NewsTab() {
 
       {/* News Filter Section */}
       <div className="news-filter-section">
-        <div className="filter-tabs">
-          {(["all", "Communications", "IoT", "Embedded", "AI", "Hardware"])?.map(key => (
-            <button 
-              key={key} 
-              className={`filter-tab ${filter === key ? 'active' : ''}`} 
-              onClick={() => setFilter(key)}
+        <div className="filter-row">
+          <div className="filter-tabs">
+            {(["all", "Communications", "IoT", "Embedded", "AI", "Hardware"])?.map(key => (
+              <button 
+                key={key} 
+                className={`filter-tab ${filter === key ? 'active' : ''}`} 
+                onClick={() => setFilter(key)}
+              >
+                <i className={`fas ${
+                  key === 'all' ? 'fa-globe' :
+                  key === 'Communications' ? 'fa-satellite-dish' :
+                  key === 'IoT' ? 'fa-wifi' :
+                  key === 'Embedded' ? 'fa-microchip' :
+                  key === 'AI' ? 'fa-robot' :
+                  key === 'Hardware' ? 'fa-cogs' : 'fa-newspaper'
+                }`}></i>
+                {key === 'all' ? 'Tất cả' : String(key).toUpperCase()}
+              </button>
+            ))}
+          </div>
+          
+          {/* Time Filter Dropdown */}
+          <div className="time-filter-dropdown">
+            <select 
+              value={timeFilter} 
+              onChange={(e) => setTimeFilter(e.target.value)}
+              className="time-select"
             >
-              <i className={`fas ${
-                key === 'all' ? 'fa-globe' :
-                key === 'Communications' ? 'fa-satellite-dish' :
-                key === 'IoT' ? 'fa-wifi' :
-                key === 'Embedded' ? 'fa-microchip' :
-                key === 'AI' ? 'fa-robot' :
-                key === 'Hardware' ? 'fa-cogs' : 'fa-newspaper'
-              }`}></i>
-              {key === 'all' ? 'Tất cả' : String(key).toUpperCase()}
-            </button>
-          ))}
+              <option value="all">Tất cả thời gian</option>
+              <option value="7">7 ngày gần đây</option>
+              <option value="14">14 ngày gần đây</option>
+              <option value="28">28 ngày gần đây</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -188,9 +220,13 @@ export default function NewsTab() {
                     </span>
                   </div>
                   <h3 className="news-title">
-                    <a href={news.link} target="_blank" rel="noreferrer">
-                      {news.title}
-                    </a>
+                    {news.link && news.link !== "#" ? (
+                      <a href={news.link} target="_blank" rel="noreferrer">
+                        {news.title}
+                      </a>
+                    ) : (
+                      <span>{news.title}</span>
+                    )}
                   </h3>
                   <div className="news-date">
                     <i className="fas fa-calendar"></i>
@@ -201,15 +237,22 @@ export default function NewsTab() {
                 <p className="news-summary">{news.summary}</p>
                 
                 <div className="news-actions">
-                  <a 
-                    href={news.link} 
-                    target="_blank" 
-                    className="btn-read-more" 
-                    rel="noreferrer"
-                  >
-                    <i className="fas fa-external-link-alt"></i>
-                    Đọc thêm
-                  </a>
+                  {news.link && news.link !== "#" ? (
+                    <a 
+                      href={news.link} 
+                      target="_blank" 
+                      className="btn-read-more" 
+                      rel="noreferrer"
+                    >
+                      <i className="fas fa-external-link-alt"></i>
+                      Đọc thêm
+                    </a>
+                  ) : (
+                    <span className="btn-read-more disabled">
+                      <i className="fas fa-info-circle"></i>
+                      Không có link
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
