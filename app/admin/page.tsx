@@ -5,7 +5,9 @@ import AdminLoginTab from "./tabs/AdminLoginTab";
 import AdminOverviewTab from "./tabs/AdminOverviewTab";
 import AdminEventsTab from "./tabs/AdminEventsTab";
 import AdminUsersTab from "./tabs/AdminUsersTab";
+import AdminCoursesTab from "./tabs/AdminCoursesTab";
 import AdminRegistrationsTab from "./tabs/AdminRegistrationsTab";
+import AdminCourseEnrollmentsTab from "./tabs/AdminCourseEnrollmentsTab";
 import AdminContactsTab from "./tabs/AdminContactsTab";
 import AdminSettingsTab from "./tabs/AdminSettingsTab";
 import { websocketManager } from "@/lib/websocket";
@@ -22,7 +24,7 @@ type AdminUser = {
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
-  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings'>('overview');
+  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'settings'>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -143,7 +145,7 @@ export default function AdminDashboard() {
     (window as any).showNotification('Đã đăng xuất admin!', 'info');
   };
 
-  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'contacts' | 'users' | 'settings') => {
+  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'settings') => {
     setCurrentTab(tabName);
     // Close mobile menu if open
     const sidebar = document.getElementById('sidebar');
@@ -204,11 +206,25 @@ export default function AdminDashboard() {
                 <span>Sự kiện</span>
               </button>
               <button 
+                className={`nav-item ${currentTab === 'courses' ? 'active' : ''}`}
+                onClick={() => switchTab('courses')}
+              >
+                <i className="fas fa-graduation-cap"></i>
+                <span>Khóa học</span>
+              </button>
+              <button 
                 className={`nav-item ${currentTab === 'registrations' ? 'active' : ''}`}
                 onClick={() => switchTab('registrations')}
               >
                 <i className="fas fa-user-check"></i>
-                <span>Đăng ký</span>
+                <span>Đăng ký Sự kiện</span>
+              </button>
+              <button 
+                className={`nav-item ${currentTab === 'course_enrollments' ? 'active' : ''}`}
+                onClick={() => switchTab('course_enrollments')}
+              >
+                <i className="fas fa-user-graduate"></i>
+                <span>Đăng ký Khóa học</span>
               </button>
               <button 
                 className={`nav-item ${currentTab === 'contacts' ? 'active' : ''}`}
@@ -256,6 +272,9 @@ export default function AdminDashboard() {
                   {currentTab === 'overview' && 'Tổng quan'}
                   {currentTab === 'events' && 'Quản lý sự kiện'}
                   {currentTab === 'users' && 'Quản lý người dùng'}
+                  {currentTab === 'courses' && 'Quản lý khóa học'}
+                  {currentTab === 'registrations' && 'Đăng ký Sự kiện'}
+                  {currentTab === 'course_enrollments' && 'Đăng ký Khóa học'}
                   {currentTab === 'settings' && 'Cài đặt hệ thống'}
                 </h1>
                 <p className="page-subtitle">Admin Dashboard - 3DIoT Management System</p>
@@ -296,8 +315,10 @@ export default function AdminDashboard() {
             {currentTab === 'overview' && <AdminOverviewTab />}
             {currentTab === 'events' && <AdminEventsTab />}
             {currentTab === 'registrations' && <AdminRegistrationsTab />}
+            {currentTab === 'course_enrollments' && <AdminCourseEnrollmentsTab />}
             {currentTab === 'contacts' && <AdminContactsTab />}
             {currentTab === 'users' && <AdminUsersTab />}
+            {currentTab === 'courses' && <AdminCoursesTab />}
             {currentTab === 'settings' && <AdminSettingsTab />}
           </div>
         </div>

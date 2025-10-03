@@ -108,3 +108,39 @@ model Setting {
 }
 
 
+// Courses feature
+model Course {
+  id               String   @id @default(cuid())
+  title            String
+  description      String
+  image            String?
+  level            String   // 'beginner' | 'intermediate' | 'advanced'
+  price            Int      @default(0)
+  status           String   // 'published' | 'draft'
+  category         String
+  tags             Json?
+  lessonsCount     Int      @default(0)
+  durationMinutes  Int      @default(0)
+  enrolledCount    Int      @default(0) // denormalized, mirrors Events
+  publishedAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  enrollments      CourseEnrollment[]
+}
+
+model CourseEnrollment {
+  id         String   @id @default(cuid())
+  courseId   String
+  fullName   String
+  email      String
+  phone      String?
+  status     String   // 'pending' | 'confirmed' | 'cancelled'
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+}
+

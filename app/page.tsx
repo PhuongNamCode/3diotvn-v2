@@ -6,6 +6,7 @@ import EventsTab from "./tabs/EventsTab";
 import ContactTab from "./tabs/ContactTab";
 import NewsTab from "./tabs/NewsTab";
 import LoginTab from "./tabs/LoginTab";
+import CoursesTab from "./tabs/CoursesTab";
 import { jwtDecode } from "jwt-decode";
 // Removed static data fallbacks; data now comes from DB via API/hooks
 import Link from "next/link";
@@ -411,6 +412,7 @@ export default function Home() {
             <div className="nav-tabs" id="navTabs">
               <button className="nav-tab active" data-tab="home"><i className="fas fa-home"></i> Trang chủ</button>
               <button className="nav-tab" data-tab="events"><i className="fas fa-calendar-alt"></i> Sự kiện</button>
+              <button className="nav-tab" data-tab="courses"><i className="fas fa-graduation-cap"></i> Khóa học</button>
               <button className="nav-tab" data-tab="news"><i className="fas fa-newspaper"></i> Tin tức</button>
               <button className="nav-tab" data-tab="contact"><i className="fas fa-handshake"></i> Liên hệ</button>
               <button className="nav-tab" data-tab="login"><i className="fas fa-sign-in-alt"></i> Đăng nhập</button>
@@ -444,6 +446,7 @@ export default function Home() {
         <div className="tab-content" id="login"><LoginTab /></div>
 
         <div className="tab-content" id="events"><EventsTab /></div>
+        <div className="tab-content" id="courses"><CoursesTab /></div>
 
 
         <div className="tab-content" id="contact"><ContactTab /></div>

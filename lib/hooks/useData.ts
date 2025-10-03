@@ -84,6 +84,35 @@ export interface Registration {
   updatedAt?: string;
 }
 
+// Courses
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  image?: string | null;
+  level: string;
+  price: number;
+  status: string;
+  category: string;
+  tags?: string[];
+  lessonsCount: number;
+  durationMinutes: number;
+  enrolledCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CourseEnrollment {
+  id: string;
+  courseId: string;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  status: 'pending' | 'confirmed' | 'cancelled' | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // Custom hook for events
 export function useEvents() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -634,6 +663,167 @@ export function useRegistrations() {
     deleteRegistration,
     refetch: fetchRegistrations
   };
+}
+
+// Custom hook for courses
+export function useCourses(params?: { page?: number; limit?: number; category?: string; level?: string; search?: string }) {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; pages: number } | null>(null);
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const sp = new URLSearchParams();
+      if (params?.page) sp.set('page', String(params.page));
+      if (params?.limit) sp.set('limit', String(params.limit));
+      if (params?.category) sp.set('category', params.category);
+      if (params?.level) sp.set('level', params.level);
+      if (params?.search) sp.set('search', params.search);
+      const response = await fetch(`/api/courses?${sp.toString()}`);
+      const result = await response.json();
+      if (result.success) {
+        setCourses(result.data);
+        setPagination(result.pagination || null);
+        setError(null);
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('Failed to fetch courses');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createCourse = async (data: Omit<Course, 'id' | 'createdAt' | 'updatedAt' | 'enrolledCount'>) => {
+    try {
+      const response = await fetch('/api/courses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const result = await response.json();
+      if (result.success) {
+        setCourses((prev) => [result.data, ...prev]);
+        return result.data as Course;
+      }
+      throw new Error(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create course');
+      throw err;
+    }
+  };
+
+  const updateCourse = async (id: string, updates: Partial<Course>) => {
+    try {
+      const response = await fetch(`/api/courses/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
+      const result = await response.json();
+      if (result.success) {
+        setCourses((prev) => prev.map((c) => (c.id === id ? result.data : c)));
+        return result.data as Course;
+      }
+      throw new Error(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update course');
+      throw err;
+    }
+  };
+
+  const deleteCourse = async (id: string) => {
+    try {
+      const response = await fetch(`/api/courses/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        setCourses((prev) => prev.filter((c) => c.id !== id));
+        return true;
+      }
+      throw new Error(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete course');
+      throw err;
+    }
+  };
+
+  useEffect(() => { fetchCourses(); }, [params?.page, params?.limit, params?.category, params?.level, params?.search]);
+
+  return { courses, loading, error, pagination, refetch: fetchCourses, createCourse, updateCourse, deleteCourse };
+}
+
+// Custom hook for course enrollments
+export function useCourseEnrollments() {
+  const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchEnrollments = async (courseId?: string) => {
+    try {
+      setLoading(true);
+      const qs = courseId ? `?courseId=${encodeURIComponent(courseId)}` : '';
+      const response = await fetch(`/api/course-enrollments${qs}`);
+      const result = await response.json();
+      if (result.success) {
+        setEnrollments(result.data);
+        setError(null);
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('Failed to fetch course enrollments');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createEnrollment = async (data: Omit<CourseEnrollment, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const response = await fetch('/api/course-enrollments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const result = await response.json();
+      if (result.success) {
+        setEnrollments((prev) => [result.data, ...prev]);
+        return result.data as CourseEnrollment;
+      }
+      throw new Error(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create course enrollment');
+      throw err;
+    }
+  };
+
+  const updateEnrollment = async (id: string, updates: Partial<CourseEnrollment>) => {
+    try {
+      const response = await fetch(`/api/course-enrollments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      const result = await response.json();
+      if (result.success) {
+        setEnrollments(prev => prev.map(e => e.id === id ? result.data : e));
+        return result.data as CourseEnrollment;
+      }
+      throw new Error(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update enrollment');
+      throw err;
+    }
+  };
+
+  const deleteEnrollment = async (id: string) => {
+    try {
+      const response = await fetch(`/api/course-enrollments/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        setEnrollments(prev => prev.filter(e => e.id !== id));
+        return true;
+      }
+      throw new Error(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete enrollment');
+      throw err;
+    }
+  };
+
+  useEffect(() => { fetchEnrollments(); }, []);
+
+  return { enrollments, loading, error, refetch: fetchEnrollments, createEnrollment, updateEnrollment, deleteEnrollment };
 }
 
 // News Management Hooks
