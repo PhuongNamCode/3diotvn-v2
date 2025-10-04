@@ -110,12 +110,30 @@ async function callPerplexityForCategory(category: typeof ALLOWED_CATEGORIES[num
   
   // Category-specific sources
   const sources: Record<string, string[]> = {
-    Communications: ['https://www.lightreading.com/','https://tecknexus.com/','https://www.telecoms.com/','vista.gov.vn','3GPP','AT&T', 'Verizon', 'T-Mobile', 'Vodafone', 'Orange', 'Telefonica', 'China Mobile', 'NTT Docomo', 'SK Telecom', 'Singtel', 'Ericsson', 'Nokia', 'Huawei', 'Cisco', 'IEEE Spectrum', 'TechCrunch', 'Ars Technica', 'Wired', 'Network World', 'Fierce Telecom', 'Light Reading', 'VnExpress', 'GenK', 'Tinhte', 'ICTNews','viettel'],
-    IoT: ['talkingiot.io', 'iottechnews', 'iotbusinessnews','iotm2mcouncil', 'Arduino', 'Raspberry Pi', 'STMicroelectronics', 'Texas Instruments', 'Microchip', 'Espressif', 'IEEE Spectrum', 'TechCrunch', 'Bao moi', 'Electronics Weekly', 'VnExpress'],
-    Embedded: ['Intel', 'ARM', 'NVIDIA', 'STMicroelectronics', 'Texas Instruments', 'Microchip', 'Espressif', 'Nordic Semiconductor', 'IEEE Spectrum', 'Hackaday', 'Electronics Weekly', 'EDN Network', 'EE Times', 'VnExpress', 'GenK', 'Tinhte'],
-    AI: ['NVIDIA', 'Google', 'OpenAI', 'Microsoft', 'Meta', 'Intel AI', 'AMD AI', 'MIT', 'Stanford', 'Berkeley', 'IEEE Spectrum', 'TechCrunch', 'MIT Technology Review', 'VnExpress', 'GenK', 'Tinhte'],
-    Hardware: ['Intel', 'AMD', 'ARM', 'NVIDIA', 'Qualcomm', 'Broadcom', 'MediaTek', 'Apple', 'Samsung', 'TSMC', 'IEEE Spectrum', 'Hackaday', 'Electronics Weekly', 'EDN Network', 'EE Times', 'VnExpress', 'GenK']
+    Communications: [
+      'lightreading.com','tecknexus.com','telecoms.com','vista.gov.vn','3GPP','AT&T','Verizon','T-Mobile','Vodafone','Orange','Telefonica','China Mobile','NTT Docomo','SK Telecom','Singtel','Ericsson','Nokia','Huawei','Cisco','IEEE Spectrum','TechCrunch','Ars Technica','Wired','Network World','Fierce Telecom','Light Reading','VnExpress','GenK','Tinhte','ICTNews','viettel',
+      'telecomtv.com','the-mobile-network.com','mobileworldlive.com','ngmn.org','o-ran.org','gsacom.com','delloro.com','analysysmason.com','tefficient.com','blog.telegeography.com','speedtest.net/insights','inform.tmforum.org','capacitymedia.com','rcrwireless.com',
+      '3gpp.org','etsi.org','ietf.org','tmforum.org','fcc.gov','berec.europa.eu','ofcom.org.uk'
+    ],
+    IoT: [
+      'talkingiot.io','iottechnews','iotbusinessnews','iotm2mcouncil','Arduino','Raspberry Pi','STMicroelectronics','Texas Instruments','Microchip','Espressif','IEEE Spectrum','TechCrunch','Bao moi','Electronics Weekly','VnExpress',
+      'staceyoniot.com','iot-analytics.com','iiot-world.com','lora-alliance.org','csa-iot.org','threadgroup.org','bluetooth.com/blog','postscapes.com','edgeimpulse.com/blog','cnx-software.com'
+    ],
+    Embedded: [
+      'Intel','ARM','NVIDIA','STMicroelectronics','Texas Instruments','Microchip','Espressif','Nordic Semiconductor','IEEE Spectrum','Hackaday','Electronics Weekly','EDN Network','EE Times','VnExpress','GenK','Tinhte',
+      'cnx-software.com','lwn.net','phoronix.com','zephyrproject.org/blog','freertos.org','platformio.org/blog','adafruit.com/blog','sparkfun.com/news'
+    ],
+    AI: [
+      'NVIDIA','Google','OpenAI','Microsoft','Meta','Intel AI','AMD AI','MIT','Stanford','Berkeley','IEEE Spectrum','TechCrunch','MIT Technology Review','VnExpress','GenK','Tinhte',
+      'deepmind.google/discover/blog','anthropic.com/news','huggingface.co/blog','ai.googleblog.com','ai.meta.com/blog','microsoft.com/en-us/research/blog','bair.berkeley.edu/blog','paperswithcode.com','thegradient.pub','importai.substack.com'
+    ],
+    Hardware: [
+      'Intel','AMD','ARM','NVIDIA','Qualcomm','Broadcom','MediaTek','Apple','Samsung','TSMC','IEEE Spectrum','Hackaday','Electronics Weekly','EDN Network','EE Times','VnExpress','GenK',
+      'anandtech.com','servethehome.com','semianalysis.com','semiengineering.com','techinsights.com','notebookcheck.net','chipsandcheese.com','computerbase.de','phoronix.com',
+      'techinsights.com/daily-insights','counterpointresearch.com','trendforce.com','asml.com/en/news','imec-int.com/en/articles'
+    ],
   };
+  
 
   const prompt = `Bạn là một chuyên gia tổng hợp và phân tích tin tức. Bạn hãy tìm kiếm tin tức thật cẩn thận.
 Hãy tìm và tổng hợp đầy đủ (tối thiểu 10 tin tức) những tin tức mới nhất về ${category} trong 1 tháng qua từ các nguồn báo lớn uy tín chất lượng quốc tế và trong nước.
