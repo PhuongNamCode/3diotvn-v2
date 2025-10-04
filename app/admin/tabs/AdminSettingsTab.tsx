@@ -314,40 +314,64 @@ export default function AdminSettingsTab() {
         {/* SMTP Settings */}
         <div className="table-container">
           <div className="table-header">
-            <h3 className="table-title">SMTP Settings</h3>
+            <h3 className="table-title">SMTP Settings (Override .env)</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0.5rem 0 0 0' }}>
+              💡 Cấu hình mặc định từ file .env. Điền vào đây để override tạm thời.
+            </p>
           </div>
           <div style={{ padding: '1.5rem' }}>
             <div className="form-group">
-              <label>SMTP Host</label>
+              <label>SMTP Host (Override)</label>
               <input
                 type="text"
                 value={integrationSettings.smtpHost}
                 onChange={(e) => setIntegrationSettings(prev => ({ ...prev, smtpHost: e.target.value }))}
-                placeholder="smtp.gmail.com"
+                placeholder="smtp.gmail.com (để trống = dùng .env)"
               />
             </div>
             <div className="form-group">
-              <label>SMTP Username</label>
+              <label>SMTP Username (Override)</label>
               <input
                 type="text"
                 value={integrationSettings.smtpUsername}
                 onChange={(e) => setIntegrationSettings(prev => ({ ...prev, smtpUsername: e.target.value }))}
-                placeholder="email@domain.com"
+                placeholder="email@domain.com (để trống = dùng .env)"
               />
             </div>
             <div className="form-group">
-              <label>SMTP Password</label>
+              <label>SMTP Password (Override)</label>
               <input
                 type="password"
                 value={integrationSettings.smtpPassword}
                 onChange={(e) => setIntegrationSettings(prev => ({ ...prev, smtpPassword: e.target.value }))}
-                placeholder="Nhập mật khẩu email"
+                placeholder="App Password (để trống = dùng .env)"
               />
             </div>
-            <button className="btn btn-primary" onClick={handleSaveSmtp} disabled={savingSmtp}>
-              <i className={`fas ${savingSmtp ? 'fa-spinner fa-spin' : 'fa-save'}`}></i>
-              {savingSmtp ? ' Đang lưu...' : ' Lưu SMTP settings'}
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button className="btn btn-primary" onClick={handleSaveSmtp} disabled={savingSmtp}>
+                <i className={`fas ${savingSmtp ? 'fa-spinner fa-spin' : 'fa-save'}`}></i>
+                {savingSmtp ? ' Đang lưu...' : ' Lưu Override'}
+              </button>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setIntegrationSettings(prev => ({ ...prev, smtpHost: '', smtpUsername: '', smtpPassword: '' }));
+                }}
+                disabled={savingSmtp}
+              >
+                <i className="fas fa-undo"></i>
+                Reset về .env
+              </button>
+            </div>
+            <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--surface-variant)', borderRadius: '8px', fontSize: '0.9rem' }}>
+              <strong>📋 Hướng dẫn:</strong>
+              <ul style={{ margin: '0.5rem 0 0 1rem' }}>
+                <li>File .env chứa cấu hình mặc định: <code>SMTP_HOST</code>, <code>SMTP_USERNAME</code>, <code>SMTP_PASSWORD</code></li>
+                <li>Admin panel dùng để override tạm thời khi cần test hoặc thay đổi nhanh</li>
+                <li>Để trống = sử dụng giá trị từ .env</li>
+                <li>Điền giá trị = override tạm thời (ưu tiên cao hơn .env)</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

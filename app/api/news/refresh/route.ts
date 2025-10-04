@@ -71,7 +71,7 @@ async function callPerplexity(prompt: string): Promise<any> {
           { role: 'user', content: prompt }
         ],
         temperature: 0.2,
-        max_tokens: 2000
+        max_tokens: 20000
       })
     });
     if (resp.ok) {
@@ -127,7 +127,7 @@ Yêu cầu:
 2. Ưu tiên các tin tức quốc tế từ các tổ chức công nghệ quốc tế lớn.
 2. Mỗi tin tức phải có **link gốc thật** từ bài báo.
 3. **Tiêu đề và tóm tắt PHẢI bằng tiếng Việt** (có thể có thuật ngữ kỹ thuật tiếng Anh).
-4. Tóm tắt dài 80-100 từ.
+4. Tóm tắt dài 60-800 từ.
 5. Trả lời theo đúng format JSON sau (mảng JSON), không thêm bất cứ text nào ngoài JSON:
 
 FORMAT JSON: [{ "title": "Tiêu đề bằng tiếng Việt", "content": "Nội dung", "excerpt": "Tóm tắt 80-100 từ bằng tiếng Việt", "author": "Tác giả", "source": "Nguồn", "category": "${category}", "publishedAt": "2024-12-09T10:00:00Z", "link": "URL" }];

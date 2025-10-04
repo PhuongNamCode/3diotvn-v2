@@ -7,6 +7,7 @@ export class EmailService {
 
   async getEmailConfig(): Promise<EmailConfig | null> {
     try {
+      // Priority 1: Check for admin panel overrides first
       const settings = await prisma.setting.findMany({
         where: {
           key: {
@@ -20,19 +21,25 @@ export class EmailService {
         return acc;
       }, {} as Record<string, string | null>);
 
-      const host = settingsMap['integrations.smtpHost'];
-      const user = settingsMap['integrations.smtpUsername'];
-      const pass = settingsMap['integrations.smtpPassword'];
+      // Priority 2: Use .env variables as default, admin panel as override
+      const host = settingsMap['integrations.smtpHost'] || process.env.SMTP_HOST;
+      const user = settingsMap['integrations.smtpUsername'] || process.env.SMTP_USERNAME;
+      const pass = settingsMap['integrations.smtpPassword'] || process.env.SMTP_PASSWORD;
+      const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : (host?.includes('gmail') ? 587 : 587);
+      const secure = process.env.SMTP_SECURE === 'true';
 
       if (!host || !user || !pass) {
-        console.warn('SMTP configuration incomplete');
+        console.warn('SMTP configuration incomplete. Please check .env file or admin panel settings.');
+        console.warn('Required: SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD');
         return null;
       }
 
+      console.log(`📧 Using SMTP: ${host} (${settingsMap['integrations.smtpHost'] ? 'Admin Panel' : 'Environment'})`);
+
       return {
         host,
-        port: host.includes('gmail') ? 587 : 587, // Default SMTP port
-        secure: false, // Use STARTTLS
+        port,
+        secure,
         auth: {
           user,
           pass
