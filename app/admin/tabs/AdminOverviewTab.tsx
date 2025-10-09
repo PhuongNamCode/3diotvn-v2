@@ -50,7 +50,7 @@ export default function AdminOverviewTab() {
         id: String(r.id),
         time: r.createdAt || new Date().toISOString(),
         type: "registration",
-        description: `Đăng ký sự kiện` + (r.eventId ? ` (#${r.eventId})` : ''),
+        description: `Đăng ký sự kiện từ ${r.fullName || r.email || 'N/A'}`,
         user: r.fullName || r.email || 'N/A',
         status: r.status || 'pending',
       }));
@@ -59,8 +59,8 @@ export default function AdminOverviewTab() {
         id: String(c.id),
         time: c.createdAt || new Date().toISOString(),
         type: "contact",
-        description: `Liên hệ hợp tác mới`,
-        user: c.company || c.name || c.email || 'N/A',
+        description: `Liên hệ ${c.type} từ ${c.name || c.email || 'N/A'}`,
+        user: c.name || c.email || 'N/A',
         status: c.status || 'pending',
       }));
 
@@ -68,9 +68,9 @@ export default function AdminOverviewTab() {
         id: String(e.id),
         time: e.createdAt || new Date().toISOString(),
         type: "event",
-        description: `Tạo sự kiện mới "${e.title}"`,
+        description: `Tạo sự kiện "${e.title}" (${e.category})`,
         user: 'Admin',
-        status: 'completed',
+        status: e.status === 'upcoming' ? 'confirmed' : e.status === 'past' ? 'completed' : 'pending',
       }));
 
       const merged = [...regActivities, ...contactActivities, ...eventActivities]
@@ -88,6 +88,13 @@ export default function AdminOverviewTab() {
 
   useEffect(() => {
     fetchRecentActivity();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchRecentActivity();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, [fetchRecentActivity]);
 
   const filteredActivity = useMemo(() => {

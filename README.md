@@ -160,6 +160,12 @@ npm run prisma:generate
 npx prisma migrate dev --name init | cat
 
 # 4) Start server
+# Tìm process đang dùng port 3000
+lsof -ti:3000
+# Kill process trên port 3000
+kill $(lsof -ti:3000)
+# Hoặc force kill
+kill -9 $(lsof -ti:3000)
 fuser -k 3000/tcp || true
 npm run dev
 ```

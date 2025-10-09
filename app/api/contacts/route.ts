@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sanitizeContactData } from '@/lib/sanitize';
-import { cache, CACHE_KEYS, CACHE_TTL, cacheInvalidation } from '@/lib/cache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,18 +9,6 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const type = searchParams.get('type');
     const status = searchParams.get('status');
-    
-    // Generate cache key
-    const cacheKey = CACHE_KEYS.CONTACTS(page, limit, type || undefined, status || undefined);
-    
-    // Try to get from cache first
-    const cached = cache.get(cacheKey);
-    if (cached) {
-      console.log(`🎯 Cache HIT: ${cacheKey}`);
-      return NextResponse.json(cached);
-    }
-    
-    console.log(`💾 Cache MISS: ${cacheKey}`);
     
     const skip = (page - 1) * limit;
     
@@ -66,9 +53,6 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit)
       }
     };
-    
-    // Cache the response
-    cache.set(cacheKey, response, CACHE_TTL.CONTACTS);
     
     return NextResponse.json(response);
   } catch (error) {
@@ -126,9 +110,6 @@ export async function POST(request: NextRequest) {
         notes: sanitizedData.notes,
       },
     });
-    
-    // Invalidate contacts cache when new contact is created
-    cacheInvalidation.invalidateContacts();
     
     return NextResponse.json({ success: true, data: created }, { status: 201 });
   } catch (error) {

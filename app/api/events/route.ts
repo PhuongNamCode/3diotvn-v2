@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { cache, CACHE_KEYS, CACHE_TTL, cacheInvalidation } from '@/lib/cache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,18 +8,6 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const category = searchParams.get('category');
     const status = searchParams.get('status');
-    
-    // Generate cache key
-    const cacheKey = CACHE_KEYS.EVENTS(page, limit, category || undefined, status || undefined);
-    
-    // Try to get from cache first
-    const cached = cache.get(cacheKey);
-    if (cached) {
-      console.log(`🎯 Cache HIT: ${cacheKey}`);
-      return NextResponse.json(cached);
-    }
-    
-    console.log(`💾 Cache MISS: ${cacheKey}`);
     
     const skip = (page - 1) * limit;
     
@@ -104,9 +91,6 @@ export async function GET(request: NextRequest) {
       }
     };
     
-    // Cache the response
-    cache.set(cacheKey, response, CACHE_TTL.EVENTS);
-    
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -183,9 +167,6 @@ export async function POST(request: NextRequest) {
       updatedAt: created.updatedAt,
     };
 
-    // Invalidate events cache when new event is created
-    cacheInvalidation.invalidateEvents();
-    
     return NextResponse.json({ success: true, data: mapped }, { status: 201 });
   } catch (error) {
     console.error('Error creating event:', error);
