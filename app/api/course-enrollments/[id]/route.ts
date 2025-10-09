@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = String(params.id);
+    const { id } = await params;
     const body = await request.json();
     const updated = await (prisma as any).courseEnrollment.update({
       where: { id },
@@ -21,9 +21,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = String(params.id);
+    const { id } = await params;
     const deleted = await (prisma as any).courseEnrollment.delete({ where: { id } });
     // recompute enrolledCount
     const count = await (prisma as any).courseEnrollment.count({ where: { courseId: deleted.courseId, NOT: { status: 'cancelled' } } });

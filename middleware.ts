@@ -7,7 +7,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Lấy client IP
+  // Kiểm tra biến môi trường để bật/tắt rate limiting
+  const enableRateLimiting = process.env.ENABLE_RATE_LIMITING === 'true';
+  
+  if (!enableRateLimiting) {
+    // Bỏ qua rate limiting nếu tắt
+    return NextResponse.next();
+  }
+
+  // Rate limiting logic
   const ip = getClientIP(request);
   const pathname = request.nextUrl.pathname;
 

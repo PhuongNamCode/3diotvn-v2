@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: 3diot-db
+    restart: always
+    environment:
+      POSTGRES_DB: web
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - 3diot-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: 3diot-redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - 3diot-network
+
+  app:
+    image: phuongnamdocker/3diot-app:latest
+    container_name: 3diot-app
+    restart: always
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/web?schema=public
+      REDIS_URL: redis://redis:6379
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      PERPLEXITY_MODEL: ${PERPLEXITY_MODEL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      ADMIN_RESET_CODE: ${ADMIN_RESET_CODE}
+      ENABLE_RATE_LIMITING: ${ENABLE_RATE_LIMITING}
+      JWT_SECRET: ${JWT_SECRET}
+      NEXT_PUBLIC_BASE_URL: https://3diot.vn
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - 3diot-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  3diot-network:
+    driver: bridge

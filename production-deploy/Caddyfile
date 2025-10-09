@@ -1,0 +1,19 @@
+{
+    email admin@3diot.vn
+}
+
+3diot.vn, www.3diot.vn {
+    reverse_proxy 127.0.0.1:3000
+    log {
+        output file /var/log/caddy/3diot.access.log
+        format console
+    }
+}
+
+n8n.3diot.vn {
+    reverse_proxy 127.0.0.1:5678
+    log {
+        output file /var/log/caddy/n8n.access.log
+        format console
+    }
+}

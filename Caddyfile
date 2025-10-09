@@ -1,0 +1,95 @@
+# 3DIoT Production Caddyfile
+# Auto-SSL with Let's Encrypt
+# Includes existing N8N subdomain configuration
+
+{
+    email admin@3diot.vn
+}
+
+3diot.vn, www.3diot.vn {
+    # Reverse proxy to Next.js app (Docker container)
+    reverse_proxy app:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Security headers
+    header {
+        # Enable HSTS
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        
+        # XSS protection
+        X-XSS-Protection "1; mode=block"
+        
+        # Content type sniffing protection
+        X-Content-Type-Options "nosniff"
+        
+        # Referrer policy
+        Referrer-Policy "no-referrer-when-downgrade"
+        
+        # Content Security Policy
+        Content-Security-Policy "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com;"
+    }
+
+    # Rate limiting for API endpoints
+    @api {
+        path /api/*
+    }
+    
+    rate_limit @api {
+        zone static {
+            key {remote_host}
+            events 100
+            window 1m
+        }
+    }
+
+    # Admin login rate limiting (stricter)
+    @admin_login {
+        path /api/admin/auth
+    }
+    
+    rate_limit @admin_login {
+        zone admin {
+            key {remote_host}
+            events 5
+            window 1m
+        }
+    }
+
+    # Cache static assets
+    @static {
+        path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
+    }
+    
+    header @static {
+        Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Gzip compression
+    encode gzip
+
+    # Logging
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 100mb
+            roll_keep 5
+        }
+        format console
+    }
+}
+
+# N8N Subdomain (existing configuration)
+n8n.3diot.vn {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:5678
+    log {
+        output file /var/log/caddy/n8n.access.log
+        format console
+    }
+}

@@ -173,20 +173,6 @@ export default function AdminOverviewTab() {
           <div className="stat-label">Tin tức đã đăng</div>
         </div>
 
-        {/* Moved from Analytics: Lượt truy cập */}
-        <div className="stat-card">
-          <div className="stat-header">
-            <div className="stat-icon">
-              <i className="fas fa-globe"></i>
-            </div>
-            <div className="stat-trend up">
-              <i className="fas fa-arrow-up"></i>
-              45%
-            </div>
-          </div>
-          <div className="stat-number">15,248</div>
-          <div className="stat-label">Lượt truy cập</div>
-        </div>
       </div>
 
       

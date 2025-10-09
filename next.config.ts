@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
     // place turbopack config here if needed
   },
   reactStrictMode: true,
+  // Enable standalone output for Docker
+  output: 'standalone',
 };
 
 export default nextConfig;

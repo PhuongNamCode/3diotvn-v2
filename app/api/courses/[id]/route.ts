@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = String(params.id);
+    const { id } = await params;
     const c = await (prisma as any).course.findUnique({ where: { id } });
     if (!c) return NextResponse.json({ success: false, error: 'Course not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: c });
@@ -12,9 +12,9 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = String(params.id);
+    const { id } = await params;
     const body = await request.json();
 
     const priceVal = body.price !== undefined ? Number(body.price) : undefined;
@@ -51,9 +51,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = String(params.id);
+    const { id } = await params;
     await (prisma as any).course.delete({ where: { id } });
     return NextResponse.json({ success: true, message: 'Deleted' });
   } catch (error) {

@@ -5,30 +5,30 @@ interface RateLimitConfig {
 
 // Rate limits cho từng endpoint
 const rateLimits: Record<string, RateLimitConfig> = {
-  // Public endpoints
-  '/api/contacts': { windowMs: 15 * 60 * 1000, max: 5 }, // 5 requests per 15 minutes
-  '/api/events': { windowMs: 15 * 60 * 1000, max: 15 },
-  '/api/courses': { windowMs: 15 * 60 * 1000, max: 20 },
-  '/api/news': { windowMs: 15 * 60 * 1000, max: 30 },
-  '/api/news/refresh': { windowMs: 60 * 60 * 1000, max: 3 }, // 3 requests per hour
-  '/api/news/scheduler': { windowMs: 60 * 60 * 1000, max: 5 },
-  '/api/users': { windowMs: 15 * 60 * 1000, max: 10 },
-  '/api/registrations': { windowMs: 15 * 60 * 1000, max: 15 },
-  '/api/course-enrollments': { windowMs: 15 * 60 * 1000, max: 15 },
-  '/api/stats': { windowMs: 15 * 60 * 1000, max: 10 },
-  '/api/settings': { windowMs: 15 * 60 * 1000, max: 5 },
-  '/api/upload': { windowMs: 15 * 60 * 1000, max: 10 },
-  '/api/test': { windowMs: 15 * 60 * 1000, max: 50 },
+  // Public endpoints (cửa sổ 5 phút)
+  '/api/contacts': { windowMs: 5 * 60 * 1000, max: 10 }, // 10 requests per 5 minutes
+  '/api/events': { windowMs: 5 * 60 * 1000, max: 30 }, // 30 requests per 5 minutes
+  '/api/courses': { windowMs: 5 * 60 * 1000, max: 40 }, // 40 requests per 5 minutes
+  '/api/news': { windowMs: 5 * 60 * 1000, max: 60 }, // 60 requests per 5 minutes
+  '/api/news/refresh': { windowMs: 60 * 60 * 1000, max: 6 }, // 6 requests per hour (giữ nguyên)
+  '/api/news/scheduler': { windowMs: 60 * 60 * 1000, max: 10 }, // 10 requests per hour (giữ nguyên)
+  '/api/users': { windowMs: 5 * 60 * 1000, max: 20 }, // 20 requests per 5 minutes
+  '/api/registrations': { windowMs: 5 * 60 * 1000, max: 30 }, // 30 requests per 5 minutes
+  '/api/course-enrollments': { windowMs: 5 * 60 * 1000, max: 30 }, // 30 requests per 5 minutes
+  '/api/stats': { windowMs: 5 * 60 * 1000, max: 20 }, // 20 requests per 5 minutes
+  '/api/settings': { windowMs: 5 * 60 * 1000, max: 10 }, // 10 requests per 5 minutes
+  '/api/upload': { windowMs: 5 * 60 * 1000, max: 20 }, // 20 requests per 5 minutes
+  '/api/test': { windowMs: 5 * 60 * 1000, max: 100 }, // 100 requests per 5 minutes
   
-  // Dynamic endpoints
-  '/api/courses/[id]': { windowMs: 15 * 60 * 1000, max: 20 },
-  '/api/users/[id]': { windowMs: 15 * 60 * 1000, max: 15 },
+  // Dynamic endpoints (cửa sổ 5 phút)
+  '/api/courses/[id]': { windowMs: 5 * 60 * 1000, max: 40 }, // 40 requests per 5 minutes
+  '/api/users/[id]': { windowMs: 5 * 60 * 1000, max: 30 }, // 30 requests per 5 minutes
   
-  // Admin endpoints (x2 như yêu cầu)
-  '/api/admin/auth': { windowMs: 15 * 60 * 1000, max: 10 }, // 5 -> 10
-  '/api/admin/security': { windowMs: 15 * 60 * 1000, max: 6 }, // 3 -> 6
-  '/api/admin/reset-password': { windowMs: 60 * 60 * 1000, max: 6 }, // 3 -> 6
-  '/api/admin/reset-code': { windowMs: 15 * 60 * 1000, max: 10 }, // 5 -> 10
+  // Admin endpoints (cửa sổ 5 phút cho auth/security/reset-code, 1 giờ cho reset-password)
+  '/api/admin/auth': { windowMs: 5 * 60 * 1000, max: 20 }, // 20 requests per 5 minutes
+  '/api/admin/security': { windowMs: 5 * 60 * 1000, max: 12 }, // 12 requests per 5 minutes
+  '/api/admin/reset-password': { windowMs: 60 * 60 * 1000, max: 12 }, // 12 requests per hour (giữ nguyên)
+  '/api/admin/reset-code': { windowMs: 5 * 60 * 1000, max: 20 }, // 20 requests per 5 minutes
 };
 
 // Map để lưu trữ số lượng requests của từng IP
