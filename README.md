@@ -47,6 +47,7 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"
 # Perplexity API (for news refresh)
 PERPLEXITY_API_KEY="<your_perplexity_api_key>"
 PERPLEXITY_MODEL="sonar" # optional; defaults to sonar
+ADMIN_RESET_CODE="3DIOT2025" # Admin password reset code
 ```
 
 ### Start PostgreSQL (localhost:5432)
@@ -145,7 +146,7 @@ npm run db:restore
 ### Tóm tắt lệnh chạy nhanh (copy/paste)
 ```bash
 # 1) Env
-printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\n' > .env
+printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nADMIN_RESET_CODE="3DIOT2025"\n' > .env
 printf 'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/web?schema=public"\nNEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_gsi_client_id>"\nPERPLEXITY_API_KEY="<your_perplexity_api_key>"\nPERPLEXITY_MODEL="sonar"\n' > .env.local
 
 # 2) DB
@@ -185,4 +186,9 @@ npm run prisma:seed
 ```
 
 - No frontend code changes needed. Only `DATABASE_URL` differs between local and prod.
+
+### Admin Security
+- **Reset Password**: Sử dụng mã reset trong biến môi trường `ADMIN_RESET_CODE`
+- **Thay đổi mã reset**: Sửa trong file `.env` và restart server
+- **Default code**: `3DIOT2025` (nên thay đổi trong production)
 

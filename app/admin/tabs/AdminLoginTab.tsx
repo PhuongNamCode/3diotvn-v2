@@ -18,22 +18,36 @@ export default function AdminLoginTab({ onLogin }: AdminLoginTabProps) {
     setIsLoading(true);
     setError("");
 
-    // Simulate authentication delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Demo credentials: admin / admin123
-    if (username === "admin" && password === "admin123") {
-      onLogin({
-        name: "Admin User",
-        email: "admin@3diot.vn",
-        role: "Super Admin",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+    try {
+      // Authenticate with API
+      const response = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password
+        })
       });
-    } else {
-      setError("Thông tin đăng nhập không chính xác!");
+
+      const result = await response.json();
+
+      if (result.success) {
+        onLogin({
+          name: result.data.name || "Admin User",
+          email: result.data.email || "admin@3diot.vn",
+          role: result.data.role || "Super Admin",
+          avatar: result.data.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+        });
+      } else {
+        setError(result.error || "Thông tin đăng nhập không chính xác!");
+      }
+    } catch (err) {
+      setError("Không thể kết nối đến server. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const togglePassword = () => {

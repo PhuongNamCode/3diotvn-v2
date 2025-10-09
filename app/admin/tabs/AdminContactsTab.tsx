@@ -99,6 +99,7 @@ export default function AdminContactsTab() {
         'Công ty': contact.company,
         'Chức vụ': contact.role,
         'Loại liên hệ': contact.type === 'partnership' ? 'Hợp tác' : 
+                       contact.type === 'support' ? 'Hỗ trợ' :
                        contact.type === 'sponsorship' ? 'Tài trợ' :
                        contact.type === 'collaboration' ? 'Cộng tác' : 'Chung',
         'Trạng thái': contact.status === 'new' ? 'Mới' :
@@ -109,6 +110,18 @@ export default function AdminContactsTab() {
         'Độ ưu tiên': contact.priority === 'high' ? 'Cao' :
                      contact.priority === 'medium' ? 'Trung bình' : 'Thấp',
         'Nội dung': contact.message,
+        'Danh mục hỗ trợ': contact.type === 'support' && contact.notes && contact.notes.length > 0 ? 
+          contact.notes.map(note => {
+            const noteLabels: { [key: string]: string } = {
+              'iot-deployment': 'Triển khai IoT',
+              'hardware-design': 'Thiết kế phần cứng',
+              'software-design': 'Thiết kế phần mềm',
+              'technical-issues': 'Vấn đề kỹ thuật',
+              'other': 'Khác'
+            };
+            return noteLabels[note] || note;
+          }).join(', ') : 
+          (contact.notes && contact.notes.length > 0 ? contact.notes.join(', ') : ''),
         'Ngày tạo': contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('vi-VN') : '',
         'Ngày cập nhật': contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString('vi-VN') : ''
       }));
@@ -128,6 +141,7 @@ export default function AdminContactsTab() {
         { wch: 15 }, // Trạng thái
         { wch: 12 }, // Độ ưu tiên
         { wch: 40 }, // Nội dung
+        { wch: 25 }, // Danh mục hỗ trợ
         { wch: 15 }, // Ngày tạo
         { wch: 15 }  // Ngày cập nhật
       ];
@@ -166,8 +180,10 @@ export default function AdminContactsTab() {
   const getTypeBadge = (type: string) => {
     const typeMap: { [key: string]: { class: string; text: string } } = {
       'partnership': { class: 'badge-success', text: 'Hợp tác' },
+      'support': { class: 'badge-info', text: 'Hỗ trợ' },
       'sponsorship': { class: 'badge-warning', text: 'Tài trợ' },
-      'general': { class: 'badge-primary', text: 'Chung' }
+      'collaboration': { class: 'badge-primary', text: 'Cộng tác' },
+      'general': { class: 'badge-secondary', text: 'Chung' }
     };
     
     const typeInfo = typeMap[type] || { class: 'badge-secondary', text: type };
@@ -381,13 +397,35 @@ export default function AdminContactsTab() {
 
                 {selectedContact.notes && selectedContact.notes.length > 0 && (
                   <div className="detail-section">
-                    <h4>Ghi chú</h4>
+                    <h4>
+                      {selectedContact.type === 'support' ? 'Danh mục hỗ trợ' : 'Ghi chú'}
+                    </h4>
                     <div className="notes-list">
-                      {selectedContact.notes.map((note: any, index: number) => (
-                        <div key={index} className="note-item">
-                          <p>{note}</p>
-                        </div>
-                      ))}
+                      {selectedContact.notes.map((note: any, index: number) => {
+                        if (selectedContact.type === 'support') {
+                          const noteLabels: { [key: string]: string } = {
+                            'iot-deployment': 'Triển khai giải pháp IoT',
+                            'hardware-design': 'Thiết kế phần cứng',
+                            'software-design': 'Thiết kế phần mềm',
+                            'technical-issues': 'Vấn đề kỹ thuật',
+                            'other': 'Khác'
+                          };
+                          const displayText = noteLabels[note] || note;
+                          return (
+                            <div key={index} className="note-item support-category">
+                              <i className="fas fa-tag"></i>
+                              <span>{displayText}</span>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div key={index} className="note-item">
+                              <i className="fas fa-sticky-note"></i>
+                              <span>{note}</span>
+                            </div>
+                          );
+                        }
+                      })}
                     </div>
                   </div>
                 )}

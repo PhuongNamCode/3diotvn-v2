@@ -1,17 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cache, CACHE_KEYS, CACHE_TTL, cacheInvalidation } from '@/lib/cache';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const events = await prisma.event.findMany({
-      include: {
-        registrations: {
-          where: { status: { not: 'cancelled' } },
-          select: { id: true },
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const category = searchParams.get('category');
+    const status = searchParams.get('status');
+    
+    // Generate cache key
+    const cacheKey = CACHE_KEYS.EVENTS(page, limit, category || undefined, status || undefined);
+    
+    // Try to get from cache first
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      console.log(`🎯 Cache HIT: ${cacheKey}`);
+      return NextResponse.json(cached);
+    }
+    
+    console.log(`💾 Cache MISS: ${cacheKey}`);
+    
+    const skip = (page - 1) * limit;
+    
+    // Build where clause
+    const where: any = {};
+    if (category) where.category = category;
+    if (status) where.status = status;
+    
+    // Optimized query with selective loading and aggregation
+    const [events, total, registrationCounts] = await Promise.all([
+      prisma.event.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          date: true,
+          time: true,
+          location: true,
+          onlineLink: true,
+          capacity: true,
+          price: true,
+          speakers: true,
+          requirements: true,
+          agenda: true,
+          image: true,
+          category: true,
+          status: true,
+          actualParticipants: true,
+          createdAt: true,
+          updatedAt: true,
         },
-      },
-      orderBy: { createdAt: 'asc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.event.count({ where }),
+      // Get registration counts in a single query
+      prisma.registration.groupBy({
+        by: ['eventId'],
+        where: { status: { not: 'cancelled' } },
+        _count: { id: true },
+      })
+    ]);
+
+    // Create a map for quick lookup of registration counts
+    const registrationMap = new Map(
+      registrationCounts.map(item => [item.eventId, item._count.id])
+    );
 
     const mapped = events.map((e) => ({
       id: e.id,
@@ -29,13 +87,27 @@ export async function GET() {
       image: e.image || '',
       category: e.category,
       status: e.status,
-      registrations: e.registrations.length,
+      registrations: registrationMap.get(e.id) || 0,
       actualParticipants: e.actualParticipants ?? undefined,
       createdAt: e.createdAt,
       updatedAt: e.updatedAt,
     }));
 
-    return NextResponse.json({ success: true, data: mapped });
+    const response = { 
+      success: true, 
+      data: mapped,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+    
+    // Cache the response
+    cache.set(cacheKey, response, CACHE_TTL.EVENTS);
+    
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching events:', error);
     return NextResponse.json(
@@ -111,6 +183,9 @@ export async function POST(request: NextRequest) {
       updatedAt: created.updatedAt,
     };
 
+    // Invalidate events cache when new event is created
+    cacheInvalidation.invalidateEvents();
+    
     return NextResponse.json({ success: true, data: mapped }, { status: 201 });
   } catch (error) {
     console.error('Error creating event:', error);

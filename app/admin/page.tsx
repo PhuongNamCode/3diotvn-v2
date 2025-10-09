@@ -10,6 +10,7 @@ import AdminRegistrationsTab from "./tabs/AdminRegistrationsTab";
 import AdminCourseEnrollmentsTab from "./tabs/AdminCourseEnrollmentsTab";
 import AdminContactsTab from "./tabs/AdminContactsTab";
 import AdminSettingsTab from "./tabs/AdminSettingsTab";
+import AdminSecurityTab from "./tabs/AdminSecurityTab";
 import { websocketManager } from "@/lib/websocket";
 import RealTimeStatus from "../components/RealTimeStatus";
 import "./admin.css";
@@ -24,7 +25,7 @@ type AdminUser = {
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
-  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'settings'>('overview');
+  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'settings' | 'security'>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -145,7 +146,7 @@ export default function AdminDashboard() {
     (window as any).showNotification('Đã đăng xuất admin!', 'info');
   };
 
-  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'settings') => {
+  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'settings' | 'security') => {
     setCurrentTab(tabName);
     // Close mobile menu if open
     const sidebar = document.getElementById('sidebar');
@@ -252,6 +253,13 @@ export default function AdminDashboard() {
                 <i className="fas fa-cog"></i>
                 <span>Cài đặt</span>
               </button>
+              <button 
+                className={`nav-item ${currentTab === 'security' ? 'active' : ''}`}
+                onClick={() => switchTab('security')}
+              >
+                <i className="fas fa-shield-alt"></i>
+                <span>Bảo mật</span>
+              </button>
             </div>
           </nav>
         </div>
@@ -276,6 +284,7 @@ export default function AdminDashboard() {
                   {currentTab === 'registrations' && 'Đăng ký Sự kiện'}
                   {currentTab === 'course_enrollments' && 'Đăng ký Khóa học'}
                   {currentTab === 'settings' && 'Cài đặt hệ thống'}
+                  {currentTab === 'security' && 'Bảo mật Admin'}
                 </h1>
                 <p className="page-subtitle">Admin Dashboard - 3DIoT Management System</p>
               </div>
@@ -320,6 +329,7 @@ export default function AdminDashboard() {
             {currentTab === 'users' && <AdminUsersTab />}
             {currentTab === 'courses' && <AdminCoursesTab />}
             {currentTab === 'settings' && <AdminSettingsTab />}
+            {currentTab === 'security' && <AdminSecurityTab />}
           </div>
         </div>
         

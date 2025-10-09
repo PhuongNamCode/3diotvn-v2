@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cache, CACHE_KEYS, CACHE_TTL, cacheInvalidation } from '@/lib/cache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +10,19 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || undefined;
     const level = searchParams.get('level') || undefined;
     const search = searchParams.get('search') || undefined;
+    
+    // Generate cache key
+    const cacheKey = CACHE_KEYS.COURSES(page, limit, category, level, search);
+    
+    // Try to get from cache first
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      console.log(`🎯 Cache HIT: ${cacheKey}`);
+      return NextResponse.json(cached);
+    }
+    
+    console.log(`💾 Cache MISS: ${cacheKey}`);
+    
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -48,7 +62,12 @@ export async function GET(request: NextRequest) {
       updatedAt: c.updatedAt,
     }));
 
-    return NextResponse.json({ success: true, data, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+    const response = { success: true, data, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
+    
+    // Cache the response
+    cache.set(cacheKey, response, CACHE_TTL.COURSES);
+    
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching courses:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch courses' }, { status: 500 });
@@ -105,6 +124,9 @@ export async function POST(request: NextRequest) {
       updatedAt: created.updatedAt,
     };
 
+    // Invalidate courses cache when new course is created
+    cacheInvalidation.invalidateCourses();
+    
     return NextResponse.json({ success: true, data: mapped }, { status: 201 });
   } catch (error) {
     console.error('Error creating course:', error);
