@@ -12,15 +12,15 @@ interface AdminCredentials {
 // Get admin credentials from database
 async function getAdminCredentials(): Promise<AdminCredentials | null> {
   try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: 'admin_credentials' }
-    });
-    
-    if (!setting || !setting.json) {
-      return null;
-    }
-    
-    return setting.json as AdminCredentials;
+  const setting = await prisma.setting.findUnique({
+    where: { key: 'admin_credentials' }
+  });
+  
+  if (!setting || !setting.json) {
+    return null;
+  }
+  
+  return setting.json as unknown as AdminCredentials;
   } catch (error) {
     console.error('Error getting admin credentials:', error);
     return null;
@@ -38,12 +38,12 @@ async function initializeDefaultCredentials(): Promise<AdminCredentials> {
     await prisma.setting.upsert({
       where: { key: 'admin_credentials' },
       update: {
-        json: defaultCredentials,
+        json: defaultCredentials as any,
         updatedAt: new Date()
       },
       create: {
         key: 'admin_credentials',
-        json: defaultCredentials,
+        json: defaultCredentials as any,
         updatedAt: new Date()
       }
     });
@@ -101,6 +101,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create session
+    const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    
+    const sessionData = {
+      username: sanitizedCredentials.username,
+      userAgent,
+      ip,
+      createdAt: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
+      isActive: true
+    };
+
+    // Save session
+    try {
+      const sessionsSetting = await prisma.setting.findUnique({
+        where: { key: 'admin_sessions' }
+      });
+
+      const sessions = sessionsSetting ? (sessionsSetting.json as any) : {};
+      sessions[sessionId] = sessionData;
+
+      await prisma.setting.upsert({
+        where: { key: 'admin_sessions' },
+        update: {
+          json: sessions,
+          updatedAt: new Date()
+        },
+        create: {
+          key: 'admin_sessions',
+          json: sessions,
+          updatedAt: new Date()
+        }
+      });
+    } catch (sessionError) {
+      console.error('Error creating admin session:', sessionError);
+      // Don't fail the main operation if session creation fails
+    }
+
     // Log successful login (optional - for audit trail)
     try {
       await prisma.setting.upsert({
@@ -112,7 +152,8 @@ export async function POST(request: NextRequest) {
               action: 'login_success',
               username: sanitizedCredentials.username,
               timestamp: new Date().toISOString(),
-              ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+              ip: ip,
+              sessionId: sessionId
             }
           },
           updatedAt: new Date()
@@ -124,7 +165,8 @@ export async function POST(request: NextRequest) {
               action: 'login_success',
               username: sanitizedCredentials.username,
               timestamp: new Date().toISOString(),
-              ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+              ip: ip,
+              sessionId: sessionId
             }
           },
           updatedAt: new Date()
