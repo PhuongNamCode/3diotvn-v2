@@ -51,3 +51,13 @@ docker compose exec redis redis-cli
 ```
 
 That's it! Simple and clean. 🎉
+
+
+# Login Docker Hub
+docker login
+
+# Build image
+docker build -t your-username/3diot-app:latest .
+
+# Push image
+docker push your-username/3diot-app:latest

@@ -34,4 +34,9 @@ docker compose --env-file env.production up -d
 docker compose --env-file env.production exec --user root app npx prisma migrate deploy
 ```
 
+docker pull phuongnamdocker/3diot-app:latest
+docker compose restart app
+
 That's it! 🚀
+
+
