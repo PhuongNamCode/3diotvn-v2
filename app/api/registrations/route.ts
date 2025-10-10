@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/email/emailService';
 import { generateRegistrationConfirmEmail } from '@/lib/email/templates/registrationConfirm';
+import { generateRegistrationPendingEmail } from '@/lib/email/templates/registrationPending';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +13,9 @@ export async function GET(request: NextRequest) {
     
     const registrations = await prisma.registration.findMany({ 
       where: whereClause,
+      include: {
+        event: true
+      },
       orderBy: { createdAt: 'desc' } 
     });
     
@@ -35,6 +39,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Event not found' }, { status: 400 });
     }
 
+    // Determine payment status based on event price and transaction ID
+    let paymentStatus = 'pending';
+    if (event.price && event.price > 0) {
+      if (body.transactionId) {
+        paymentStatus = 'pending_verification'; // Cần admin xác thực
+      } else {
+        paymentStatus = 'pending'; // Chưa thanh toán
+      }
+    } else {
+      paymentStatus = 'paid'; // Sự kiện miễn phí
+    }
+
     const created = await prisma.registration.create({
       data: {
         id: body.id ? String(body.id) : undefined,
@@ -46,7 +62,7 @@ export async function POST(request: NextRequest) {
         experience: body.experience || null,
         expectation: body.expectation || null,
         status: body.status || 'pending',
-        paymentStatus: body.paymentStatus || 'pending',
+        paymentStatus: paymentStatus,
         paymentMethod: body.paymentMethod || null,
         transactionId: body.transactionId || null,
         amount: body.amount || null,
@@ -57,33 +73,52 @@ export async function POST(request: NextRequest) {
     const count = await prisma.registration.count({ where: { eventId: created.eventId, NOT: { status: 'cancelled' } } });
     await prisma.event.update({ where: { id: created.eventId }, data: { registrationsCount: count } });
 
-    // Send confirmation email
+    // Send appropriate email based on payment status
     try {
-      const emailData = generateRegistrationConfirmEmail({
-        userName: created.fullName,
-        userEmail: created.email,
-        eventTitle: event.title,
-        eventDate: event.date.toISOString(),
-        eventTime: event.time,
-        eventLocation: event.location,
-        eventPrice: event.price,
-        onlineLink: event.onlineLink || undefined
-      });
+      let emailSubject = '';
+      let emailData;
+
+      if (paymentStatus === 'pending_verification') {
+        emailSubject = `⏳ Đang xử lý đăng ký: ${event.title}`;
+        emailData = generateRegistrationPendingEmail({
+          userName: created.fullName,
+          userEmail: created.email,
+          eventTitle: event.title,
+          eventDate: event.date.toISOString(),
+          eventTime: event.time,
+          eventLocation: event.location,
+          eventPrice: event.price,
+          transactionId: created.transactionId || '',
+          onlineLink: event.onlineLink || undefined
+        });
+      } else {
+        emailSubject = `🎉 Xác nhận đăng ký: ${event.title}`;
+        emailData = generateRegistrationConfirmEmail({
+          userName: created.fullName,
+          userEmail: created.email,
+          eventTitle: event.title,
+          eventDate: event.date.toISOString(),
+          eventTime: event.time,
+          eventLocation: event.location,
+          eventPrice: event.price,
+          onlineLink: event.onlineLink || undefined
+        });
+      }
 
       const emailSent = await emailService.sendEmail({
         to: created.email,
-        subject: `🎉 Xác nhận đăng ký: ${event.title}`,
+        subject: emailSubject,
         html: emailData.html,
         text: emailData.text
       });
 
       if (!emailSent) {
-        console.warn(`Failed to send confirmation email to ${created.email}`);
+        console.warn(`Failed to send ${paymentStatus === 'pending_verification' ? 'pending' : 'confirmation'} email to ${created.email}`);
       } else {
-        console.log(`Confirmation email sent successfully to ${created.email}`);
+        console.log(`${paymentStatus === 'pending_verification' ? 'Pending' : 'Confirmation'} email sent successfully to ${created.email}`);
       }
     } catch (emailError) {
-      console.error('Error sending confirmation email:', emailError);
+      console.error('Error sending email:', emailError);
       // Don't fail the registration if email fails
     }
 

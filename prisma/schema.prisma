@@ -86,7 +86,7 @@ model Registration {
   experience    String?
   expectation   String?
   status        String
-  paymentStatus String?  @default("pending") // pending, paid, failed
+  paymentStatus String?  @default("pending") // pending, pending_verification, paid, failed
   transactionId String?  // Mã giao dịch từ ngân hàng/VDT
   amount        Int?     // Số tiền thanh toán (VNĐ)
   paymentMethod String?  // bank_transfer, vnpay, momo, etc.
@@ -130,7 +130,7 @@ model CourseEnrollment {
   email         String
   phone         String?
   status        String
-  paymentStatus String?  @default("pending") // pending, paid, failed
+  paymentStatus String?  @default("pending") // pending, pending_verification, paid, failed
   transactionId String?  // Mã giao dịch từ ngân hàng/VDT
   amount        Int?     // Số tiền thanh toán (VNĐ)
   paymentMethod String?  // bank_transfer, vnpay, momo, etc.

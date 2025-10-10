@@ -80,12 +80,18 @@ export interface Registration {
   experience?: string | null;
   expectation?: string | null;
   status: 'pending' | 'confirmed' | 'cancelled' | string;
-  paymentStatus?: 'pending' | 'paid' | 'failed' | string;
+  paymentStatus?: 'pending' | 'pending_verification' | 'paid' | 'failed' | string;
   paymentMethod?: string | null;
   transactionId?: string | null;
   amount?: number | null;
   registeredAt?: string;
   updatedAt?: string;
+  event?: {
+    id: string;
+    title: string;
+    date: string;
+    price: number;
+  };
 }
 
 // Courses
@@ -113,12 +119,17 @@ export interface CourseEnrollment {
   email: string;
   phone?: string | null;
   status: 'pending' | 'confirmed' | 'cancelled' | string;
-  paymentStatus?: 'pending' | 'paid' | 'failed' | string;
+  paymentStatus?: 'pending' | 'pending_verification' | 'paid' | 'failed' | string;
   paymentMethod?: string | null;
   transactionId?: string | null;
   amount?: number | null;
   createdAt?: string;
   updatedAt?: string;
+  course?: {
+    id: string;
+    title: string;
+    price: number;
+  };
 }
 
 // Custom hook for events
@@ -619,7 +630,7 @@ export function useRegistrations() {
   const updateRegistration = async (id: string, updates: Partial<Registration>) => {
     try {
       const response = await fetch(`/api/registrations/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
@@ -798,7 +809,7 @@ export function useCourseEnrollments() {
   const updateEnrollment = async (id: string, updates: Partial<CourseEnrollment>) => {
     try {
       const response = await fetch(`/api/course-enrollments/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });

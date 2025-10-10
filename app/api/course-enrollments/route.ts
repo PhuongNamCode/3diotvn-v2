@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/email/emailService';
+import { generateCourseEnrollmentConfirmEmail } from '@/lib/email/templates/courseEnrollmentConfirm';
+import { generateCourseEnrollmentPendingEmail } from '@/lib/email/templates/courseEnrollmentPending';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +10,13 @@ export async function GET(request: NextRequest) {
     const courseId = searchParams.get('courseId');
 
     const whereClause = courseId ? { courseId: String(courseId) } : {};
-    const enrollments = await prisma.courseEnrollment.findMany({ where: whereClause, orderBy: { createdAt: 'desc' } });
+    const enrollments = await prisma.courseEnrollment.findMany({ 
+      where: whereClause, 
+      include: {
+        course: true
+      },
+      orderBy: { createdAt: 'desc' } 
+    });
     return NextResponse.json({ success: true, data: enrollments });
   } catch (error) {
     console.error('Error fetching course enrollments:', error);
@@ -25,6 +33,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Course not found' }, { status: 400 });
     }
 
+    // Determine payment status based on course price and transaction ID
+    let paymentStatus = 'pending';
+    if (course.price && course.price > 0) {
+      if (body.transactionId) {
+        paymentStatus = 'pending_verification'; // Cần admin xác thực
+      } else {
+        paymentStatus = 'pending'; // Chưa thanh toán
+      }
+    } else {
+      paymentStatus = 'paid'; // Khóa học miễn phí
+    }
+
     const created = await prisma.courseEnrollment.create({
       data: {
         id: body.id ? String(body.id) : undefined,
@@ -33,6 +53,10 @@ export async function POST(request: NextRequest) {
         email: body.email || '',
         phone: body.phone || null,
         status: body.status || 'pending',
+        paymentStatus: paymentStatus,
+        paymentMethod: body.paymentMethod || null,
+        transactionId: body.transactionId || null,
+        amount: body.amount || null,
       },
     });
 
@@ -40,24 +64,44 @@ export async function POST(request: NextRequest) {
     const count = await prisma.courseEnrollment.count({ where: { courseId: created.courseId, NOT: { status: 'cancelled' } } });
     await prisma.course.update({ where: { id: created.courseId }, data: { enrolledCount: count } });
 
-    // Send confirmation email (best effort)
+    // Send appropriate email based on payment status
     try {
-      const html = `
-        <div style="font-family:system-ui,sans-serif;line-height:1.6">
-          <h2>🎉 Xác nhận đăng ký khóa học</h2>
-          <p>Xin chào ${created.fullName},</p>
-          <p>Bạn đã đăng ký thành công khóa học: <strong>${course.title}</strong>.</p>
-          <ul>
-            <li>Cấp độ: ${course.level}</li>
-            <li>Thời lượng dự kiến: ${course.durationMinutes} phút</li>
-          </ul>
-          <p>Chúng tôi sẽ sớm gửi thêm thông tin chi tiết cho bạn.</p>
-          <p>— 3DIoT Community</p>
-        </div>
-      `;
-      await emailService.sendEmail({ to: created.email, subject: `Xác nhận đăng ký: ${course.title}`, html, text: `Ban da dang ky khoa hoc: ${course.title}` });
+      let emailSubject = '';
+      let emailData;
+
+      if (paymentStatus === 'pending_verification') {
+        emailSubject = `⏳ Đang xử lý đăng ký: ${course.title}`;
+        emailData = generateCourseEnrollmentPendingEmail({
+          userName: created.fullName,
+          userEmail: created.email,
+          courseTitle: course.title,
+          coursePrice: course.price,
+          transactionId: created.transactionId || ''
+        });
+      } else {
+        emailSubject = `🎉 Xác nhận đăng ký khóa học: ${course.title}`;
+        emailData = generateCourseEnrollmentConfirmEmail({
+          userName: created.fullName,
+          userEmail: created.email,
+          courseTitle: course.title,
+          coursePrice: course.price
+        });
+      }
+
+      const emailSent = await emailService.sendEmail({
+        to: created.email,
+        subject: emailSubject,
+        html: emailData.html,
+        text: emailData.text
+      });
+
+      if (!emailSent) {
+        console.warn(`Failed to send ${paymentStatus === 'pending_verification' ? 'pending' : 'confirmation'} email to ${created.email}`);
+      } else {
+        console.log(`${paymentStatus === 'pending_verification' ? 'Pending' : 'Confirmation'} email sent successfully to ${created.email}`);
+      }
     } catch (emailError) {
-      console.error('Error sending enrollment email:', emailError);
+      console.error('Error sending email:', emailError);
     }
 
     return NextResponse.json({ success: true, data: created }, { status: 201 });

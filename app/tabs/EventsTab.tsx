@@ -46,6 +46,7 @@ export default function EventsTab() {
   const [selected, setSelected] = useState<EventItem | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
+  const [paymentStatus, setPaymentStatus] = useState<string>('');
   const [showEventDetails, setShowEventDetails] = useState<boolean>(false);
   const [selectedEventDetails, setSelectedEventDetails] = useState<EventItem | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'past'>('all');
@@ -190,8 +191,9 @@ export default function EventsTab() {
         amount: selected.price || null
       };
       
-      await createRegistration(registrationData);
+      const response = await createRegistration(registrationData);
       setSuccess(true);
+      setPaymentStatus(response.paymentStatus || '');
       
       // Refresh events data to update registration counts
       await fetchEvents();
@@ -795,6 +797,7 @@ export default function EventsTab() {
                   if (!ensureLoggedInOrRedirect()) return;
                   setSelected(selectedEventDetails);
                   setSuccess(false);
+                  setPaymentStatus('');
                   setShowEventDetails(false);
                 }}
                   style={{
@@ -1469,37 +1472,91 @@ export default function EventsTab() {
             ) : (
               /* Success State */
               <div style={{ padding: '60px 40px', textAlign: 'center' }}>
-                <div style={{
-                  background: 'linear-gradient(135deg, var(--success), #22c55e)',
-                  borderRadius: '50%',
-                  width: '100px',
-                  height: '100px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 30px',
-                  color: 'white',
-                  fontSize: '40px'
-                }}>
-                  <i className="fas fa-check"></i>
-                </div>
-                <h3 style={{ 
-                  fontSize: '2rem', 
-                  fontWeight: '700', 
-                  color: 'var(--success)', 
-                  margin: '0 0 15px' 
-                }}>
-                  🎉 Đăng ký thành công!
-                </h3>
-                <p style={{ 
-                  fontSize: '1.1rem', 
-                  color: 'var(--text-secondary)', 
-                  lineHeight: '1.6',
-                  margin: '0 0 30px'
-                }}>
-                  Cảm ơn bạn đã đăng ký tham gia <strong>{selected.title}</strong>!<br />
-                  Chúng tôi sẽ gửi thông tin chi tiết qua email trong thời gian sớm nhất.
-                </p>
+                {paymentStatus === 'pending_verification' ? (
+                  <>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                      borderRadius: '50%',
+                      width: '100px',
+                      height: '100px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 30px',
+                      color: 'white',
+                      fontSize: '40px'
+                    }}>
+                      <i className="fas fa-clock"></i>
+                    </div>
+                    <h3 style={{ 
+                      fontSize: '2rem', 
+                      fontWeight: '700', 
+                      color: '#f59e0b', 
+                      margin: '0 0 15px' 
+                    }}>
+                      ⏳ Đang xử lý thanh toán
+                    </h3>
+                    <p style={{ 
+                      fontSize: '1.1rem', 
+                      color: 'var(--text-secondary)', 
+                      lineHeight: '1.6',
+                      margin: '0 0 20px'
+                    }}>
+                      Cảm ơn bạn đã đăng ký <strong>{selected.title}</strong>!<br />
+                      Chúng tôi đã nhận được thông tin đăng ký và mã giao dịch của bạn.
+                    </p>
+                    <div style={{
+                      background: '#fef3c7',
+                      border: '1px solid #f59e0b',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      margin: '20px 0',
+                      textAlign: 'left'
+                    }}>
+                      <h4 style={{ margin: '0 0 10px', color: '#92400e' }}>📋 Thông tin xử lý:</h4>
+                      <ul style={{ margin: '0', paddingLeft: '20px', color: '#92400e' }}>
+                        <li>Chúng tôi đang xác thực thông tin thanh toán</li>
+                        <li>Thời gian xử lý: 24-48 giờ</li>
+                        <li>Bạn sẽ nhận email xác nhận sau khi hoàn tất</li>
+                        <li>Vui lòng kiểm tra email thường xuyên</li>
+                      </ul>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{
+                      background: 'linear-gradient(135deg, var(--success), #22c55e)',
+                      borderRadius: '50%',
+                      width: '100px',
+                      height: '100px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 30px',
+                      color: 'white',
+                      fontSize: '40px'
+                    }}>
+                      <i className="fas fa-check"></i>
+                    </div>
+                    <h3 style={{ 
+                      fontSize: '2rem', 
+                      fontWeight: '700', 
+                      color: 'var(--success)', 
+                      margin: '0 0 15px' 
+                    }}>
+                      🎉 Đăng ký thành công!
+                    </h3>
+                    <p style={{ 
+                      fontSize: '1.1rem', 
+                      color: 'var(--text-secondary)', 
+                      lineHeight: '1.6',
+                      margin: '0 0 30px'
+                    }}>
+                      Cảm ơn bạn đã đăng ký tham gia <strong>{selected.title}</strong>!<br />
+                      Chúng tôi sẽ gửi thông tin chi tiết qua email trong thời gian sớm nhất.
+                    </p>
+                  </>
+                )}
                 <button 
                   onClick={() => setSelected(null)}
                   style={{

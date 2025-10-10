@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useCourses, useCourseEnrollments } from "@/lib/hooks/useData";
+import { paymentMethods, generatePaymentInstructions } from "@/lib/payment-config";
 
 type CourseItem = {
   id: string;
@@ -25,6 +26,9 @@ type EnrollmentPayload = {
   email: string;
   phone?: string;
   status?: string;
+  paymentMethod?: string;
+  transactionId?: string;
+  amount?: number;
 };
 
 export default function CoursesTab() {
@@ -39,6 +43,9 @@ export default function CoursesTab() {
   const [showDetails, setShowDetails] = useState<boolean>(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [levelFilter, setLevelFilter] = useState<string>('all');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('ocb');
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [paymentStatus, setPaymentStatus] = useState<string>('');
 
   useEffect(() => {
     if (apiCourses && apiCourses.length >= 0) {
@@ -63,6 +70,27 @@ export default function CoursesTab() {
       setLoading(false);
     }
   }, [apiCourses, apiLoading]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const dropdown = document.getElementById('payment-dropdown');
+      const selector = document.getElementById('payment-selector');
+      if (dropdown && selector && 
+          !selector.contains(event.target as Node) && 
+          !dropdown.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   const filtered = useMemo(() => {
     if (!items) return [] as CourseItem[];
@@ -95,11 +123,14 @@ export default function CoursesTab() {
   function handleViewDetails(course: CourseItem) {
     if (!ensureLoggedInOrRedirect()) return;
     setSelected(course);
+    setSuccess(false);
+    setPaymentStatus('');
     setShowDetails(true);
   }
 
   async function submitEnrollment(formData: FormData) {
     if (!selected) return;
+    
     const payload: EnrollmentPayload = {
       courseId: selected.id,
       fullName: String(formData.get('fullName') || ''),
@@ -107,12 +138,23 @@ export default function CoursesTab() {
       phone: String(formData.get('phone') || ''),
       status: 'pending'
     };
+
+    // Thêm thông tin thanh toán nếu khóa học có phí
+    if ((selected.price ?? 0) > 0) {
+      payload.paymentMethod = selectedPaymentMethod;
+      payload.transactionId = String(formData.get('transactionId') || '');
+      payload.amount = selected.price;
+    }
+
     setSubmitting(true);
     setSuccess(false);
     setError(null);
+    setPaymentStatus('');
+    
     try {
-      await createEnrollment(payload as any);
+      const response = await createEnrollment(payload as any);
       setSuccess(true);
+      setPaymentStatus(response.paymentStatus || '');
       await refetchCourses();
     } catch (e: any) {
       setError(e?.message || 'Có lỗi xảy ra');
@@ -295,6 +337,314 @@ export default function CoursesTab() {
                         <label htmlFor="phone">Số điện thoại</label>
                         <input id="phone" name="phone" placeholder="0901 234 567" />
                       </div>
+
+                      {/* Payment Information - Only show if course has price > 0 */}
+                      {(selected.price ?? 0) > 0 && (
+                        <div style={{ marginBottom: '30px' }}>
+
+                          {/* Payment Method Selection */}
+                          <div style={{ marginBottom: '20px' }}>
+                            <label htmlFor="paymentMethod" style={{ 
+                              display: 'block', 
+                              marginBottom: '8px', 
+                              fontWeight: '600', 
+                              color: 'var(--primary)' 
+                            }}>
+                              Phương thức thanh toán *
+                            </label>
+                            
+                            {/* Custom Payment Method Selector */}
+                            <div style={{ position: 'relative' }}>
+                              <div 
+                                id="payment-selector"
+                                style={{
+                                  width: '100%',
+                                  padding: '15px 20px',
+                                  border: '2px solid var(--border)',
+                                  borderRadius: '12px',
+                                  fontSize: '16px',
+                                  background: 'var(--background)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between'
+                                }}
+                                onClick={() => {
+                                  setIsDropdownOpen(!isDropdownOpen);
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                  {selectedPaymentMethod === 'ocb' ? (
+                                    <>
+                                      <img 
+                                        src="/payment-logos/ocb-logo.png" 
+                                        alt="OCB" 
+                                        style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                      <span>OCB (Ngân hàng)</span>
+                                    </>
+                                  ) : selectedPaymentMethod === 'momo' ? (
+                                    <>
+                                      <img 
+                                        src="/payment-logos/momo-logo.png" 
+                                        alt="MoMo" 
+                                        style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                      <span>MoMo</span>
+                                    </>
+                                  ) : (
+                                    <span>Chọn phương thức thanh toán</span>
+                                  )}
+                                </div>
+                                <i className={`fas fa-chevron-${isDropdownOpen ? 'up' : 'down'}`} style={{ color: 'var(--text-secondary)' }}></i>
+                              </div>
+
+                              {/* Dropdown Options */}
+                              {isDropdownOpen && (
+                                <div id="payment-dropdown" style={{
+                                  position: 'absolute',
+                                  top: '100%',
+                                  left: 0,
+                                  right: 0,
+                                  background: 'var(--surface)',
+                                  border: '2px solid var(--border)',
+                                  borderRadius: '12px',
+                                  boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                                  zIndex: 1000,
+                                  marginTop: '4px',
+                                  overflow: 'hidden'
+                                }}>
+                                  <div 
+                                    onClick={() => {
+                                      setSelectedPaymentMethod('ocb');
+                                      setIsDropdownOpen(false);
+                                    }}
+                                    style={{
+                                      padding: '15px 20px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      borderBottom: '1px solid var(--border)',
+                                      transition: 'background-color 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'var(--surface-variant)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'transparent';
+                                    }}
+                                  >
+                                    <img 
+                                      src="/payment-logos/ocb-logo.png" 
+                                      alt="OCB" 
+                                      style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                    />
+                                    <span>OCB (Ngân hàng)</span>
+                                  </div>
+                                  <div 
+                                    onClick={() => {
+                                      setSelectedPaymentMethod('momo');
+                                      setIsDropdownOpen(false);
+                                    }}
+                                    style={{
+                                      padding: '15px 20px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      transition: 'background-color 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'var(--surface-variant)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'transparent';
+                                    }}
+                                  >
+                                    <img 
+                                      src="/payment-logos/momo-logo.png" 
+                                      alt="MoMo" 
+                                      style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                    />
+                                    <span>MoMo</span>
+                                  </div>
+                                </div>
+                              )}
+                              <input type="hidden" name="paymentMethod" value={selectedPaymentMethod} />
+                            </div>
+                          </div>
+
+                          {/* Transaction ID */}
+                          <div style={{ marginBottom: '20px' }}>
+                            <label htmlFor="transactionId" style={{ 
+                              display: 'block', 
+                              marginBottom: '8px', 
+                              fontWeight: '600', 
+                              color: 'var(--primary)' 
+                            }}>
+                              Mã giao dịch *
+                            </label>
+                            <input 
+                              type="text" 
+                              id="transactionId" 
+                              name="transactionId" 
+                              required 
+                              style={{
+                                width: '100%',
+                                padding: '15px 20px',
+                                border: '2px solid var(--border)',
+                                borderRadius: '12px',
+                                fontSize: '16px',
+                                background: 'var(--background)'
+                              }}
+                              placeholder="Nhập mã giao dịch sau khi thanh toán thành công"
+                            />
+                            <small style={{ 
+                              color: 'var(--text-secondary)', 
+                              fontSize: '14px', 
+                              marginTop: '6px', 
+                              display: 'block' 
+                            }}>
+                              Sau khi chuyển khoản thành công, vui lòng nhập mã giao dịch để xác thực
+                            </small>
+                          </div>
+
+                          {/* Payment Instructions */}
+                          <div style={{ 
+                            background: 'linear-gradient(135deg, var(--surface-variant), var(--surface))',
+                            border: '2px solid var(--border)',
+                            borderRadius: '16px',
+                            padding: '24px',
+                            marginBottom: '20px'
+                          }}>
+                            <h4 style={{ 
+                              fontSize: '1.1rem', 
+                              fontWeight: '600', 
+                              color: 'var(--primary)', 
+                              margin: '0 0 20px',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}>
+                              <i className="fas fa-qrcode" style={{ marginRight: '10px', color: 'var(--accent)' }}></i>
+                              Hướng dẫn thanh toán
+                            </h4>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '24px', alignItems: 'center' }}>
+                              <div>
+                                {selectedPaymentMethod === 'ocb' && (
+                                  <>
+                                    <div style={{ marginBottom: '12px' }}>
+                                      <strong style={{ color: 'var(--primary)', fontSize: '15px' }}>🏦 Thông tin ngân hàng OCB:</strong>
+                                    </div>
+                                    <div style={{ 
+                                      background: 'var(--background)', 
+                                      padding: '16px', 
+                                      borderRadius: '12px',
+                                      border: '1px solid var(--border)'
+                                    }}>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Ngân hàng:</strong> TMCP Phương Đông (OCB)
+                                      </p>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Số tài khoản:</strong> <span style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>0004100026206005</span>
+                                      </p>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Chủ tài khoản:</strong> Nguyen Phuong Nam
+                                      </p>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{(selected.price ?? 0).toLocaleString('vi-VN')} VNĐ</span>
+                                      </p>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Nội dung chuyển:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>DK {selected.title.substring(0, 20)}...</span>
+                                      </p>
+                                      <p style={{ margin: '0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                        <em>Ví dụ: DK Khóa học IoT - Nguyễn Văn A</em>
+                                      </p>
+                                    </div>
+                                  </>
+                                )}
+                                {selectedPaymentMethod === 'momo' && (
+                                  <>
+                                    <div style={{ marginBottom: '12px' }}>
+                                      <strong style={{ color: 'var(--primary)', fontSize: '15px' }}>📱 Thông tin MoMo:</strong>
+                                    </div>
+                                    <div style={{ 
+                                      background: 'var(--background)', 
+                                      padding: '16px', 
+                                      borderRadius: '12px',
+                                      border: '1px solid var(--border)'
+                                    }}>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Số điện thoại:</strong> <span style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>0339830128</span>
+                                      </p>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Chủ tài khoản:</strong> Nguyen Phuong Nam
+                                      </p>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{(selected.price ?? 0).toLocaleString('vi-VN')} VNĐ</span>
+                                      </p>
+                                      <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                        <strong>Nội dung chuyển:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>DK {selected.title.substring(0, 20)}...</span>
+                                      </p>
+                                      <p style={{ margin: '0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                        <em>Ví dụ: DK Khóa học IoT - Nguyễn Văn A</em>
+                                      </p>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ 
+                                  background: 'var(--background)', 
+                                  padding: '16px', 
+                                  borderRadius: '12px',
+                                  border: '1px solid var(--border)',
+                                  display: 'inline-block'
+                                }}>
+                                  <img
+                                    src={`/payment-logos/${selectedPaymentMethod === 'ocb' ? 'ocb-qr.jpg' : 'momo-qr.jpg'}`}
+                                    alt={`QR ${selectedPaymentMethod === 'ocb' ? 'OCB' : 'MoMo'}`}
+                                    style={{ 
+                                      width: '160px', 
+                                      height: '160px', 
+                                      objectFit: 'contain', 
+                                      borderRadius: '8px',
+                                      border: '1px solid var(--border)'
+                                    }}
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent) {
+                                        parent.innerHTML = '<p style="color: var(--text-muted); padding: 20px;">QR Code không khả dụng</p>';
+                                      }
+                                    }}
+                                  />
+                                </div>
+                                <p style={{ 
+                                  margin: '8px 0 0', 
+                                  fontSize: '12px', 
+                                  color: 'var(--text-secondary)',
+                                  fontWeight: '600'
+                                }}>
+                                  {selectedPaymentMethod === 'ocb' 
+                                    ? 'Quét mã bằng app OCB hoặc ngân hàng hỗ trợ'
+                                    : 'Quét mã bằng app MoMo'
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {error && <div className="error-message"><i className="fas fa-exclamation-triangle"></i><span>{error}</span></div>}
                       <button type="submit" className="btn-register" disabled={submitting}>
                         {submitting ? (<><i className="fas fa-spinner fa-spin"></i> Đang xử lý...</>) : (<><i className="fas fa-check"></i> Xác nhận đăng ký</>)}
@@ -303,8 +653,19 @@ export default function CoursesTab() {
                   ) : (
                     <div className="success-message">
                       <div className="success-icon"><i className="fas fa-check-circle"></i></div>
-                      <h3>🎉 Đăng ký thành công!</h3>
-                      <p>Chúng tôi đã gửi xác nhận đến email của bạn.</p>
+                      {paymentStatus === 'pending_verification' ? (
+                        <>
+                          <h3>⏳ Đang xử lý đăng ký!</h3>
+                          <p>Chúng tôi đã nhận được thông tin đăng ký và mã giao dịch của bạn.</p>
+                          <p><strong>Trạng thái:</strong> Đang chờ xác thực thanh toán từ admin (24-48 giờ làm việc)</p>
+                          <p>Bạn sẽ nhận được email xác nhận chính thức sau khi giao dịch được xác thực thành công.</p>
+                        </>
+                      ) : (
+                        <>
+                          <h3>🎉 Đăng ký thành công!</h3>
+                          <p>Chúng tôi đã gửi xác nhận đến email của bạn.</p>
+                        </>
+                      )}
                       <button className="btn-primary" onClick={() => { setSuccess(false); setShowDetails(false); }}>
                         Đóng
                       </button>
