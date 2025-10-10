@@ -108,6 +108,15 @@ export interface Course {
   lessonsCount: number;
   durationMinutes: number;
   enrolledCount: number;
+  // Enhanced fields
+  overview?: string | null;
+  curriculum?: any[] | null;
+  instructorName?: string | null;
+  instructorBio?: string | null;
+  instructorImage?: string | null;
+  instructorEmail?: string | null;
+  requirements?: string | null;
+  whatYouWillLearn?: any[] | null;
   createdAt?: string;
   updatedAt?: string;
 }

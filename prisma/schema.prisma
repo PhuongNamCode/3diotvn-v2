@@ -118,6 +118,17 @@ model Course {
   durationMinutes Int                @default(0)
   enrolledCount   Int                @default(0)
   publishedAt     DateTime?
+  
+  // New fields for enhanced course information
+  overview        String?            // Tổng quan khóa học
+  curriculum      Json?              // Chương trình học (array of lessons)
+  instructorName  String?            // Tên giảng viên
+  instructorBio   String?            // Tiểu sử giảng viên
+  instructorImage String?            // Ảnh giảng viên
+  instructorEmail String?            // Email giảng viên
+  requirements    String?            // Yêu cầu đầu vào
+  whatYouWillLearn Json?             // Những gì bạn sẽ học (array)
+  
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   enrollments     CourseEnrollment[]

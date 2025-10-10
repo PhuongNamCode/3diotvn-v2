@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useCourses, useCourseEnrollments } from "@/lib/hooks/useData";
 import { paymentMethods, generatePaymentInstructions } from "@/lib/payment-config";
+import CourseCard from "@/app/components/CourseCard";
+import CourseCardSkeleton from "@/app/components/CourseCardSkeleton";
+import EnhancedSearchBar from "@/app/components/EnhancedSearchBar";
+import CourseDetailModal from "@/app/components/CourseDetailModal";
 
 type CourseItem = {
   id: string;
@@ -18,6 +22,15 @@ type CourseItem = {
   lessonsCount: number;
   durationMinutes: number;
   enrolledCount: number;
+  // Enhanced fields
+  overview?: string;
+  curriculum?: any[];
+  instructorName?: string;
+  instructorBio?: string;
+  instructorImage?: string;
+  instructorEmail?: string;
+  requirements?: string;
+  whatYouWillLearn?: any[];
 };
 
 type EnrollmentPayload = {
@@ -43,9 +56,11 @@ export default function CoursesTab() {
   const [showDetails, setShowDetails] = useState<boolean>(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [levelFilter, setLevelFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('ocb');
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [paymentStatus, setPaymentStatus] = useState<string>('');
+  const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (apiCourses && apiCourses.length >= 0) {
@@ -62,6 +77,15 @@ export default function CoursesTab() {
         lessonsCount: c.lessonsCount,
         durationMinutes: c.durationMinutes,
         enrolledCount: c.enrolledCount,
+        // Enhanced fields
+        overview: c.overview || undefined,
+        curriculum: c.curriculum || undefined,
+        instructorName: c.instructorName || undefined,
+        instructorBio: c.instructorBio || undefined,
+        instructorImage: c.instructorImage || undefined,
+        instructorEmail: c.instructorEmail || undefined,
+        requirements: c.requirements || undefined,
+        whatYouWillLearn: c.whatYouWillLearn || undefined,
       }));
       setItems(converted);
       setLoading(false);
@@ -95,10 +119,36 @@ export default function CoursesTab() {
   const filtered = useMemo(() => {
     if (!items) return [] as CourseItem[];
     let base = items;
+    
+    // Search filter
+    if (searchTerm) {
+      base = base.filter(c => 
+        c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.tags && c.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
+      );
+    }
+    
+    // Category filter
     if (categoryFilter !== 'all') base = base.filter(c => c.category === categoryFilter);
+    
+    // Level filter
     if (levelFilter !== 'all') base = base.filter(c => c.level === levelFilter);
+    
     return base;
-  }, [items, categoryFilter, levelFilter]);
+  }, [items, searchTerm, categoryFilter, levelFilter]);
+
+  // Get unique categories and levels for filters
+  const categories = useMemo(() => {
+    if (!items) return [];
+    return [...new Set(items.map(item => item.category))].sort();
+  }, [items]);
+
+  const levels = useMemo(() => {
+    if (!items) return [];
+    return [...new Set(items.map(item => item.level))].sort();
+  }, [items]);
 
   function formatDuration(mins: number) {
     const h = Math.floor(mins / 60);
@@ -123,9 +173,18 @@ export default function CoursesTab() {
   function handleViewDetails(course: CourseItem) {
     if (!ensureLoggedInOrRedirect()) return;
     setSelected(course);
+    setShowDetailModal(true);
+    setShowDetails(false);
     setSuccess(false);
     setPaymentStatus('');
+  }
+
+  function handleEnrollFromModal(course: CourseItem) {
+    setShowDetailModal(false);
+    setSelected(course);
     setShowDetails(true);
+    setSuccess(false);
+    setPaymentStatus('');
   }
 
   async function submitEnrollment(formData: FormData) {
@@ -201,77 +260,175 @@ export default function CoursesTab() {
         </div>
       </section>
 
-      {/* Filters */}
-      <div className="events-filter-section">
-        <div className="filter-tabs">
-          <button className={`filter-tab ${categoryFilter === 'all' ? 'active' : ''}`} onClick={() => setCategoryFilter('all')}>
-            <i className="fas fa-layer-group"></i>
-            Tất cả
-          </button>
-          {['IoT', 'Embedded', 'AI', 'Hardware', 'Communications'].map(cat => (
-            <button key={cat} className={`filter-tab ${categoryFilter === cat ? 'active' : ''}`} onClick={() => setCategoryFilter(cat)}>
-              <i className="fas fa-tag"></i>
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
 
+      {/* Enhanced Search Bar */}
+      <EnhancedSearchBar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        categoryFilter={categoryFilter}
+        onCategoryChange={setCategoryFilter}
+        levelFilter={levelFilter}
+        onLevelChange={setLevelFilter}
+        categories={categories}
+        levels={levels}
+      />
+
+      {/* Loading State */}
       {loading && (
-        <div className="events-grid">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '16px',
+          marginTop: '20px',
+          justifyContent: 'start'
+        }}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div className="event-card" key={`sk-${i}`} aria-hidden="true">
-              <div className="event-image skeleton" />
-              <div className="event-content">
-                <div className="skeleton h-6 w-3/4" style={{ height: 24, width: '75%', borderRadius: 8 }} />
-                <div className="skeleton h-4 w-1/2" style={{ height: 16, width: '50%', marginTop: 10, borderRadius: 6 }} />
-                <div className="skeleton h-4 w-2/3" style={{ height: 16, width: '66%', marginTop: 8, borderRadius: 6 }} />
-                <div className="skeleton h-16 w-full" style={{ height: 64, width: '100%', marginTop: 12, borderRadius: 10 }} />
-                <div className="skeleton h-10 w-full" style={{ height: 40, width: '100%', marginTop: 12, borderRadius: 8 }} />
-              </div>
-            </div>
+            <CourseCardSkeleton key={`skeleton-${i}`} />
           ))}
         </div>
       )}
 
+      {/* Error State */}
       {error && (
-        <div className="events-grid"><p style={{ color: "var(--danger)" }}>{error}</p></div>
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          background: 'var(--surface)',
+          borderRadius: '16px',
+          border: '1px solid var(--border)'
+        }}>
+          <i className="fas fa-exclamation-triangle" style={{
+            fontSize: '48px',
+            color: 'var(--error)',
+            marginBottom: '16px'
+          }}></i>
+          <h3 style={{ color: 'var(--error)', marginBottom: '8px' }}>Có lỗi xảy ra</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
+        </div>
       )}
 
+      {/* Courses Grid */}
       {!loading && !error && (
-        <div className="events-grid">
-          {filtered.map(course => {
-            const isFree = !course.price || course.price <= 0;
-            return (
-              <div className="event-card" key={course.id}>
-                <div className="event-image">
-                  {course.image ? (
-                    <Image src={course.image} alt={course.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" style={{ objectFit: 'cover' }} />
-                  ) : (
-                    <div className="event-image-placeholder"><i className="fas fa-graduation-cap"></i></div>
-                  )}
-                  <div className="event-category-badge">{course.level}</div>
-                  <div className="event-status upcoming">{isFree ? 'Miễn phí' : `${course.price.toLocaleString('vi-VN')} VNĐ`}</div>
+        <>
+          {/* Results Count */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px',
+            padding: '16px 20px',
+            background: 'var(--surface)',
+            borderRadius: '12px',
+            border: '1px solid var(--border)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fas fa-graduation-cap" style={{ color: 'var(--accent)' }}></i>
+              <span style={{ fontWeight: '600', color: 'var(--primary)' }}>
+                {filtered.length} khóa học được tìm thấy
+              </span>
+            </div>
+            {(searchTerm || categoryFilter !== 'all' || levelFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setCategoryFilter('all');
+                  setLevelFilter('all');
+                }}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-secondary)',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--accent)';
+                  e.currentTarget.style.color = 'var(--accent)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }}
+              >
+                <i className="fas fa-times" style={{ marginRight: '6px' }}></i>
+                Xóa bộ lọc
+              </button>
+            )}
                 </div>
-                <div className="event-content">
-                  <div className="event-header">
-                    <h3 className="event-title">{course.title}</h3>
-                    <div className="event-price">{formatDuration(course.durationMinutes)}</div>
-                  </div>
-                  <div className="event-meta">
-                    <div className="event-meta-item"><i className="fas fa-list"></i><span>{course.lessonsCount} bài học</span></div>
-                    <div className="event-meta-item"><i className="fas fa-user"></i><span>{course.enrolledCount} đã đăng ký</span></div>
-                  </div>
-                  <p className="event-description">{course.description}</p>
-                  <button className="btn-register" onClick={() => handleViewDetails(course)}>
-                    <i className="fas fa-user-plus"></i>
-                    Đăng ký khóa học
+
+          {/* Courses Grid */}
+          {filtered.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '80px 20px',
+              background: 'var(--surface)',
+              borderRadius: '16px',
+              border: '1px solid var(--border)'
+            }}>
+              <i className="fas fa-search" style={{
+                fontSize: '64px',
+                color: 'var(--text-muted)',
+                marginBottom: '24px'
+              }}></i>
+              <h3 style={{ color: 'var(--primary)', marginBottom: '12px' }}>
+                Không tìm thấy khóa học nào
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
+                Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc của bạn
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setCategoryFilter('all');
+                  setLevelFilter('all');
+                }}
+                style={{
+                  background: 'var(--accent)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Xem tất cả khóa học
                   </button>
                 </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '16px',
+              marginBottom: '40px',
+              justifyContent: 'start'
+            }}>
+              {filtered.map(course => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  onViewDetails={handleViewDetails}
+                />
+              ))}
               </div>
-            );
-          })}
-        </div>
+          )}
+        </>
+      )}
+
+      {/* Course Detail Modal */}
+      {showDetailModal && selected && (
+        <CourseDetailModal
+          course={selected}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelected(null);
+          }}
+          onEnroll={handleEnrollFromModal}
+        />
       )}
 
       {/* Details & Enrollment Modal */}
@@ -662,8 +819,8 @@ export default function CoursesTab() {
                         </>
                       ) : (
                         <>
-                          <h3>🎉 Đăng ký thành công!</h3>
-                          <p>Chúng tôi đã gửi xác nhận đến email của bạn.</p>
+                      <h3>🎉 Đăng ký thành công!</h3>
+                      <p>Chúng tôi đã gửi xác nhận đến email của bạn.</p>
                         </>
                       )}
                       <button className="btn-primary" onClick={() => { setSuccess(false); setShowDetails(false); }}>

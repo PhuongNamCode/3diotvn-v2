@@ -20,6 +20,15 @@ export default function AdminCoursesTab() {
     lessonsCount: 0,
     durationMinutes: 0,
     tags: "",
+    // New enhanced fields
+    overview: "",
+    curriculum: "",
+    instructorName: "",
+    instructorBio: "",
+    instructorImage: "",
+    instructorEmail: "",
+    requirements: "",
+    whatYouWillLearn: "",
   });
   const [uploading, setUploading] = useState(false);
 
@@ -49,36 +58,55 @@ export default function AdminCoursesTab() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      // Parse JSON fields safely
+      let curriculum = [];
+      let whatYouWillLearn = [];
+      try {
+        curriculum = form.curriculum ? JSON.parse(form.curriculum) : [];
+      } catch (e) {
+        console.warn('Invalid curriculum JSON, using empty array');
+      }
+      try {
+        whatYouWillLearn = form.whatYouWillLearn ? JSON.parse(form.whatYouWillLearn) : [];
+      } catch (e) {
+        console.warn('Invalid whatYouWillLearn JSON, using empty array');
+      }
+
+      const courseData = {
+        title: form.title,
+        description: form.description,
+        image: form.image,
+        level: form.level,
+        price: Number(form.price),
+        status: form.status,
+        category: form.category,
+        lessonsCount: Number(form.lessonsCount),
+        durationMinutes: Number(form.durationMinutes),
+        tags: form.tags ? form.tags.split(',').map(s => s.trim()).filter(Boolean) : [],
+        // Enhanced fields
+        overview: form.overview,
+        curriculum: curriculum,
+        instructorName: form.instructorName,
+        instructorBio: form.instructorBio,
+        instructorImage: form.instructorImage,
+        instructorEmail: form.instructorEmail,
+        requirements: form.requirements,
+        whatYouWillLearn: whatYouWillLearn,
+      };
+
       if (editingId) {
-        await updateCourse(editingId, {
-          title: form.title,
-          description: form.description,
-          image: form.image,
-          level: form.level,
-          price: Number(form.price),
-          status: form.status,
-          category: form.category,
-          lessonsCount: Number(form.lessonsCount),
-          durationMinutes: Number(form.durationMinutes),
-          tags: form.tags ? form.tags.split(',').map(s => s.trim()).filter(Boolean) : [],
-        } as any);
+        await updateCourse(editingId, courseData as any);
       } else {
-        await createCourse({
-          title: form.title,
-          description: form.description,
-          image: form.image,
-          level: form.level,
-          price: Number(form.price),
-          status: form.status,
-          category: form.category,
-          lessonsCount: Number(form.lessonsCount),
-          durationMinutes: Number(form.durationMinutes),
-          tags: form.tags ? form.tags.split(',').map(s => s.trim()).filter(Boolean) : [],
-        } as any);
+        await createCourse(courseData as any);
       }
       setFormOpen(false);
       setEditingId(null);
-      setForm({ title: "", description: "", image: "", level: "beginner", price: 0, status: "published", category: "IoT", lessonsCount: 0, durationMinutes: 0, tags: "" });
+      setForm({ 
+        title: "", description: "", image: "", level: "beginner", price: 0, status: "published", 
+        category: "IoT", lessonsCount: 0, durationMinutes: 0, tags: "",
+        overview: "", curriculum: "", instructorName: "", instructorBio: "", 
+        instructorImage: "", instructorEmail: "", requirements: "", whatYouWillLearn: ""
+      });
       (window as any).showNotification?.('Lưu khóa học thành công', 'success');
     } catch (err) {
       (window as any).showNotification?.('Lỗi lưu khóa học', 'error');
@@ -103,6 +131,15 @@ export default function AdminCoursesTab() {
       lessonsCount: c.lessonsCount,
       durationMinutes: c.durationMinutes,
       tags: (c.tags || []).join(', '),
+      // Enhanced fields
+      overview: c.overview || "",
+      curriculum: Array.isArray(c.curriculum) ? JSON.stringify(c.curriculum, null, 2) : (c.curriculum || ""),
+      instructorName: c.instructorName || "",
+      instructorBio: c.instructorBio || "",
+      instructorImage: c.instructorImage || "",
+      instructorEmail: c.instructorEmail || "",
+      requirements: c.requirements || "",
+      whatYouWillLearn: Array.isArray(c.whatYouWillLearn) ? JSON.stringify(c.whatYouWillLearn, null, 2) : (c.whatYouWillLearn || ""),
     });
   };
 
@@ -230,6 +267,121 @@ export default function AdminCoursesTab() {
                   </div>
                 </div>
                 <div className="form-group"><label>Tags (phân tách bằng dấu phẩy)</label><input value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} /></div>
+
+                {/* Enhanced Course Information */}
+                <div style={{ borderTop: '2px solid var(--border)', paddingTop: '20px', marginTop: '20px' }}>
+                  <h4 style={{ color: 'var(--accent)', marginBottom: '16px', fontSize: '1.2rem' }}>
+                    <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+                    Thông tin chi tiết khóa học
+                  </h4>
+
+                  <div className="form-group">
+                    <label>Tổng quan khóa học</label>
+                    <textarea 
+                      value={form.overview} 
+                      onChange={e => setForm({ ...form, overview: e.target.value })}
+                      placeholder="Mô tả chi tiết về khóa học, mục tiêu, và những gì học viên sẽ đạt được..."
+                      style={{ minHeight: '100px' }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Yêu cầu đầu vào</label>
+                    <textarea 
+                      value={form.requirements} 
+                      onChange={e => setForm({ ...form, requirements: e.target.value })}
+                      placeholder="Kiến thức, kỹ năng, hoặc công cụ cần thiết trước khi tham gia khóa học..."
+                      style={{ minHeight: '80px' }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Những gì bạn sẽ học (JSON array)</label>
+                    <textarea 
+                      value={form.whatYouWillLearn} 
+                      onChange={e => setForm({ ...form, whatYouWillLearn: e.target.value })}
+                      placeholder='["Học lập trình Arduino", "Làm việc với cảm biến", "Xây dựng dự án IoT"]'
+                      style={{ minHeight: '80px', fontFamily: 'monospace' }}
+                    />
+                    <small style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                      Định dạng: JSON array, mỗi item là một chuỗi mô tả kỹ năng sẽ học
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Chương trình học (JSON array)</label>
+                    <textarea 
+                      value={form.curriculum} 
+                      onChange={e => setForm({ ...form, curriculum: e.target.value })}
+                      placeholder='[{"title": "Bài 1: Giới thiệu", "duration": "15 phút", "type": "video"}, {"title": "Bài 2: Thực hành", "duration": "30 phút", "type": "assignment"}]'
+                      style={{ minHeight: '120px', fontFamily: 'monospace' }}
+                    />
+                    <small style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                      Định dạng: JSON array, mỗi item có: title, duration, type (video/assignment/project)
+                    </small>
+                  </div>
+                </div>
+
+                {/* Instructor Information */}
+                <div style={{ borderTop: '2px solid var(--border)', paddingTop: '20px', marginTop: '20px' }}>
+                  <h4 style={{ color: 'var(--accent)', marginBottom: '16px', fontSize: '1.2rem' }}>
+                    <i className="fas fa-user-tie" style={{ marginRight: '8px' }}></i>
+                    Thông tin giảng viên
+                  </h4>
+
+                  <div className="form-group">
+                    <label>Tên giảng viên</label>
+                    <input 
+                      value={form.instructorName} 
+                      onChange={e => setForm({ ...form, instructorName: e.target.value })}
+                      placeholder="VD: Nguyễn Văn A"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Email giảng viên</label>
+                    <input 
+                      type="email"
+                      value={form.instructorEmail} 
+                      onChange={e => setForm({ ...form, instructorEmail: e.target.value })}
+                      placeholder="instructor@example.com"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Ảnh giảng viên</label>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                      <input 
+                        value={form.instructorImage} 
+                        onChange={e => setForm({ ...form, instructorImage: e.target.value })}
+                        placeholder="URL ảnh giảng viên"
+                        style={{ flex: 1 }}
+                      />
+                      {form.instructorImage && (
+                        <img 
+                          src={form.instructorImage} 
+                          alt="Instructor preview" 
+                          style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Tiểu sử giảng viên</label>
+                    <textarea 
+                      value={form.instructorBio} 
+                      onChange={e => setForm({ ...form, instructorBio: e.target.value })}
+                      placeholder="Kinh nghiệm, chuyên môn, thành tích của giảng viên..."
+                      style={{ minHeight: '100px' }}
+                    />
+                  </div>
+                </div>
+
                 <div className="form-actions">
                   <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}><i className="fas fa-times"></i>Hủy</button>
                   <button type="submit" className="btn-primary" disabled={submitting}><i className="fas fa-save"></i>{submitting ? 'Đang lưu...' : 'Lưu'}</button>

@@ -32,7 +32,32 @@ export async function GET(request: NextRequest) {
       prisma.course.count({ where })
     ]);
 
-    const data = items.map((c) => ({
+    const data = items.map((c) => {
+      // Coerce potentially stringified JSON fields into arrays for backward compatibility
+      let normalizedCurriculum: any[] = [];
+      let normalizedWhatYouWillLearn: any[] = [];
+      try {
+        if (Array.isArray((c as any).curriculum)) {
+          normalizedCurriculum = (c as any).curriculum as any[];
+        } else if (typeof (c as any).curriculum === 'string' && (c as any).curriculum.trim().length > 0) {
+          normalizedCurriculum = JSON.parse((c as any).curriculum as unknown as string);
+          if (!Array.isArray(normalizedCurriculum)) normalizedCurriculum = [];
+        }
+      } catch {
+        normalizedCurriculum = [];
+      }
+      try {
+        if (Array.isArray((c as any).whatYouWillLearn)) {
+          normalizedWhatYouWillLearn = (c as any).whatYouWillLearn as any[];
+        } else if (typeof (c as any).whatYouWillLearn === 'string' && (c as any).whatYouWillLearn.trim().length > 0) {
+          normalizedWhatYouWillLearn = JSON.parse((c as any).whatYouWillLearn as unknown as string);
+          if (!Array.isArray(normalizedWhatYouWillLearn)) normalizedWhatYouWillLearn = [];
+        }
+      } catch {
+        normalizedWhatYouWillLearn = [];
+      }
+
+      return ({
       id: c.id,
       title: c.title,
       description: c.description,
@@ -45,9 +70,18 @@ export async function GET(request: NextRequest) {
       lessonsCount: c.lessonsCount,
       durationMinutes: c.durationMinutes,
       enrolledCount: c.enrolledCount,
+      // Enhanced fields
+      overview: c.overview || '',
+      curriculum: normalizedCurriculum,
+      instructorName: c.instructorName || '',
+      instructorBio: c.instructorBio || '',
+      instructorImage: c.instructorImage || '',
+      instructorEmail: c.instructorEmail || '',
+      requirements: c.requirements || '',
+      whatYouWillLearn: normalizedWhatYouWillLearn,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
-    }));
+    })});
 
     const response = { success: true, data, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
     
@@ -88,6 +122,15 @@ export async function POST(request: NextRequest) {
         lessonsCount: lessonsCountVal,
         durationMinutes: durationMinutesVal,
         publishedAt: body.publishedAt ? new Date(body.publishedAt) : null,
+        // Enhanced fields
+        overview: body.overview || null,
+        curriculum: body.curriculum || null,
+        instructorName: body.instructorName || null,
+        instructorBio: body.instructorBio || null,
+        instructorImage: body.instructorImage || null,
+        instructorEmail: body.instructorEmail || null,
+        requirements: body.requirements || null,
+        whatYouWillLearn: body.whatYouWillLearn || null,
       }
     });
 
@@ -104,6 +147,15 @@ export async function POST(request: NextRequest) {
       lessonsCount: created.lessonsCount,
       durationMinutes: created.durationMinutes,
       enrolledCount: created.enrolledCount,
+      // Enhanced fields
+      overview: created.overview || '',
+      curriculum: (created.curriculum as any) || [],
+      instructorName: created.instructorName || '',
+      instructorBio: created.instructorBio || '',
+      instructorImage: created.instructorImage || '',
+      instructorEmail: created.instructorEmail || '',
+      requirements: created.requirements || '',
+      whatYouWillLearn: (created.whatYouWillLearn as any) || [],
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
     };
