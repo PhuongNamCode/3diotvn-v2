@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
         experience: body.experience || null,
         expectation: body.expectation || null,
         status: body.status || 'pending',
+        paymentStatus: body.paymentStatus || 'pending',
+        paymentMethod: body.paymentMethod || null,
+        transactionId: body.transactionId || null,
+        amount: body.amount || null,
       },
     });
 

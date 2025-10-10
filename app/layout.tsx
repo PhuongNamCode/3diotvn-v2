@@ -16,6 +16,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "3DIoT - Cộng Đồng Lập Trình Nhúng & IoT",
   description: "Cộng đồng lập trình nhúng và IoT Việt Nam",
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: [
+      { rel: 'icon', url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+  },
 };
 
 export default function RootLayout({

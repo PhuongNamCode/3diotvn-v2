@@ -80,6 +80,10 @@ export interface Registration {
   experience?: string | null;
   expectation?: string | null;
   status: 'pending' | 'confirmed' | 'cancelled' | string;
+  paymentStatus?: 'pending' | 'paid' | 'failed' | string;
+  paymentMethod?: string | null;
+  transactionId?: string | null;
+  amount?: number | null;
   registeredAt?: string;
   updatedAt?: string;
 }
@@ -109,6 +113,10 @@ export interface CourseEnrollment {
   email: string;
   phone?: string | null;
   status: 'pending' | 'confirmed' | 'cancelled' | string;
+  paymentStatus?: 'pending' | 'paid' | 'failed' | string;
+  paymentMethod?: string | null;
+  transactionId?: string | null;
+  amount?: number | null;
   createdAt?: string;
   updatedAt?: string;
 }

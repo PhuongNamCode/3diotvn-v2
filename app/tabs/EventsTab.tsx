@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useEvents, useRegistrations } from "@/lib/hooks/useData";
+import { paymentMethods, generatePaymentInstructions } from "@/lib/payment-config";
+// Removed QRCodeGenerator import - using static QR codes instead
 
 type EventItem = {
   id: string;
@@ -31,6 +33,8 @@ type RegistrationPayload = {
   organization?: string;
   experience?: string;
   expectation?: string;
+  paymentMethod?: string;
+  transactionId?: string;
 };
 
 export default function EventsTab() {
@@ -45,6 +49,29 @@ export default function EventsTab() {
   const [showEventDetails, setShowEventDetails] = useState<boolean>(false);
   const [selectedEventDetails, setSelectedEventDetails] = useState<EventItem | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'past'>('all');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const dropdown = document.getElementById('payment-dropdown');
+      const selector = document.getElementById('payment-selector');
+      if (dropdown && selector && 
+          !selector.contains(event.target as Node) && 
+          !dropdown.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   useEffect(() => {
     // Use API data if available, otherwise fallback to static data
@@ -122,6 +149,8 @@ export default function EventsTab() {
     if (!ensureLoggedInOrRedirect()) return;
     setSelectedEventDetails(event);
     setShowEventDetails(true);
+    
+    // No need to generate QR codes - using static QR codes from public folder
   }
 
   function handleCloseEventDetails() {
@@ -139,6 +168,8 @@ export default function EventsTab() {
       organization: String(formData.get("organization") || ""),
       experience: String(formData.get("experience") || ""),
       expectation: String(formData.get("expectation") || ""),
+      paymentMethod: String(formData.get("paymentMethod") || ""),
+      transactionId: String(formData.get("transactionId") || ""),
     };
     setSubmitting(true);
     setSuccess(false);
@@ -152,7 +183,11 @@ export default function EventsTab() {
         organization: payload.organization || "",
         experience: payload.experience || "",
         expectation: payload.expectation || "",
-        status: "pending" as const
+        status: "pending" as const,
+        paymentStatus: selected.price && selected.price > 0 ? "pending" : "paid",
+        paymentMethod: payload.paymentMethod || null,
+        transactionId: payload.transactionId || null,
+        amount: selected.price || null
       };
       
       await createRegistration(registrationData);
@@ -1081,6 +1116,317 @@ export default function EventsTab() {
                         placeholder="Chia sẻ kỳ vọng của bạn về sự kiện này..."
                       />
                     </div>
+
+                    {/* Payment Information - Only show if event has price > 0 */}
+                    {selected.price && selected.price > 0 && (
+                      <div style={{ marginBottom: '30px' }}>
+
+                        {/* Payment Method Selection */}
+                        <div style={{ marginBottom: '20px' }}>
+                          <label htmlFor="paymentMethod" style={{ 
+                            display: 'block', 
+                            marginBottom: '8px', 
+                            fontWeight: '600', 
+                            color: 'var(--primary)' 
+                          }}>
+                            Phương thức thanh toán *
+                          </label>
+                          
+                          {/* Custom Payment Method Selector */}
+                          <div style={{ position: 'relative' }}>
+                            <div 
+                              id="payment-selector"
+                              style={{
+                                width: '100%',
+                                padding: '15px 20px',
+                                border: '2px solid var(--border)',
+                                borderRadius: '12px',
+                                fontSize: '16px',
+                                background: 'var(--background)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between'
+                              }}
+                              onClick={() => {
+                                setIsDropdownOpen(!isDropdownOpen);
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                {selectedPaymentMethod === 'ocb' ? (
+                                  <>
+                                    <img 
+                                      src="/payment-logos/ocb-logo.png" 
+                                      alt="OCB" 
+                                      style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                      }}
+                                    />
+                                    <span>OCB (Ngân hàng)</span>
+                                  </>
+                                ) : selectedPaymentMethod === 'momo' ? (
+                                  <>
+                                    <img 
+                                      src="/payment-logos/momo-logo.png" 
+                                      alt="MoMo" 
+                                      style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                      }}
+                                    />
+                                    <span>MoMo</span>
+                                  </>
+                                ) : (
+                                  <span style={{ color: 'var(--text-muted)' }}>Chọn phương thức thanh toán</span>
+                                )}
+                              </div>
+                              <i className="fas fa-chevron-down" style={{ fontSize: '12px', color: 'var(--text-muted)' }}></i>
+                            </div>
+                            
+                            {/* Dropdown Options */}
+                            {isDropdownOpen && (
+                              <div 
+                                id="payment-dropdown"
+                                style={{
+                                  position: 'absolute',
+                                  top: '100%',
+                                  left: '0',
+                                  right: '0',
+                                  background: 'var(--background)',
+                                  border: '2px solid var(--border)',
+                                  borderTop: 'none',
+                                  borderRadius: '0 0 12px 12px',
+                                  zIndex: 1000
+                                }}
+                              >
+                              <div 
+                                style={{
+                                  padding: '12px 20px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  borderBottom: '1px solid var(--border)'
+                                }}
+                                onClick={() => {
+                                  setSelectedPaymentMethod('ocb');
+                                  setIsDropdownOpen(false);
+                                }}
+                              >
+                                <img 
+                                  src="/payment-logos/ocb-logo.png" 
+                                  alt="OCB" 
+                                  style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                                <span>OCB (Ngân hàng)</span>
+                              </div>
+                              
+                              <div 
+                                style={{
+                                  padding: '12px 20px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                                onClick={() => {
+                                  setSelectedPaymentMethod('momo');
+                                  setIsDropdownOpen(false);
+                                }}
+                              >
+                                <img 
+                                  src="/payment-logos/momo-logo.png" 
+                                  alt="MoMo" 
+                                  style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                                <span>MoMo</span>
+                              </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Hidden input for form submission */}
+                          <input 
+                            type="hidden" 
+                            name="paymentMethod" 
+                            value={selectedPaymentMethod}
+                            required 
+                          />
+                        </div>
+
+                        {/* Selected Payment Method Details */}
+                        {selectedPaymentMethod && (
+                          <div style={{ marginBottom: '20px' }}>
+                            <div style={{
+                              background: 'var(--surface)',
+                              border: '1px solid var(--border)',
+                              borderRadius: '12px',
+                              padding: '20px',
+                              fontSize: '14px'
+                            }}>
+                              {selectedPaymentMethod === 'ocb' ? (
+                                <>
+                                  <h4 style={{ margin: '0 0 15px', color: 'var(--primary)', fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center' }}>
+                                    <img 
+                                      src="/payment-logos/ocb-logo.png" 
+                                      alt="OCB" 
+                                      style={{ width: '24px', height: '24px', marginRight: '8px' }}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        target.nextElementSibling?.setAttribute('style', 'margin-right: 8px;');
+                                      }}
+                                    />
+                                    <span></span> OCB - Ngân hàng TMCP Phương Đông
+                                  </h4>
+                                  
+                                  {/* OCB QR Code - Static */}
+                                  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                                    <img 
+                                      src="/payment-logos/ocb-qr.jpg" 
+                                      alt="OCB QR Code" 
+                                      style={{ 
+                                        width: '320px', 
+                                        height: '320px', 
+                                        margin: '0 auto',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                      }}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = '<p style="color: var(--text-muted); padding: 20px;">QR Code không khả dụng</p>';
+                                        }
+                                      }}
+                                    />
+                                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                      Quét mã bằng app OCB hoặc ngân hàng hỗ trợ
+                                    </p>
+                                  </div>
+
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <strong>Ngân hàng:</strong> TMCP Phương Đông (OCB)
+                                  </div>
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <strong>Số tài khoản:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>0004100026206005</span>
+                                  </div>
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <strong>Chủ tài khoản:</strong> Nguyễn Phương Nam
+                                  </div>
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{selected.price.toLocaleString('vi-VN')} VNĐ</span>
+                                  </div>
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <strong>Nội dung:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>DK {selected.title.substring(0, 20)}...</span>
+                                  </div>
+                                </>
+                              ) : selectedPaymentMethod === 'momo' ? (
+                                <>
+                                  <h4 style={{ margin: '0 0 15px', color: 'var(--primary)', fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center' }}>
+                                    <img 
+                                      src="/payment-logos/momo-logo.png" 
+                                      alt="MoMo" 
+                                      style={{ width: '24px', height: '24px', marginRight: '8px' }}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        target.nextElementSibling?.setAttribute('style', 'margin-right: 8px;');
+                                      }}
+                                    />
+                                    <span></span> MoMo - Ví điện tử
+                                  </h4>
+                                  
+                                  {/* MoMo QR Code - Static */}
+                                  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                                    <img 
+                                      src="/payment-logos/momo-qr.jpg" 
+                                      alt="MoMo QR Code" 
+                                      style={{ 
+                                        width: '320px', 
+                                        height: '320px', 
+                                        margin: '0 auto',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                      }}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = '<p style="color: var(--text-muted); padding: 20px;">QR Code không khả dụng</p>';
+                                        }
+                                      }}
+                                    />
+                                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                      Quét mã bằng app MoMo
+                                    </p>
+                                  </div>
+
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <strong>Số điện thoại:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>0339830128</span>
+                                  </div>
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{selected.price.toLocaleString('vi-VN')} VNĐ</span>
+                                  </div>
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <strong>Nội dung:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>DK {selected.title.substring(0, 20)}...</span>
+                                  </div>
+                                </>
+                              ) : null}
+                              <div style={{ marginTop: '15px', padding: '10px', background: 'var(--warning)', color: 'white', borderRadius: '8px', fontSize: '13px' }}>
+                                <strong>⚠️ Lưu ý:</strong> Sau khi thanh toán thành công, vui lòng nhập mã giao dịch vào form bên dưới để hoàn tất đăng ký.
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Transaction ID Input */}
+                        <div>
+                          <label htmlFor="transactionId" style={{ 
+                            display: 'block', 
+                            marginBottom: '8px', 
+                            fontWeight: '600', 
+                            color: 'var(--primary)' 
+                          }}>
+                            Mã giao dịch *
+                          </label>
+                          <input 
+                            type="text" 
+                            id="transactionId" 
+                            name="transactionId" 
+                            required 
+                            style={{
+                              width: '100%',
+                              padding: '15px 20px',
+                              border: '2px solid var(--border)',
+                              borderRadius: '12px',
+                              fontSize: '16px',
+                              background: 'var(--background)'
+                            }}
+                            placeholder="Nhập mã giao dịch (VD: 1234567890)"
+                          />
+                          <p style={{ 
+                            fontSize: '12px', 
+                            color: 'var(--text-muted)', 
+                            margin: '8px 0 0',
+                            lineHeight: '1.4'
+                          }}>
+                            💡 Mã giao dịch có thể tìm thấy trong tin nhắn SMS hoặc email xác nhận từ ngân hàng
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Submit Button */}
                     <button 

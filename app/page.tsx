@@ -48,8 +48,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Initialize theme from localStorage or default to light
-    let currentTheme = (typeof window !== 'undefined' && localStorage.getItem('theme')) || 'light';
+    // Initialize theme from localStorage or default to dark
+    let currentTheme = (typeof window !== 'undefined' && localStorage.getItem('theme')) || 'dark';
     document.documentElement.setAttribute('data-theme', currentTheme);
 
     const lightIcon = document.getElementById('lightIcon');
@@ -405,8 +405,35 @@ export default function Home() {
       <header className="header" id="header">
         <nav className="nav">
           <a href="#" className="logo">
-            <div className="logo-icon"><i className="fas fa-microchip"></i></div>
-            3DIoT
+            <div className="logo-icon">
+              <img 
+                src="/3diot-logo.png" 
+                alt="3DIoT Logo" 
+                style={{ 
+                  width: '32px', 
+                  height: '32px', 
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                  transition: 'all 0.3s ease'
+                }} 
+                onError={(e) => {
+                  // Fallback về icon cũ nếu logo không load được
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = '<i class="fas fa-microchip"></i>';
+                  }
+                }}
+              />
+            </div>
+            <span className="logo-text">
+              <span className="logo-char">3</span>
+              <span className="logo-char">D</span>
+              <span className="logo-char">I</span>
+              <span className="logo-char">o</span>
+              <span className="logo-char">T</span>
+            </span>
           </a>
           <div className="nav-center">
             <div className="nav-tabs" id="navTabs">

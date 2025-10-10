@@ -23,8 +23,10 @@ html[data-theme="light"] {
   --shadow-lg: rgba(30, 41, 59, 0.15);
 }
 
-/* Dark Theme */
+/* Dark Theme (Default) */
+:root,
 :root[data-theme="dark"],
+html,
 html[data-theme="dark"] {
   --primary: #f1f5f9;
   --primary-light: #cbd5e1;
@@ -112,18 +114,166 @@ body {
   font-weight: 800;
   color: var(--primary);
   text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.logo-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 900;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  transition: all 0.3s ease;
+  position: relative;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+@keyframes logoGlow {
+  0% {
+    filter: brightness(1) saturate(1);
+  }
+  100% {
+    filter: brightness(1.1) saturate(1.2);
+  }
+}
+
+.logo-char {
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+@keyframes charBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.logo:hover .logo-char {
+  animation: charHover 0.6s ease-in-out;
+}
+
+.logo:hover .logo-char:nth-child(1) { animation-delay: 0s; }
+.logo:hover .logo-char:nth-child(2) { animation-delay: 0.1s; }
+.logo:hover .logo-char:nth-child(3) { animation-delay: 0.2s; }
+.logo:hover .logo-char:nth-child(4) { animation-delay: 0.3s; }
+.logo:hover .logo-char:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes charHover {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.logo-text::before {
+  content: '3DIoT';
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: blur(1px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: -1;
+}
+
+
+.logo:hover .logo-text {
+  transform: translateY(-1px);
+  text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  animation: logoGlow 1s ease-in-out infinite alternate;
+}
+
+.logo:hover .logo-text::before {
+  opacity: 0.3;
+  filter: blur(2px);
+  transform: translateY(2px);
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .logo-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="dark"] .logo:hover .logo-text {
+  text-shadow: 0 4px 8px rgba(96, 165, 250, 0.4);
 }
 
 .logo-icon {
   width: 40px;
   height: 40px;
-  background: var(--gradient-accent);
-  border-radius: 10px;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-variant) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 1.2rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 12px;
+  z-index: 0;
+}
+
+.logo-icon img {
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.logo:hover .logo-icon::before {
+  opacity: 0.1;
+}
+
+.logo:hover .logo-icon {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md-val);
+  border-color: var(--accent);
+}
+
+/* Dark theme specific adjustments */
+[data-theme="dark"] .logo-icon {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-variant) 100%);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .logo-icon::before {
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+}
+
+[data-theme="dark"] .logo:hover .logo-icon::before {
+  opacity: 0.2;
 }
 
 .nav-center {

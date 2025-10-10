@@ -57,7 +57,7 @@ That's it! Simple and clean. 🎉
 docker login
 
 # Build image
-docker build -t your-username/3diot-app:latest .
+docker build -t phuongnamdocker/3diot-app:latest .
 
 # Push image
-docker push your-username/3diot-app:latest
+docker push phuongnamdocker/3diot-app:latest

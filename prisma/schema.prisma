@@ -77,18 +77,22 @@ model User {
 }
 
 model Registration {
-  id           String   @id @default(cuid())
-  eventId      String
-  fullName     String
-  email        String
-  phone        String?
-  organization String?
-  experience   String?
-  expectation  String?
-  status       String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  eventId       String
+  fullName      String
+  email         String
+  phone         String?
+  organization  String?
+  experience    String?
+  expectation   String?
+  status        String
+  paymentStatus String?  @default("pending") // pending, paid, failed
+  transactionId String?  // Mã giao dịch từ ngân hàng/VDT
+  amount        Int?     // Số tiền thanh toán (VNĐ)
+  paymentMethod String?  // bank_transfer, vnpay, momo, etc.
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
 }
@@ -120,15 +124,19 @@ model Course {
 }
 
 model CourseEnrollment {
-  id        String   @id @default(cuid())
-  courseId  String
-  fullName  String
-  email     String
-  phone     String?
-  status    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  courseId      String
+  fullName      String
+  email         String
+  phone         String?
+  status        String
+  paymentStatus String?  @default("pending") // pending, paid, failed
+  transactionId String?  // Mã giao dịch từ ngân hàng/VDT
+  amount        Int?     // Số tiền thanh toán (VNĐ)
+  paymentMethod String?  // bank_transfer, vnpay, momo, etc.
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
 }
