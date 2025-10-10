@@ -913,7 +913,7 @@ export default function EventsTab() {
                     textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                   }}>
                     {selected.price && selected.price > 0 
-                      ? `${selected.price.toLocaleString('vi-VN')} VNĐ`
+                      ? `${(selected.price ?? 0).toLocaleString('vi-VN')} VNĐ`
                       : '🎉 Miễn phí'
                     }
                   </div>
@@ -1118,7 +1118,7 @@ export default function EventsTab() {
                     </div>
 
                     {/* Payment Information - Only show if event has price > 0 */}
-                    {selected.price && selected.price > 0 && (
+                    {(selected.price ?? 0) > 0 && (
                       <div style={{ marginBottom: '30px' }}>
 
                         {/* Payment Method Selection */}
@@ -1325,7 +1325,7 @@ export default function EventsTab() {
                                     <strong>Chủ tài khoản:</strong> Nguyễn Phương Nam
                                   </div>
                                   <div style={{ marginBottom: '10px' }}>
-                                    <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{selected.price.toLocaleString('vi-VN')} VNĐ</span>
+                                    <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{(selected.price ?? 0).toLocaleString('vi-VN')} VNĐ</span>
                                   </div>
                                   <div style={{ marginBottom: '10px' }}>
                                     <strong>Nội dung:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>DK {selected.title.substring(0, 20)}...</span>
@@ -1377,7 +1377,7 @@ export default function EventsTab() {
                                     <strong>Số điện thoại:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>0339830128</span>
                                   </div>
                                   <div style={{ marginBottom: '10px' }}>
-                                    <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{selected.price.toLocaleString('vi-VN')} VNĐ</span>
+                                    <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{(selected.price ?? 0).toLocaleString('vi-VN')} VNĐ</span>
                                   </div>
                                   <div style={{ marginBottom: '10px' }}>
                                     <strong>Nội dung:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>DK {selected.title.substring(0, 20)}...</span>
