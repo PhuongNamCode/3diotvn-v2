@@ -261,29 +261,119 @@ export default function Home() {
         loginTab.innerHTML = `
           <div class="container">
             <div class="login-container">
-              <div class="login-card">
-                <div class="login-header">
-                  <p class="login-subtitle">Chào mừng bạn đến với cộng đồng 3DIoT!</p>
-                </div>
-                <div class="login-content">
-                  <div style="margin:2rem 0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                    <img id="loginAvatarImg" src="${user.picture}" alt="User Avatar" style="width:80px;height:80px;border-radius:50%;display:block;margin:0 auto 1rem;border:3px solid var(--accent);" />
-                    <h3 style="color:var(--primary);margin-bottom:0.5rem;">${user.name}</h3>
-                    <p style="color:var(--text-secondary);">${user.email}</p>
+              <div class="login-card modern-profile-card">
+                <!-- Welcome Header with Gradient -->
+                <div class="profile-header">
+                  <div class="welcome-badge">
+                    <i class="fas fa-rocket"></i>
+                    <span>Chào mừng bạn đến với cộng đồng 3DIoT!</span>
                   </div>
-                  <div style="background:var(--background);padding:1.5rem;border-radius:12px;margin:1.5rem 0;">
-                    <h4 style="color:var(--accent);margin-bottom:1rem;text-align:center;">Tính năng đã mở khóa</h4>
-                    <div style="display:grid;gap:0.8rem;">
-                      <div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-check-circle" style="color:var(--success);"></i><span>Đăng ký tham gia sự kiện</span></div>
-                      <div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-check-circle" style="color:var(--success);"></i><span>Truy cập tài nguyên độc quyền</span></div>
-                      <div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-check-circle" style="color:var(--success);"></i><span>Kết nối với cộng đồng</span></div>
-                      <div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-check-circle" style="color:var(--success);"></i><span>Nhận thông báo việc làm</span></div>
+                </div>
+
+                <!-- User Profile Section -->
+                <div class="profile-section">
+                  <div class="profile-avatar-container">
+                    <div class="avatar-ring">
+                      <img id="loginAvatarImg" src="${user.picture}" alt="User Avatar" class="profile-avatar" />
+                      <div class="avatar-status"></div>
+                    </div>
+                    <div class="profile-info">
+                      <h3 class="profile-name">${user.name}</h3>
+                      <p class="profile-email">${user.email}</p>
+                      <div class="profile-badge">
+                        <i class="fas fa-crown"></i>
+                        <span>Thành viên VIP</span>
+                      </div>
                     </div>
                   </div>
-                  <div style="display:grid;gap:1rem;">
-                    <button class="btn-primary" id="goEvents" style="justify-content:center;"><i class="fas fa-calendar-alt"></i> Xem sự kiện</button>
-                    <button id="logoutInline" style="background:var(--danger);color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;font-weight:600;"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+                </div>
+
+                <!-- Features Section -->
+                <div class="features-section">
+                  <div class="features-header">
+                    <i class="fas fa-star"></i>
+                    <h4>Tính năng đã mở khóa</h4>
+                    <div class="features-count">4/4</div>
                   </div>
+                  <div class="features-grid">
+                    <div class="feature-item">
+                      <div class="feature-icon">
+                        <i class="fas fa-calendar-check"></i>
+                      </div>
+                      <div class="feature-content">
+                        <span class="feature-title">Đăng ký tham gia sự kiện</span>
+                        <span class="feature-desc">Tham gia các workshop và hội thảo</span>
+                      </div>
+                      <div class="feature-status">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                    </div>
+                    <div class="feature-item">
+                      <div class="feature-icon">
+                        <i class="fas fa-gem"></i>
+                      </div>
+                      <div class="feature-content">
+                        <span class="feature-title">Truy cập tài nguyên độc quyền</span>
+                        <span class="feature-desc">Tài liệu và code mẫu premium</span>
+                      </div>
+                      <div class="feature-status">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                    </div>
+                    <div class="feature-item">
+                      <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                      </div>
+                      <div class="feature-content">
+                        <span class="feature-title">Kết nối với cộng đồng</span>
+                        <span class="feature-desc">Tham gia nhóm và mạng lưới</span>
+                      </div>
+                      <div class="feature-status">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                    </div>
+                    <div class="feature-item">
+                      <div class="feature-icon">
+                        <i class="fas fa-briefcase"></i>
+                      </div>
+                      <div class="feature-content">
+                        <span class="feature-title">Nhận thông báo việc làm</span>
+                        <span class="feature-desc">Cơ hội nghề nghiệp từ đối tác</span>
+                      </div>
+                      <div class="feature-status">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                  <button class="btn-modern btn-primary-modern" id="goEvents">
+                    <div class="btn-icon">
+                      <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="btn-content">
+                      <span class="btn-title">Xem sự kiện</span>
+                      <span class="btn-subtitle">Khám phá các sự kiện sắp tới</span>
+                    </div>
+                    <div class="btn-arrow">
+                      <i class="fas fa-arrow-right"></i>
+                    </div>
+                  </button>
+                  
+                  <button class="btn-modern btn-secondary-modern" id="logoutInline">
+                    <div class="btn-icon">
+                      <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <div class="btn-content">
+                      <span class="btn-title">Đăng xuất</span>
+                      <span class="btn-subtitle">Thoát khỏi tài khoản</span>
+                    </div>
+                    <div class="btn-arrow">
+                      <i class="fas fa-arrow-right"></i>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
