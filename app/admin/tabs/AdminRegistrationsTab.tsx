@@ -379,6 +379,7 @@ export default function AdminRegistrationsTab() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'var(--surface-variant)' }}>
+                  <th style={{ padding: '16px', textAlign: 'center', fontWeight: '600', width: '50px' }}>STT</th>
                   <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Thông tin người dùng</th>
                   <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Sự kiện</th>
                   <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Trạng thái</th>
@@ -387,8 +388,11 @@ export default function AdminRegistrationsTab() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRegistrations.map((reg) => (
+                {filteredRegistrations.map((reg, index) => (
                   <tr key={reg.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                      {index + 1}
+                    </td>
                     <td style={{ padding: '16px' }}>
                       <div>
                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>{reg.fullName}</div>

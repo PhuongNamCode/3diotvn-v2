@@ -5946,3 +5946,22 @@ body {
     font-size: 1.1rem;
   }
 }
+
+/* Course Detail Modal Responsive */
+.sticky-enroll-button {
+  display: flex !important;
+}
+
+/* Hide sticky button on desktop (1025px and above) */
+@media (min-width: 1025px) {
+  .sticky-enroll-button {
+    display: none !important;
+  }
+}
+
+/* Show sticky button on mobile and tablet */
+@media (max-width: 1024px) {
+  .sticky-enroll-button {
+    display: flex !important;
+  }
+}

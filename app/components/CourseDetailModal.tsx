@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { calculateFakeEnrollmentCount } from '@/lib/utils/enrollmentUtils';
 
 interface CourseDetailModalProps {
   course: {
@@ -18,6 +19,14 @@ interface CourseDetailModalProps {
     durationMinutes: number;
     enrolledCount: number;
     publishedAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    // Discount fields
+    discountPercentage?: number | null;
+    discountAmount?: number | null;
+    discountStartDate?: string | null;
+    discountEndDate?: string | null;
+    isDiscountActive?: boolean | null;
     // Enhanced fields
     overview?: string;
     curriculum?: any[];
@@ -36,6 +45,29 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose, 
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'instructor'>('overview');
 
   // Helper functions
+  const calculateFinalPrice = (course: any) => {
+    if (!course.isDiscountActive || course.price <= 0) return course.price;
+    
+    const now = new Date();
+    const startDate = course.discountStartDate ? new Date(course.discountStartDate) : null;
+    const endDate = course.discountEndDate ? new Date(course.discountEndDate) : null;
+    
+    // Check if discount is within valid date range
+    if (startDate && now < startDate) return course.price;
+    if (endDate && now > endDate) return course.price;
+    
+    let discountAmount = 0;
+    
+    // Calculate discount based on percentage or fixed amount
+    if (course.discountPercentage && course.discountPercentage > 0) {
+      discountAmount = (course.price * course.discountPercentage) / 100;
+    } else if (course.discountAmount && course.discountAmount > 0) {
+      discountAmount = course.discountAmount;
+    }
+    
+    return Math.max(0, course.price - discountAmount);
+  };
+
   const formatPrice = (price: number) => {
     return price > 0 ? `${price.toLocaleString('vi-VN')}₫` : 'Miễn phí';
   };
@@ -215,7 +247,52 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose, 
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          {/* Sticky Enroll Button - Mobile & Tablet */}
+          <div style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            padding: '12px 20px',
+            background: 'var(--surface)',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'center',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+          }} className="sticky-enroll-button">
+            <button
+              onClick={() => onEnroll(course)}
+              style={{
+                padding: '12px 24px',
+                border: 'none',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+                color: 'white',
+                borderRadius: '25px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '16px',
+                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+                minWidth: '200px',
+                justifyContent: 'center'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3)';
+              }}
+            >
+              <i className="fas fa-rocket"></i>
+              Đăng ký ngay - {formatPrice(calculateFinalPrice(course))}
+            </button>
+          </div>
+
           {/* Title & Price */}
           <div style={{
             padding: '30px 30px 20px',
@@ -233,13 +310,57 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose, 
               }}>
                 {course.title}
               </h1>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                color: course.price > 0 ? 'var(--accent)' : '#34d399',
-                whiteSpace: 'nowrap'
-              }}>
-                {formatPrice(course.price)}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                {(() => {
+                  const finalPrice = calculateFinalPrice(course);
+                  const hasDiscount = course.isDiscountActive && finalPrice < course.price && course.price > 0;
+                  const discountAmount = course.price - finalPrice;
+                  
+                  if (hasDiscount) {
+                    return (
+                      <>
+                        <div style={{
+                          fontSize: '2rem',
+                          fontWeight: '700',
+                          color: 'var(--accent)',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {formatPrice(finalPrice)}
+                        </div>
+                        <div style={{
+                          fontSize: '1.2rem',
+                          color: 'var(--text-muted)',
+                          textDecoration: 'line-through',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {formatPrice(course.price)}
+                        </div>
+                        <div style={{
+                          fontSize: '0.9rem',
+                          color: '#16a34a',
+                          background: '#dcfce7',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontWeight: '600',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          -{course.discountPercentage ? `${course.discountPercentage}%` : formatPrice(discountAmount)}
+                        </div>
+                      </>
+                    );
+                  } else {
+                    return (
+                      <div style={{
+                        fontSize: '2rem',
+                        fontWeight: '700',
+                        color: course.price > 0 ? 'var(--accent)' : '#34d399',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {formatPrice(course.price)}
+                      </div>
+                    );
+                  }
+                })()}
               </div>
             </div>
 
@@ -274,7 +395,9 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose, 
                 <i className="fas fa-users" style={{ color: 'var(--accent)', fontSize: '18px' }}></i>
                 <div>
                   <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Học viên</div>
-                  <div style={{ fontWeight: '600', color: 'var(--primary)' }}>{course.enrolledCount}</div>
+                  <div style={{ fontWeight: '600', color: 'var(--primary)' }}>
+                    {calculateFakeEnrollmentCount(course.enrolledCount || 0, course.createdAt || course.updatedAt || new Date())}
+                  </div>
                 </div>
               </div>
               <div style={{
@@ -597,19 +720,18 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose, 
           </div>
 
           {/* Footer */}
+          {/* Fixed Bottom Action Bar */}
           <div style={{
             padding: '20px 30px',
             borderTop: '1px solid var(--border)',
-            background: 'var(--surface-variant)',
+            background: 'var(--surface)',
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
+            justifyContent: 'center',
+            alignItems: 'center',
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
-              <i className="fas fa-shield-alt" style={{ marginRight: '6px', color: 'var(--success)' }}></i>
-              Đảm bảo hoàn tiền trong 30 ngày
-            </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            {/* Action Buttons - Centered */}
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
               <button
                 onClick={onClose}
                 style={{
@@ -617,48 +739,81 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose, 
                   border: '1px solid var(--border)',
                   background: 'transparent',
                   color: 'var(--text-primary)',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  fontSize: '14px'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = 'var(--accent)';
                   e.currentTarget.style.color = 'var(--accent)';
+                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = 'var(--border)';
                   e.currentTarget.style.color = 'var(--text-primary)';
+                  e.currentTarget.style.background = 'transparent';
                 }}
               >
+                <i className="fas fa-times" style={{ marginRight: '6px' }}></i>
                 Đóng
               </button>
               <button
                 onClick={() => onEnroll(course)}
                 style={{
-                  padding: '12px 24px',
+                  padding: '14px 28px',
                   border: 'none',
-                  background: 'var(--accent)',
+                  background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
                   color: 'white',
-                  borderRadius: '8px',
-                  fontWeight: '600',
+                  borderRadius: '10px',
+                  fontWeight: '700',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '10px',
+                  fontSize: '16px',
+                  boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  minWidth: '180px',
+                  justifyContent: 'center'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--accent-secondary)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.4)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, var(--accent-secondary), var(--accent))';
+                  
+                  // Trigger shimmer effect
+                  const shimmer = e.currentTarget.querySelector('.shimmer-effect') as HTMLElement;
+                  if (shimmer) {
+                    shimmer.style.left = '100%';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--accent)';
                   e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, var(--accent), var(--accent-secondary))';
+                  
+                  // Reset shimmer effect
+                  const shimmer = e.currentTarget.querySelector('.shimmer-effect') as HTMLElement;
+                  if (shimmer) {
+                    shimmer.style.left = '-100%';
+                  }
                 }}
               >
-                <i className="fas fa-user-plus"></i>
+                <i className="fas fa-rocket"></i>
                 Đăng ký ngay
+                <div className="shimmer-effect" style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '-100%',
+                  width: '100%',
+                  height: '100%',
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                  transition: 'left 0.5s ease'
+                }}></div>
               </button>
             </div>
           </div>

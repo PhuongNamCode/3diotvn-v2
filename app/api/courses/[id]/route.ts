@@ -44,6 +44,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       lessonsCount: c.lessonsCount,
       durationMinutes: c.durationMinutes,
       enrolledCount: c.enrolledCount,
+      // Discount fields
+      discountPercentage: (c as any).discountPercentage || 0,
+      discountAmount: (c as any).discountAmount || 0,
+      discountStartDate: (c as any).discountStartDate || null,
+      discountEndDate: (c as any).discountEndDate || null,
+      isDiscountActive: (c as any).isDiscountActive || false,
       // Enhanced fields
       overview: c.overview || '',
       curriculum: normalizedCurriculum,
@@ -67,10 +73,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
+    console.log('PUT request body:', body);
+    console.log('enrolledCount from body:', body.enrolledCount);
 
     const priceVal = body.price !== undefined ? Number(body.price) : undefined;
     const lessonsCountVal = body.lessonsCount !== undefined ? Number(body.lessonsCount) : undefined;
     const durationMinutesVal = body.durationMinutes !== undefined ? Number(body.durationMinutes) : undefined;
+    const enrolledCountVal = body.enrolledCount !== undefined ? Number(body.enrolledCount) : undefined;
+    const discountPercentageVal = body.discountPercentage !== undefined ? Number(body.discountPercentage) : undefined;
+    const discountAmountVal = body.discountAmount !== undefined ? Number(body.discountAmount) : undefined;
     const tagsVal = body.tags !== undefined
       ? (Array.isArray(body.tags)
           ? (body.tags as any[]).map((s) => String(s)).filter((s) => s.trim().length > 0)
@@ -92,7 +103,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         tags: tagsVal as any,
         lessonsCount: lessonsCountVal,
         durationMinutes: durationMinutesVal,
+        enrolledCount: enrolledCountVal,
         publishedAt: body.publishedAt ? new Date(body.publishedAt) : undefined,
+        // Discount fields
+        discountPercentage: discountPercentageVal,
+        discountAmount: discountAmountVal,
+        discountStartDate: body.discountStartDate ? new Date(body.discountStartDate) : undefined,
+        discountEndDate: body.discountEndDate ? new Date(body.discountEndDate) : undefined,
+        isDiscountActive: body.isDiscountActive,
         // Enhanced fields
         overview: body.overview,
         curriculum: body.curriculum as any,

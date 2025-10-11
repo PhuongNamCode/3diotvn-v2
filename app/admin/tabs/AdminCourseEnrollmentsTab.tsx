@@ -37,6 +37,19 @@ export default function AdminCourseEnrollmentsTab() {
     return course ? course.price : 0;
   };
 
+  const getCourseDiscountInfo = (courseId: string) => {
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return null;
+    
+    return {
+      isDiscountActive: course.isDiscountActive || false,
+      discountPercentage: course.discountPercentage || 0,
+      discountAmount: course.discountAmount || 0,
+      discountStartDate: course.discountStartDate,
+      discountEndDate: course.discountEndDate
+    };
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -371,16 +384,21 @@ export default function AdminCourseEnrollmentsTab() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'var(--surface-variant)' }}>
+                  <th style={{ padding: '16px', textAlign: 'center', fontWeight: '600', width: '50px' }}>STT</th>
                   <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Thông tin người dùng</th>
                   <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Khóa học</th>
+                  <th style={{ padding: '16px', textAlign: 'center', fontWeight: '600', width: '120px' }}>Discount</th>
                   <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Trạng thái</th>
                   <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Ngày đăng ký</th>
                   <th style={{ padding: '16px', textAlign: 'center', fontWeight: '600' }}>Hành động</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredEnrollments.map((enrollment) => (
+                {filteredEnrollments.map((enrollment, index) => (
                   <tr key={enrollment.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                      {index + 1}
+                    </td>
                     <td style={{ padding: '16px' }}>
                       <div>
                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>{enrollment.fullName}</div>
@@ -397,6 +415,76 @@ export default function AdminCourseEnrollmentsTab() {
                           {formatPrice(getCoursePrice(enrollment.courseId))}
                         </div>
                       </div>
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'center' }}>
+                      {(() => {
+                        const discountInfo = getCourseDiscountInfo(enrollment.courseId);
+                        if (!discountInfo || !discountInfo.isDiscountActive) {
+                          return (
+                            <div style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 8px',
+                              borderRadius: '12px',
+                              background: '#f3f4f6',
+                              color: '#6b7280',
+                              fontSize: '12px',
+                              fontWeight: '500'
+                            }}>
+                              <i className="fas fa-percentage"></i>
+                              0%
+                            </div>
+                          );
+                        }
+
+                        const now = new Date();
+                        const startDate = discountInfo.discountStartDate ? new Date(discountInfo.discountStartDate) : null;
+                        const endDate = discountInfo.discountEndDate ? new Date(discountInfo.discountEndDate) : null;
+                        
+                        // Check if discount is within date range
+                        const isWithinDateRange = (!startDate || now >= startDate) && (!endDate || now <= endDate);
+                        
+                        if (!isWithinDateRange) {
+                          return (
+                            <div style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 8px',
+                              borderRadius: '12px',
+                              background: '#fef3c7',
+                              color: '#d97706',
+                              fontSize: '12px',
+                              fontWeight: '500'
+                            }}>
+                              <i className="fas fa-clock"></i>
+                              Hết hạn
+                            </div>
+                          );
+                        }
+
+                        const discountText = discountInfo.discountPercentage > 0 
+                          ? `${discountInfo.discountPercentage}%`
+                          : `${discountInfo.discountAmount.toLocaleString('vi-VN')}₫`;
+
+                        return (
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            background: '#dcfce7',
+                            color: '#16a34a',
+                            fontSize: '12px',
+                            fontWeight: '600'
+                          }}>
+                            <i className="fas fa-percentage"></i>
+                            {discountText}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td style={{ padding: '16px' }}>
                       <div style={{ marginBottom: '8px' }}>

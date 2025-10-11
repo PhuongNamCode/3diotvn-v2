@@ -22,15 +22,21 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [items, total] = await Promise.all([
-      prisma.course.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      prisma.course.count({ where })
-    ]);
+    // Use raw query to debug discount fields
+    const rawItems = await prisma.$queryRaw`
+      SELECT 
+        id, title, description, image, level, price, status, category, tags,
+        "lessonsCount", "durationMinutes", "enrolledCount", "publishedAt",
+        "discountPercentage", "discountAmount", "discountStartDate", "discountEndDate", "isDiscountActive",
+        overview, curriculum, "instructorName", "instructorBio", "instructorImage", "instructorEmail",
+        requirements, "whatYouWillLearn", "createdAt", "updatedAt"
+      FROM "Course"
+      ORDER BY "createdAt" DESC
+      LIMIT ${limit} OFFSET ${skip}
+    ` as any[];
+    
+    const total = await prisma.course.count({ where });
+    const items = rawItems;
 
     const data = items.map((c) => {
       // Coerce potentially stringified JSON fields into arrays for backward compatibility
@@ -70,6 +76,12 @@ export async function GET(request: NextRequest) {
       lessonsCount: c.lessonsCount,
       durationMinutes: c.durationMinutes,
       enrolledCount: c.enrolledCount,
+      // Discount fields
+      discountPercentage: c.discountPercentage || 0,
+      discountAmount: c.discountAmount || 0,
+      discountStartDate: c.discountStartDate || null,
+      discountEndDate: c.discountEndDate || null,
+      isDiscountActive: c.isDiscountActive || false,
       // Enhanced fields
       overview: c.overview || '',
       curriculum: normalizedCurriculum,
@@ -102,6 +114,8 @@ export async function POST(request: NextRequest) {
     const priceVal = Number.isFinite(Number(body.price)) ? Number(body.price) : 0;
     const lessonsCountVal = Number.isFinite(Number(body.lessonsCount)) ? Number(body.lessonsCount) : 0;
     const durationMinutesVal = Number.isFinite(Number(body.durationMinutes)) ? Number(body.durationMinutes) : 0;
+    const discountPercentageVal = Number.isFinite(Number(body.discountPercentage)) ? Number(body.discountPercentage) : 0;
+    const discountAmountVal = Number.isFinite(Number(body.discountAmount)) ? Number(body.discountAmount) : 0;
     const tagsVal = Array.isArray(body.tags)
       ? (body.tags as any[]).map((s) => String(s)).filter((s) => s.trim().length > 0)
       : typeof body.tags === 'string'
@@ -121,7 +135,14 @@ export async function POST(request: NextRequest) {
         tags: tagsVal,
         lessonsCount: lessonsCountVal,
         durationMinutes: durationMinutesVal,
+        enrolledCount: 0, // Mặc định 0 đăng ký thực tế
         publishedAt: body.publishedAt ? new Date(body.publishedAt) : null,
+        // Discount fields
+        discountPercentage: discountPercentageVal,
+        discountAmount: discountAmountVal,
+        discountStartDate: body.discountStartDate ? new Date(body.discountStartDate) : null,
+        discountEndDate: body.discountEndDate ? new Date(body.discountEndDate) : null,
+        isDiscountActive: Boolean(body.isDiscountActive),
         // Enhanced fields
         overview: body.overview || null,
         curriculum: body.curriculum || null,
@@ -147,6 +168,12 @@ export async function POST(request: NextRequest) {
       lessonsCount: created.lessonsCount,
       durationMinutes: created.durationMinutes,
       enrolledCount: created.enrolledCount,
+      // Discount fields
+      discountPercentage: created.discountPercentage || 0,
+      discountAmount: created.discountAmount || 0,
+      discountStartDate: created.discountStartDate || null,
+      discountEndDate: created.discountEndDate || null,
+      isDiscountActive: created.isDiscountActive || false,
       // Enhanced fields
       overview: created.overview || '',
       curriculum: (created.curriculum as any) || [],

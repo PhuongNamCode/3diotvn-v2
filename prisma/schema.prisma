@@ -116,8 +116,15 @@ model Course {
   tags            Json?
   lessonsCount    Int                @default(0)
   durationMinutes Int                @default(0)
-  enrolledCount   Int                @default(0)
+  enrolledCount   Int                @default(0)  // Số học viên thực tế
   publishedAt     DateTime?
+  
+  // Discount fields
+  discountPercentage Int?            @default(0) // Phần trăm giảm giá (0-100)
+  discountAmount     Int?            @default(0) // Số tiền giảm giá cố định (VNĐ)
+  discountStartDate  DateTime?       // Ngày bắt đầu áp giảm giá
+  discountEndDate    DateTime?       // Ngày kết thúc áp giảm giá
+  isDiscountActive   Boolean         @default(false) // Trạng thái áp giảm giá
   
   // New fields for enhanced course information
   overview        String?            // Tổng quan khóa học

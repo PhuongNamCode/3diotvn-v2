@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useCourses, useCourseEnrollments } from "@/lib/hooks/useData";
+import { calculateFakeEnrollmentCount } from "@/lib/utils/enrollmentUtils";
 import { paymentMethods, generatePaymentInstructions } from "@/lib/payment-config";
 import CourseCard from "@/app/components/CourseCard";
 import CourseCardSkeleton from "@/app/components/CourseCardSkeleton";
@@ -22,6 +23,14 @@ type CourseItem = {
   lessonsCount: number;
   durationMinutes: number;
   enrolledCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+  // Discount fields
+  discountPercentage?: number | null;
+  discountAmount?: number | null;
+  discountStartDate?: string | null;
+  discountEndDate?: string | null;
+  isDiscountActive?: boolean | null;
   // Enhanced fields
   overview?: string;
   curriculum?: any[];
@@ -77,6 +86,14 @@ export default function CoursesTab() {
         lessonsCount: c.lessonsCount,
         durationMinutes: c.durationMinutes,
         enrolledCount: c.enrolledCount,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        // Discount fields
+        discountPercentage: c.discountPercentage || 0,
+        discountAmount: c.discountAmount || 0,
+        discountStartDate: c.discountStartDate || null,
+        discountEndDate: c.discountEndDate || null,
+        isDiscountActive: c.isDiscountActive || false,
         // Enhanced fields
         overview: c.overview || undefined,
         curriculum: c.curriculum || undefined,
@@ -160,6 +177,29 @@ export default function CoursesTab() {
     try { const raw = localStorage.getItem('user'); return raw ? JSON.parse(raw) : null; } catch { return null; }
   }
 
+  function calculateFinalPrice(course: CourseItem) {
+    if (!course.isDiscountActive || course.price <= 0) return course.price;
+    
+    const now = new Date();
+    const startDate = course.discountStartDate ? new Date(course.discountStartDate) : null;
+    const endDate = course.discountEndDate ? new Date(course.discountEndDate) : null;
+    
+    // Check if discount is within valid date range
+    if (startDate && now < startDate) return course.price;
+    if (endDate && now > endDate) return course.price;
+    
+    let discountAmount = 0;
+    
+    // Calculate discount based on percentage or fixed amount
+    if (course.discountPercentage && course.discountPercentage > 0) {
+      discountAmount = (course.price * course.discountPercentage) / 100;
+    } else if (course.discountAmount && course.discountAmount > 0) {
+      discountAmount = course.discountAmount;
+    }
+    
+    return Math.max(0, course.price - discountAmount);
+  }
+
   function ensureLoggedInOrRedirect(): boolean {
     const user = getCurrentUser();
     if (!user) {
@@ -199,10 +239,11 @@ export default function CoursesTab() {
     };
 
     // Thêm thông tin thanh toán nếu khóa học có phí
-    if ((selected.price ?? 0) > 0) {
+    const finalPrice = calculateFinalPrice(selected);
+    if ((finalPrice ?? 0) > 0) {
       payload.paymentMethod = selectedPaymentMethod;
       payload.transactionId = String(formData.get('transactionId') || '');
-      payload.amount = selected.price;
+      payload.amount = finalPrice;
     }
 
     setSubmitting(true);
@@ -244,7 +285,7 @@ export default function CoursesTab() {
                 <span className="stat-label">Bài học</span>
               </div>
               <div className="stat-item">
-                <span className="stat-number">{items?.reduce((s, c) => s + (c?.enrolledCount || 0), 0) || 0}</span>
+                <span className="stat-number">{items?.reduce((s, c) => s + calculateFakeEnrollmentCount(c?.enrolledCount || 0, c?.createdAt || c?.updatedAt || new Date()), 0) || 0}</span>
                 <span className="stat-label">Đăng ký</span>
               </div>
             </div>
@@ -463,14 +504,21 @@ export default function CoursesTab() {
                     <i className="fas fa-user"></i>
                     <strong>Đã đăng ký</strong>
                   </div>
-                  <div style={{ color: 'var(--primary)', fontWeight: 700 }}>{selected.enrolledCount}</div>
+                  <div style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                    {calculateFakeEnrollmentCount(selected.enrolledCount || 0, selected.createdAt || selected.updatedAt || new Date())}
+                  </div>
                 </div>
                 <div style={{ background: 'var(--surface)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <i className="fas fa-dollar-sign"></i>
                     <strong>Học phí</strong>
                   </div>
-                  <div style={{ color: 'var(--primary)', fontWeight: 700 }}>{(!selected.price || selected.price <= 0) ? 'Miễn phí' : `${selected.price.toLocaleString('vi-VN')} VNĐ`}</div>
+                  <div style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                    {(() => {
+                      const finalPrice = calculateFinalPrice(selected);
+                      return (!finalPrice || finalPrice <= 0) ? 'Miễn phí' : `${finalPrice.toLocaleString('vi-VN')} VNĐ`;
+                    })()}
+                  </div>
                 </div>
               </div>
 
@@ -496,7 +544,10 @@ export default function CoursesTab() {
                       </div>
 
                       {/* Payment Information - Only show if course has price > 0 */}
-                      {(selected.price ?? 0) > 0 && (
+                      {(() => {
+                        const finalPrice = calculateFinalPrice(selected);
+                        return (finalPrice ?? 0) > 0;
+                      })() && (
                         <div style={{ marginBottom: '30px' }}>
 
                           {/* Payment Method Selection */}
@@ -716,7 +767,7 @@ export default function CoursesTab() {
                                         <strong>Chủ tài khoản:</strong> Nguyen Phuong Nam
                                       </p>
                                       <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
-                                        <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{(selected.price ?? 0).toLocaleString('vi-VN')} VNĐ</span>
+                                        <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{calculateFinalPrice(selected).toLocaleString('vi-VN')} VNĐ</span>
                                       </p>
                                       <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
                                         <strong>Nội dung chuyển:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>DK {selected.title.substring(0, 20)}...</span>
@@ -745,7 +796,7 @@ export default function CoursesTab() {
                                         <strong>Chủ tài khoản:</strong> Nguyen Phuong Nam
                                       </p>
                                       <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
-                                        <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{(selected.price ?? 0).toLocaleString('vi-VN')} VNĐ</span>
+                                        <strong>Số tiền:</strong> <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{calculateFinalPrice(selected).toLocaleString('vi-VN')} VNĐ</span>
                                       </p>
                                       <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
                                         <strong>Nội dung chuyển:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--surface-variant)', padding: '4px 8px', borderRadius: '4px' }}>DK {selected.title.substring(0, 20)}...</span>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { calculateFakeEnrollmentCount } from '@/lib/utils/enrollmentUtils';
 import Image from 'next/image';
 
 interface CourseCardProps {
@@ -18,12 +19,43 @@ interface CourseCardProps {
     durationMinutes: number;
     enrolledCount: number;
     publishedAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    // Discount fields
+    discountPercentage?: number | null;
+    discountAmount?: number | null;
+    discountStartDate?: string | null;
+    discountEndDate?: string | null;
+    isDiscountActive?: boolean | null;
   };
   onViewDetails: (course: any) => void;
 }
 
 const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
   // Helper functions
+  const calculateFinalPrice = (course: any) => {
+    if (!course.isDiscountActive || course.price <= 0) return course.price;
+    
+    const now = new Date();
+    const startDate = course.discountStartDate ? new Date(course.discountStartDate) : null;
+    const endDate = course.discountEndDate ? new Date(course.discountEndDate) : null;
+    
+    // Check if discount is within valid date range
+    if (startDate && now < startDate) return course.price;
+    if (endDate && now > endDate) return course.price;
+    
+    let discountAmount = 0;
+    
+    // Calculate discount based on percentage or fixed amount
+    if (course.discountPercentage && course.discountPercentage > 0) {
+      discountAmount = (course.price * course.discountPercentage) / 100;
+    } else if (course.discountAmount && course.discountAmount > 0) {
+      discountAmount = course.discountAmount;
+    }
+    
+    return Math.max(0, course.price - discountAmount);
+  };
+
   const formatPrice = (price: number) => {
     return price > 0 ? `${price.toLocaleString('vi-VN')}₫` : 'Miễn phí';
   };
@@ -39,15 +71,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
     switch (level.toLowerCase()) {
       case 'beginner':
       case 'cơ bản':
-        return '#34d399'; // Success green (matches project theme)
+        return 'linear-gradient(135deg, #10b981, #34d399)'; // Modern green gradient
       case 'intermediate':
       case 'trung bình':
-        return '#fbbf24'; // Warning amber (matches project theme)
+        return 'linear-gradient(135deg, #f59e0b, #fbbf24)'; // Modern amber gradient
       case 'advanced':
       case 'nâng cao':
-        return '#f87171'; // Danger red (matches project theme)
+        return 'linear-gradient(135deg, #ef4444, #f87171)'; // Modern red gradient
       default:
-        return '#94a3b8'; // Text muted (matches project theme)
+        return 'linear-gradient(135deg, #6b7280, #9ca3af)'; // Modern gray gradient
     }
   };
 
@@ -55,15 +87,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
     switch (level.toLowerCase()) {
       case 'beginner':
       case 'cơ bản':
-        return '🟢';
+        return 'fas fa-seedling'; // Growing plant icon
       case 'intermediate':
       case 'trung bình':
-        return '🟡';
+        return 'fas fa-chart-line'; // Trending up icon
       case 'advanced':
       case 'nâng cao':
-        return '🔴';
+        return 'fas fa-rocket'; // Rocket icon
       default:
-        return '⚪';
+        return 'fas fa-circle'; // Default circle icon
     }
   };
 
@@ -92,7 +124,13 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
     (new Date().getTime() - new Date(course.publishedAt).getTime()) < (30 * 24 * 60 * 60 * 1000) : 
     false;
 
-  const isPopular = course.enrolledCount > 50;
+  const displayStudents = calculateFakeEnrollmentCount(course.enrolledCount, course.createdAt || course.updatedAt || new Date());
+  const isPopular = course.enrolledCount > 100; // Tag "HOT" khi có > 100 học viên thật
+  
+  // Calculate pricing information
+  const finalPrice = calculateFinalPrice(course);
+  const hasDiscount = course.isDiscountActive && finalPrice < course.price && course.price > 0;
+  const discountAmount = course.price - finalPrice;
 
   return (
     <div 
@@ -165,30 +203,62 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
         }}>
           {isNew && (
             <span style={{
-              background: '#ef4444',
+              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
               color: 'white',
-              padding: '4px 8px',
-              borderRadius: '12px',
-              fontSize: '12px',
-              fontWeight: '600',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: '700',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px'
+              letterSpacing: '0.8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
             }}>
+              <i className="fas fa-sparkles" style={{ fontSize: '10px' }}></i>
               Mới
             </span>
           )}
           {isPopular && (
             <span style={{
-              background: '#f59e0b',
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
               color: 'white',
-              padding: '4px 8px',
-              borderRadius: '12px',
-              fontSize: '12px',
-              fontWeight: '600',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: '700',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px'
+              letterSpacing: '0.8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
             }}>
-              Phổ biến
+              <i className="fas fa-fire" style={{ fontSize: '10px' }}></i>
+              HOT
+            </span>
+          )}
+          {hasDiscount && (
+            <span style={{
+              background: 'linear-gradient(135deg, #16a34a, #15803d)',
+              color: 'white',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: '700',
+              textTransform: 'uppercase',
+              letterSpacing: '0.8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <i className="fas fa-percentage" style={{ fontSize: '10px' }}></i>
+              {course.discountPercentage ? `${course.discountPercentage}%` : 'Giảm giá'}
             </span>
           )}
         </div>
@@ -244,15 +314,19 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
           <span style={{
             background: getLevelColor(course.level),
             color: 'white',
-            padding: '4px 8px',
-            borderRadius: '8px',
-            fontSize: '12px',
-            fontWeight: '500',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            fontWeight: '700',
+            textTransform: 'capitalize',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            gap: '6px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
-            {getLevelIcon(course.level)} {course.level}
+            <i className={getLevelIcon(course.level)} style={{ fontSize: '10px' }}></i>
+            {course.level}
           </span>
         </div>
 
@@ -301,7 +375,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <i className="fas fa-users"></i>
-            <span>{course.enrolledCount} học viên</span>
+            <span>{displayStudents} học viên</span>
           </div>
         </div>
 
@@ -314,12 +388,49 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
           paddingTop: '12px',
           borderTop: '1px solid var(--border)'
         }}>
-          <div style={{
-            fontSize: '1.2rem',
-            fontWeight: '700',
-            color: course.price > 0 ? 'var(--accent)' : '#22c55e'
-          }}>
-            {formatPrice(course.price)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {hasDiscount ? (
+              <>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <div style={{
+                    fontSize: '1.2rem',
+                    fontWeight: '700',
+                    color: 'var(--accent)'
+                  }}>
+                    {formatPrice(finalPrice)}
+                  </div>
+                  <div style={{
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    color: '#16a34a',
+                    background: '#dcfce7',
+                    padding: '2px 6px',
+                    borderRadius: '4px'
+                  }}>
+                    -{course.discountPercentage ? `${course.discountPercentage}%` : formatPrice(discountAmount)}
+                  </div>
+                </div>
+                <div style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--text-muted)',
+                  textDecoration: 'line-through'
+                }}>
+                  {formatPrice(course.price)}
+                </div>
+              </>
+            ) : (
+              <div style={{
+                fontSize: '1.2rem',
+                fontWeight: '700',
+                color: course.price > 0 ? 'var(--accent)' : '#22c55e'
+              }}>
+                {formatPrice(course.price)}
+              </div>
+            )}
           </div>
           <button
             style={{

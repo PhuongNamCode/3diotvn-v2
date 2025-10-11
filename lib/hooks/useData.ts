@@ -108,6 +108,12 @@ export interface Course {
   lessonsCount: number;
   durationMinutes: number;
   enrolledCount: number;
+  // Discount fields
+  discountPercentage?: number | null;
+  discountAmount?: number | null;
+  discountStartDate?: string | null;
+  discountEndDate?: string | null;
+  isDiscountActive?: boolean | null;
   // Enhanced fields
   overview?: string | null;
   curriculum?: any[] | null;
