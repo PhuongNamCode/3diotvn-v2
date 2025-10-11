@@ -320,73 +320,306 @@ export default function EventsTab() {
                 100
               );
               return (
-                <div className="event-card" key={event.id}>
-                  <div className="event-image">
+                <div className="event-card" key={event.id} style={{
+                  background: 'var(--surface)',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  border: '1px solid var(--border)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s ease',
+                  position: 'relative'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 16px 48px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.1)';
+                }}>
+                  
+                  {/* Status Tag - Only keep "Sắp diễn ra" on top */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '16px',
+                    left: '16px',
+                    zIndex: 10
+                  }}>
+                    <span style={{
+                      background: isUpcoming 
+                        ? 'linear-gradient(135deg, #10b981, #34d399)' 
+                        : 'linear-gradient(135deg, #6b7280, #9ca3af)',
+                      color: 'white',
+                      padding: '8px 16px',
+                      borderRadius: '25px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      backdropFilter: 'blur(10px)'
+                    }}>
+                      <i className={`fas ${isUpcoming ? 'fa-clock' : 'fa-check-circle'}`} style={{ fontSize: '12px' }}></i>
+                      {isUpcoming ? "Sắp diễn ra" : "Đã diễn ra"}
+                    </span>
+                  </div>
+
+                  <div className="event-image" style={{
+                    position: 'relative',
+                    height: '200px',
+                    overflow: 'hidden'
+                  }}>
                     {event.image ? (
                       <Image src={event.image} alt={event.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" style={{ objectFit: 'cover' }} />
                     ) : (
-                      <div className="event-image-placeholder">
+                      <div className="event-image-placeholder" style={{
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '48px',
+                        color: 'white'
+                      }}>
                         <i className="fas fa-calendar-alt"></i>
                       </div>
                     )}
-                    <div className={`event-status ${isUpcoming ? "upcoming" : "past"}`}>
-                      {isUpcoming ? "Sắp diễn ra" : "Đã diễn ra"}
-                    </div>
-                    {event.category && (
-                      <div className="event-category-badge">
-                        {event.category}
-                      </div>
-                    )}
+                    
+                    {/* Gradient Overlay */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: '60px',
+                      background: 'linear-gradient(transparent, rgba(0,0,0,0.7))'
+                    }}></div>
                   </div>
-                  <div className="event-content">
-                    <div className="event-header">
-                      <h3 className="event-title">{event.title}</h3>
-                        <div className="event-price">
-                        {event.price && event.price > 0 
-                          ? `${event.price.toLocaleString('vi-VN')} VNĐ`
-                          : 'Miễn phí'
-                        }
-                        </div>
+                  <div className="event-content" style={{
+                    padding: '24px'
+                  }}>
+                    {/* Tags and Price Section - Before Title */}
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                      marginBottom: '16px',
+                      alignItems: 'center'
+                    }}>
+                      {/* Category Tag */}
+                      {event.category && (
+                        <span style={{
+                          background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
+                          color: 'white',
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 3px 12px rgba(59, 130, 246, 0.4)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          backdropFilter: 'blur(10px)'
+                        }}>
+                          <i className="fas fa-tag" style={{ fontSize: '10px' }}></i>
+                          {event.category}
+                        </span>
+                      )}
+
+                      {/* Price Tag - Professional Gold for Free */}
+                      <span style={{
+                        background: event.price && event.price > 0 
+                          ? 'linear-gradient(135deg, #f59e0b, #d97706, #b45309)' 
+                          : 'linear-gradient(135deg, #fbbf24, #f59e0b, #d97706)',
+                        color: event.price && event.price > 0 ? 'white' : '#1f2937',
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: event.price && event.price > 0 
+                          ? '0 3px 12px rgba(245, 158, 11, 0.4)' 
+                          : '0 3px 12px rgba(251, 191, 36, 0.5)',
+                        border: event.price && event.price > 0 
+                          ? '1px solid rgba(255, 255, 255, 0.2)' 
+                          : '1px solid rgba(31, 41, 55, 0.1)',
+                        backdropFilter: 'blur(10px)',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}>
+                        {/* Shine effect for free tag */}
+                        {!(event.price && event.price > 0) && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '-50%',
+                            left: '-50%',
+                            width: '200%',
+                            height: '200%',
+                            background: 'linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)',
+                            animation: 'shine 2s infinite',
+                            pointerEvents: 'none'
+                          }}></div>
+                        )}
+                        <i className={`fas ${event.price && event.price > 0 ? 'fa-dollar-sign' : 'fa-gift'}`} style={{ fontSize: '10px', position: 'relative', zIndex: 1 }}></i>
+                        <span style={{ position: 'relative', zIndex: 1 }}>
+                          {event.price && event.price > 0 
+                            ? `${event.price.toLocaleString('vi-VN')}₫`
+                            : 'Miễn phí'
+                          }
+                        </span>
+                      </span>
+                    </div>
+
+                    <div className="event-header" style={{
+                      marginBottom: '16px'
+                    }}>
+                      <h3 className="event-title" style={{
+                        fontSize: '1.2rem',
+                        fontWeight: '700',
+                        color: 'var(--primary)',
+                        margin: '0 0 8px 0',
+                        lineHeight: '1.4'
+                      }}>{event.title}</h3>
                     </div>
                     
-                    <div className="event-meta">
-                      <div className="event-meta-item">
-                        <i className="fas fa-calendar"></i>
+                    <div className="event-meta" style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      marginBottom: '16px'
+                    }}>
+                      <div className="event-meta-item" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        <i className="fas fa-calendar" style={{
+                          color: 'var(--accent)',
+                          width: '16px',
+                          textAlign: 'center'
+                        }}></i>
                         <span>{formatDate(event.date)} | {event.time}</span>
                       </div>
-                      <div className="event-meta-item">
-                        <i className="fas fa-map-marker-alt"></i>
+                      <div className="event-meta-item" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        <i className="fas fa-map-marker-alt" style={{
+                          color: 'var(--accent)',
+                          width: '16px',
+                          textAlign: 'center'
+                        }}></i>
                         <span>{event.location}</span>
                       </div>
                     </div>
                     
-                    <p className="event-description">{event.description}</p>
+                    <p className="event-description" style={{
+                      fontSize: '14px',
+                      color: 'var(--text-secondary)',
+                      lineHeight: '1.6',
+                      margin: '0 0 20px 0',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}>{event.description}</p>
                     
                     <div 
                       className="event-participants"
-                      data-type={event.status === 'past' && event.actualParticipants !== undefined ? 'actual' : 'registration'}
+                      style={{
+                        marginBottom: '20px'
+                      }}
                     >
-                      <div className="participant-info">
-                        <span className="participant-label">
+                      <div className="participant-info" style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '8px'
+                      }}>
+                        <span className="participant-label" style={{
+                          fontSize: '14px',
+                          color: 'var(--text-secondary)',
+                          fontWeight: '500'
+                        }}>
                           {event.status === 'past' && event.actualParticipants !== undefined 
                             ? 'Đã tham gia:' 
                             : 'Đã đăng ký:'
                           }
                         </span>
-                        <span className="participant-count">
+                        <span className="participant-count" style={{
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: 'var(--primary)'
+                        }}>
                           {event.status === 'past' && event.actualParticipants !== undefined 
                             ? `${event.actualParticipants}/${event.capacity}` 
                             : `${event.registered}/${event.capacity}`
                           }
                         </span>
                       </div>
-                      <div className="participant-progress">
-                        <div className="participant-progress-bar" style={{ width: `${Math.round(progress)}%` }}></div>
+                      <div className="participant-progress" style={{
+                        height: '8px',
+                        background: 'var(--surface-variant)',
+                        borderRadius: '4px',
+                        overflow: 'hidden'
+                      }}>
+                        <div className="participant-progress-bar" style={{ 
+                          width: `${Math.round(progress)}%`,
+                          height: '100%',
+                          background: 'linear-gradient(90deg, var(--accent), var(--accent-secondary))',
+                          borderRadius: '4px',
+                          transition: 'width 0.3s ease'
+                        }}></div>
                       </div>
                     </div>
                     
                     {isUpcoming && (
-                      <button className="btn-register" onClick={() => handleViewEventDetails(event)}>
+                      <button 
+                        className="btn-register" 
+                        onClick={() => handleViewEventDetails(event)}
+                        style={{
+                          width: '100%',
+                          background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px 20px',
+                          borderRadius: '12px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3)';
+                        }}
+                      >
                         <i className="fas fa-user-plus"></i> 
                         Đăng ký tham gia
                       </button>

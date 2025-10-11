@@ -252,13 +252,89 @@ export default function AdminEventsTab() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'upcoming':
-        return <span className="status-badge status-upcoming">Sắp diễn ra</span>;
+        return (
+          <span style={{
+            background: 'linear-gradient(135deg, #10b981, #34d399)',
+            color: 'white',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <i className="fas fa-clock" style={{ fontSize: '10px' }}></i>
+            Sắp diễn ra
+          </span>
+        );
       case 'past':
-        return <span className="status-badge status-past">Đã diễn ra</span>;
+        return (
+          <span style={{
+            background: 'linear-gradient(135deg, #6b7280, #9ca3af)',
+            color: 'white',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 2px 8px rgba(107, 114, 128, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <i className="fas fa-check-circle" style={{ fontSize: '10px' }}></i>
+            Đã diễn ra
+          </span>
+        );
       case 'cancelled':
-        return <span className="status-badge status-cancelled">Đã hủy</span>;
+        return (
+          <span style={{
+            background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            color: 'white',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <i className="fas fa-times-circle" style={{ fontSize: '10px' }}></i>
+            Đã hủy
+          </span>
+        );
       default:
-        return <span className="status-badge status-pending">Chờ xử lý</span>;
+        return (
+          <span style={{
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            color: 'white',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <i className="fas fa-hourglass-half" style={{ fontSize: '10px' }}></i>
+            Chờ xử lý
+          </span>
+        );
     }
   };
 
@@ -267,96 +343,555 @@ export default function AdminEventsTab() {
   };
 
   return (
-    <div className="admin-events">
-      <div className="table-container">
-        <div className="table-header">
-          <h3 className="table-title">Quản lý sự kiện</h3>
-          <div className="table-actions">
-            <div className="search-box">
-              <i className="fas fa-search"></i>
+    <div className="admin-events" style={{
+      padding: '24px',
+      background: 'var(--background)',
+      minHeight: '100vh'
+    }}>
+      {/* Header Section */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+        borderRadius: '20px',
+        padding: '32px',
+        marginBottom: '32px',
+        color: 'white',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Background Pattern */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '200px',
+          height: '200px',
+          background: 'rgba(255,255,255,0.1)',
+          borderRadius: '50%',
+          transform: 'translate(50%, -50%)'
+        }}></div>
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '150px',
+          height: '150px',
+          background: 'rgba(255,255,255,0.1)',
+          borderRadius: '50%',
+          transform: 'translate(-50%, 50%)'
+        }}></div>
+        
+        <div style={{
+          position: 'relative',
+          zIndex: 1
+        }}>
+          <h1 style={{
+            fontSize: '2.5rem',
+            fontWeight: '700',
+            margin: '0 0 8px 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <i className="fas fa-calendar-alt" style={{ fontSize: '2rem' }}></i>
+            Quản lý sự kiện
+          </h1>
+          <p style={{
+            fontSize: '1.1rem',
+            margin: '0',
+            opacity: 0.9
+          }}>
+            Tổng cộng {events.length} sự kiện • {events.filter(e => e.status === 'upcoming').length} sắp diễn ra
+          </p>
+        </div>
+      </div>
+
+      {/* Filters and Actions */}
+      <div style={{
+        background: 'var(--surface)',
+        borderRadius: '16px',
+        padding: '24px',
+        marginBottom: '24px',
+        border: '1px solid var(--border)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '20px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            flex: '1',
+            minWidth: '300px'
+          }}>
+            <div style={{
+              position: 'relative',
+              background: 'var(--background)',
+              borderRadius: '12px',
+              border: '1px solid var(--border)',
+              overflow: 'hidden'
+            }}>
+              <i className="fas fa-search" style={{
+                position: 'absolute',
+                left: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-secondary)',
+                fontSize: '16px'
+              }}></i>
               <input
                 type="text"
                 placeholder="Tìm kiếm sự kiện..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '16px 16px 16px 48px',
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '16px',
+                  color: 'var(--text-primary)',
+                  outline: 'none'
+                }}
               />
             </div>
+          </div>
+          
           <button 
             className="btn btn-primary"
             onClick={handleAddEvent}
+            style={{
+              background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+              color: 'white',
+              border: 'none',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+              minHeight: '56px',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3)';
+            }}
           >
             <i className="fas fa-plus"></i>
             Thêm sự kiện
           </button>
+        </div>
+      </div>
+
+      <div className="table-container" style={{
+        background: 'var(--surface)',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        border: '1px solid var(--border)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+      }}>
+        {/* Table Header */}
+        <div style={{
+          background: 'linear-gradient(135deg, var(--surface-variant), var(--surface))',
+          padding: '24px',
+          borderBottom: '1px solid var(--border)'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <h3 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              color: 'var(--primary)',
+              margin: '0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <i className="fas fa-table" style={{ color: 'var(--accent)' }}></i>
+              Danh sách sự kiện
+            </h3>
+            <div style={{
+              fontSize: '14px',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <i className="fas fa-info-circle"></i>
+              {filteredEvents.length} sự kiện
+            </div>
           </div>
         </div>
-        <div className="table-content">
-          <table className="data-table">
-            <thead>
+
+        <div className="table-content" style={{
+          overflow: 'auto'
+        }}>
+          <table className="data-table" style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            background: 'var(--surface)'
+          }}>
+            <thead style={{
+              background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+              color: 'white'
+            }}>
               <tr>
-                <th>Tên sự kiện</th>
-                <th>Ngày</th>
-                <th>Địa điểm</th>
-                <th>Đăng ký</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
+                <th style={{
+                  padding: '20px 24px',
+                  textAlign: 'left',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  borderBottom: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <i className="fas fa-calendar-alt" style={{ marginRight: '8px' }}></i>
+                  Tên sự kiện
+                </th>
+                <th style={{
+                  padding: '20px 24px',
+                  textAlign: 'center',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  borderBottom: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <i className="fas fa-clock" style={{ marginRight: '8px' }}></i>
+                  Ngày & Thời gian
+                </th>
+                <th style={{
+                  padding: '20px 24px',
+                  textAlign: 'center',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  borderBottom: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <i className="fas fa-map-marker-alt" style={{ marginRight: '8px' }}></i>
+                  Địa điểm
+                </th>
+                <th style={{
+                  padding: '20px 24px',
+                  textAlign: 'center',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  borderBottom: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <i className="fas fa-users" style={{ marginRight: '8px' }}></i>
+                  Đăng ký
+                </th>
+                <th style={{
+                  padding: '20px 24px',
+                  textAlign: 'center',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  borderBottom: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+                  Trạng thái
+                </th>
+                <th style={{
+                  padding: '20px 24px',
+                  textAlign: 'center',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  borderBottom: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <i className="fas fa-cogs" style={{ marginRight: '8px' }}></i>
+                  Hành động
+                </th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
-                    <i className="fas fa-spinner fa-spin"></i> Đang tải...
+                  <td colSpan={6} style={{ 
+                    textAlign: 'center', 
+                    padding: '3rem',
+                    color: 'var(--text-secondary)',
+                    fontSize: '16px'
+                  }}>
+                    <i className="fas fa-spinner fa-spin" style={{ 
+                      fontSize: '24px', 
+                      marginRight: '12px',
+                      color: 'var(--accent)'
+                    }}></i> 
+                    Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : filteredEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
+                  <td colSpan={6} style={{ 
+                    textAlign: 'center', 
+                    padding: '3rem',
+                    color: 'var(--text-secondary)',
+                    fontSize: '16px'
+                  }}>
+                    <i className="fas fa-calendar-times" style={{ 
+                      fontSize: '48px', 
+                      marginBottom: '16px',
+                      color: 'var(--text-muted)',
+                      display: 'block'
+                    }}></i>
                     Không có sự kiện nào
                   </td>
                 </tr>
               ) : (
-                filteredEvents.map((event) => (
-                  <tr key={event.id}>
-                    <td>{event.title}</td>
-                    <td>{formatDate(event.date)}</td>
-                    <td>{event.location}</td>
-                    <td>
-                      {event.status === 'past' && event.actualParticipants !== undefined 
-                        ? `${event.actualParticipants}/${event.capacity}` 
-                        : `${event.registrations}/${event.capacity}`
-                      }
+                filteredEvents.map((event, index) => (
+                  <tr key={event.id} style={{
+                    borderBottom: '1px solid var(--border)',
+                    transition: 'all 0.3s ease',
+                    background: index % 2 === 0 ? 'var(--surface)' : 'var(--background)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--surface-variant)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = index % 2 === 0 ? 'var(--surface)' : 'var(--background)';
+                  }}>
+                    <td style={{
+                      padding: '20px 24px',
+                      fontWeight: '600',
+                      color: 'var(--primary)',
+                      fontSize: '16px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: event.status === 'upcoming' 
+                            ? 'linear-gradient(135deg, #10b981, #34d399)'
+                            : event.status === 'past'
+                            ? 'linear-gradient(135deg, #6b7280, #9ca3af)'
+                            : 'linear-gradient(135deg, #ef4444, #dc2626)',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }}></div>
+                        {event.title}
+                      </div>
                     </td>
-                    <td>{getStatusBadge(event.status)}</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button 
-                        className="btn btn-sm btn-secondary"
-                        onClick={() => handleViewRegistrations(event.id)}
-                        title="Xem đăng ký"
-                      >
-                        <i className="fas fa-eye"></i>
-                      </button>
-                      <button 
-                        className="btn btn-sm btn-primary"
-                        onClick={() => handleEditEvent(event)}
-                        title="Chỉnh sửa"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      {event.status === 'past' ? (
+                    <td style={{
+                      padding: '20px 24px',
+                      textAlign: 'center',
+                      color: 'var(--text-primary)',
+                      fontSize: '14px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}>
+                        <span style={{ fontWeight: '600' }}>{formatDate(event.date)}</span>
+                        <span style={{ 
+                          color: 'var(--text-secondary)',
+                          fontSize: '12px'
+                        }}>{event.time}</span>
+                      </div>
+                    </td>
+                    <td style={{
+                      padding: '20px 24px',
+                      textAlign: 'center',
+                      color: 'var(--text-primary)',
+                      fontSize: '14px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}>
+                        <i className="fas fa-map-marker-alt" style={{
+                          color: 'var(--accent)',
+                          fontSize: '12px'
+                        }}></i>
+                        <span>{event.location}</span>
+                      </div>
+                    </td>
+                    <td style={{
+                      padding: '20px 24px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <span style={{
+                          fontWeight: '600',
+                          color: 'var(--primary)',
+                          fontSize: '16px'
+                        }}>
+                          {event.status === 'past' && event.actualParticipants !== undefined 
+                            ? `${event.actualParticipants}/${event.capacity}` 
+                            : `${event.registrations}/${event.capacity}`
+                          }
+                        </span>
+                        <div style={{
+                          width: '60px',
+                          height: '4px',
+                          background: 'var(--surface-variant)',
+                          borderRadius: '2px',
+                          overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            width: `${Math.min(
+                              (event.status === 'past' && event.actualParticipants !== undefined 
+                                ? event.actualParticipants 
+                                : event.registrations) / event.capacity * 100, 
+                              100
+                            )}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, var(--accent), var(--accent-secondary))',
+                            borderRadius: '2px',
+                            transition: 'width 0.3s ease'
+                          }}></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{
+                      padding: '20px 24px',
+                      textAlign: 'center'
+                    }}>
+                      {getStatusBadge(event.status)}
+                    </td>
+                    <td style={{
+                      padding: '20px 24px',
+                      textAlign: 'center'
+                    }}>
+                      <div className="action-buttons" style={{
+                        display: 'flex',
+                        gap: '8px',
+                        justifyContent: 'center'
+                      }}>
                         <button 
-                          className="btn btn-sm btn-success"
-                          onClick={() => handleExportData(event.id)}
-                          title="Xuất dữ liệu"
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => handleViewRegistrations(event.id)}
+                          title="Xem đăng ký"
+                          style={{
+                            background: 'linear-gradient(135deg, #6b7280, #9ca3af)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 2px 8px rgba(107, 114, 128, 0.3)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 114, 128, 0.4)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(107, 114, 128, 0.3)';
+                          }}
                         >
-                          <i className="fas fa-download"></i>
+                          <i className="fas fa-eye"></i>
                         </button>
+                        <button 
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleEditEvent(event)}
+                          title="Chỉnh sửa"
+                          style={{
+                            background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)';
+                          }}
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        {event.status === 'past' ? (
+                          <button 
+                            className="btn btn-sm btn-success"
+                            onClick={() => handleExportData(event.id)}
+                            title="Xuất dữ liệu"
+                            style={{
+                              background: 'linear-gradient(135deg, #10b981, #34d399)',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
+                            }}
+                          >
+                            <i className="fas fa-download"></i>
+                          </button>
                       ) : (
                         <button 
                           className="btn btn-sm btn-danger"
                           onClick={() => handleDeleteEvent(event.id)}
                           title="Xóa"
+                          style={{
+                            background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.4)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(239, 68, 68, 0.3)';
+                          }}
                         >
                           <i className="fas fa-trash"></i>
                         </button>
