@@ -484,29 +484,126 @@ export default function Home() {
       </main>
 
       <footer className="footer">
+        {/* Decorative Background Elements */}
+        <div className="footer-bg-pattern">
+          <div className="footer-bg-circle footer-bg-circle-1"></div>
+          <div className="footer-bg-circle footer-bg-circle-2"></div>
+          <div className="footer-bg-circle footer-bg-circle-3"></div>
+        </div>
+
         <div className="container">
+          {/* Main Footer Content */}
           <div className="footer-content">
-            <div className="footer-section">
-              <h4>🚀 3DIoT Community</h4>
-              <p className="footer-intro" style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '1rem' }}>Kết nối đam mê, chia sẻ tri thức và đồng hành cùng bạn trên hành trình khám phá & làm chủ công nghệ.</p>
-              <div style={{ marginTop: '1rem' }}>
-                <strong style={{ color: 'var(--accent-secondary)' }}>📧 Contact:</strong><br />
-                <a href="mailto:contact.3diot@gmail.com">contact.3diot@gmail.com</a><br />
-                <a href="tel:+84339830128">📞 +84 33 983 0128</a>
+            {/* Brand Section */}
+            <div className="footer-section footer-brand">
+              <div className="footer-brand-header">
+                <div className="footer-logo">
+                  <i className="fas fa-rocket"></i>
+                  <span>3DIoT Community</span>
+                </div>
+                <p className="footer-intro">
+                  Kết nối đam mê, chia sẻ tri thức và đồng hành cùng bạn trên hành trình khám phá & làm chủ công nghệ.
+                </p>
+              </div>
+              
+              <div className="footer-contact">
+                <div className="contact-item">
+                  <i className="fas fa-envelope"></i>
+                  <div>
+                    <span className="contact-label">Email</span>
+                    <a href="mailto:contact.3diot@gmail.com">contact.3diot@gmail.com</a>
+                  </div>
+                </div>
+                <div className="contact-item">
+                  <i className="fas fa-phone"></i>
+                  <div>
+                    <span className="contact-label">Phone</span>
+                    <a href="tel:+84339830128">+84 33 983 0128</a>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="footer-section"><h4>Học tập</h4><a href="#">Arduino Cơ bản</a><a href="#">ESP32 Advanced</a><a href="#">IoT với Cloud</a><a href="#">Embedded AI</a><a href="#">PCB Design</a><a href="#">Robotics</a></div>
-            <div className="footer-section"><h4>Cộng đồng</h4><a href="#">Facebook Group</a><a href="#">TikTok</a><a href="#">GitHub Repos</a><a href="#">YouTube Channel</a><a href="#">Zalo Group</a><a href="#">LinkedIn Page</a></div>
-            <div className="footer-section"><h4>Về chúng tôi</h4><a href="#">Câu chuyện</a><a href="#">Cộng tác viên</a><a href="#">Partners</a><a href="#">Events</a><a href="#">Liên hệ</a></div>
-          </div>
-          <div className="footer-bottom">
-            <div className="social-links">
-              <a href="https://www.facebook.com/groups/3diot.laptrinhnhungiot" target="_blank" rel="noopener noreferrer" title="Facebook Group"><i className="fab fa-facebook"></i></a>
-              <a href="https://www.tiktok.com/@3diot_laptrinhnhungiot" target="_blank" rel="noopener noreferrer" title="TikTok"><i className="fab fa-tiktok"></i></a>
-              <a href="https://www.youtube.com/@3DIoT.LapTrinhNhungIoT" target="_blank" rel="noopener noreferrer" title="YouTube"><i className="fab fa-youtube"></i></a>
+
+            {/* Learning Section */}
+            <div className="footer-section">
+              <h4 className="footer-section-title">
+                <i className="fas fa-graduation-cap"></i>
+                Học tập
+              </h4>
+              <ul className="footer-links">
+                <li><a href="#">Arduino Cơ bản</a></li>
+                <li><a href="#">ESP32 Advanced</a></li>
+                <li><a href="#">IoT với Cloud</a></li>
+                <li><a href="#">Embedded AI</a></li>
+                <li><a href="#">PCB Design</a></li>
+                <li><a href="#">Robotics</a></li>
+              </ul>
             </div>
-            <p>© 2025 3DIoT Community.</p>
-            <p>🌟 Proudly supporting the next generation of Embedded & IoT engineers</p>
+
+            {/* Community Section */}
+            <div className="footer-section">
+              <h4 className="footer-section-title">
+                <i className="fas fa-users"></i>
+                Cộng đồng
+              </h4>
+              <ul className="footer-links">
+                <li><a href="https://www.facebook.com/groups/3diot.laptrinhnhungiot" target="_blank" rel="noopener noreferrer">Facebook Group</a></li>
+                <li><a href="https://www.tiktok.com/@3diot_laptrinhnhungiot" target="_blank" rel="noopener noreferrer">TikTok</a></li>
+                <li><a href="#">GitHub Repos</a></li>
+                <li><a href="https://www.youtube.com/@3DIoT.LapTrinhNhungIoT" target="_blank" rel="noopener noreferrer">YouTube Channel</a></li>
+                <li><a href="#">Zalo Group</a></li>
+                <li><a href="#">LinkedIn Page</a></li>
+              </ul>
+            </div>
+
+            {/* About Section */}
+            <div className="footer-section">
+              <h4 className="footer-section-title">
+                <i className="fas fa-info-circle"></i>
+                Về chúng tôi
+              </h4>
+              <ul className="footer-links">
+                <li><a href="#">Câu chuyện</a></li>
+                <li><a href="#">Cộng tác viên</a></li>
+                <li><a href="#">Partners</a></li>
+                <li><a href="#">Events</a></li>
+                <li><a href="#">Liên hệ</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Footer Bottom */}
+          <div className="footer-bottom">
+            <div className="footer-bottom-content">
+              <div className="footer-bottom-left">
+                <p className="copyright">© 2025 3DIoT Community. All rights reserved.</p>
+              </div>
+              
+              <div className="social-links">
+                <a href="https://www.facebook.com/groups/3diot.laptrinhnhungiot" target="_blank" rel="noopener noreferrer" className="social-link facebook" title="Facebook Group">
+                  <i className="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://www.tiktok.com/@3diot_laptrinhnhungiot" target="_blank" rel="noopener noreferrer" className="social-link tiktok" title="TikTok">
+                  <i className="fab fa-tiktok"></i>
+                </a>
+                <a href="https://www.youtube.com/@3DIoT.LapTrinhNhungIoT" target="_blank" rel="noopener noreferrer" className="social-link youtube" title="YouTube">
+                  <i className="fab fa-youtube"></i>
+                </a>
+                <a href="#" className="social-link github" title="GitHub">
+                  <i className="fab fa-github"></i>
+                </a>
+                <a href="#" className="social-link linkedin" title="LinkedIn">
+                  <i className="fab fa-linkedin-in"></i>
+                </a>
+              </div>
+              
+              <div className="footer-bottom-right">
+                <p className="mission">
+                  <i className="fas fa-star"></i>
+                  Proudly supporting the next generation of Embedded & IoT engineers
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </footer>

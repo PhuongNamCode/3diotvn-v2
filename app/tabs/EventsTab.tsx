@@ -324,18 +324,32 @@ export default function EventsTab() {
                   background: 'var(--surface)',
                   borderRadius: '20px',
                   overflow: 'hidden',
-                  border: '1px solid var(--border)',
+                  border: '2px solid transparent',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
                   transition: 'all 0.3s ease',
-                  position: 'relative'
+                  position: 'relative',
+                  backgroundClip: 'padding-box'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 16px 48px rgba(0, 0, 0, 0.15)';
+                  e.currentTarget.style.boxShadow = `
+                    0 16px 48px rgba(0, 0, 0, 0.15),
+                    0 0 20px rgba(59, 130, 246, 0.4),
+                    0 0 40px rgba(59, 130, 246, 0.2)
+                  `;
+                  e.currentTarget.style.border = '2px solid var(--accent)';
+                  e.currentTarget.style.background = `
+                    linear-gradient(var(--surface), var(--surface)) padding-box,
+                    linear-gradient(135deg, var(--accent), var(--accent-secondary), #8b5cf6, var(--accent)) border-box
+                  `;
+                  e.currentTarget.style.animation = 'glow-pulse 2s ease-in-out infinite';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.border = '2px solid transparent';
+                  e.currentTarget.style.background = 'var(--surface)';
+                  e.currentTarget.style.animation = 'none';
                 }}>
                   
                   {/* Status Tag - Only keep "Sắp diễn ra" on top */}
