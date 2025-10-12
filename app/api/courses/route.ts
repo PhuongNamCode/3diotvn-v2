@@ -22,21 +22,48 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Use raw query to debug discount fields
-    const rawItems = await prisma.$queryRaw`
-      SELECT 
-        id, title, description, image, level, price, status, category, tags,
-        "lessonsCount", "durationMinutes", "enrolledCount", "publishedAt",
-        "discountPercentage", "discountAmount", "discountStartDate", "discountEndDate", "isDiscountActive",
-        overview, curriculum, "instructorName", "instructorBio", "instructorImage", "instructorEmail",
-        requirements, "whatYouWillLearn", "createdAt", "updatedAt"
-      FROM "Course"
-      ORDER BY "createdAt" DESC
-      LIMIT ${limit} OFFSET ${skip}
-    ` as any[];
+    // Use Prisma ORM for better type safety
+    const items = await prisma.course.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        image: true,
+        level: true,
+        price: true,
+        status: true,
+        category: true,
+        tags: true,
+        lessonsCount: true,
+        durationMinutes: true,
+        enrolledCount: true,
+        publishedAt: true,
+        discountPercentage: true,
+        discountAmount: true,
+        discountStartDate: true,
+        discountEndDate: true,
+        isDiscountActive: true,
+        overview: true,
+        curriculum: true,
+        instructorName: true,
+        instructorBio: true,
+        instructorImage: true,
+        instructorEmail: true,
+        requirements: true,
+        whatYouWillLearn: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: [
+        { publishedAt: { sort: 'desc', nulls: 'last' } },
+        { createdAt: 'desc' }
+      ],
+      skip,
+      take: limit,
+    });
     
     const total = await prisma.course.count({ where });
-    const items = rawItems;
 
     const data = items.map((c) => {
       // Coerce potentially stringified JSON fields into arrays for backward compatibility
@@ -76,6 +103,7 @@ export async function GET(request: NextRequest) {
       lessonsCount: c.lessonsCount,
       durationMinutes: c.durationMinutes,
       enrolledCount: c.enrolledCount,
+      publishedAt: c.publishedAt,
       // Discount fields
       discountPercentage: c.discountPercentage || 0,
       discountAmount: c.discountAmount || 0,
@@ -107,6 +135,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('Course POST body:', JSON.stringify(body, null, 2));
     if (!body?.title) {
       return NextResponse.json({ success: false, error: 'Thiếu trường bắt buộc (title)' }, { status: 400 });
     }
@@ -168,6 +197,7 @@ export async function POST(request: NextRequest) {
       lessonsCount: created.lessonsCount,
       durationMinutes: created.durationMinutes,
       enrolledCount: created.enrolledCount,
+      publishedAt: created.publishedAt,
       // Discount fields
       discountPercentage: created.discountPercentage || 0,
       discountAmount: created.discountAmount || 0,

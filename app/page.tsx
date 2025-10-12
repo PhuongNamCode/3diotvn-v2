@@ -175,11 +175,13 @@ export default function Home() {
     function applyLoggedInUI(user: User) {
       const userProfile = document.getElementById('userProfile');
       const joinBtn = document.getElementById('joinBtn');
+      const themeToggle = document.getElementById('themeToggle');
       const userName = document.getElementById('userName');
       const userAvatar = document.getElementById('userAvatar') as HTMLImageElement | null;
       const loginNavBtn = document.querySelector<HTMLElement>('.nav-tab[data-tab="login"]');
       if (userProfile) (userProfile as HTMLElement).style.display = 'flex';
       if (joinBtn) (joinBtn as HTMLElement).style.display = 'none';
+      if (themeToggle) (themeToggle as HTMLElement).style.display = 'flex';
       if (userName) userName.textContent = user.name;
       if (userAvatar) {
         try { (userAvatar as any).referrerPolicy = 'no-referrer'; } catch {}
@@ -189,14 +191,16 @@ export default function Home() {
       }
       if (loginNavBtn) loginNavBtn.style.display = 'none';
     }
-    function applyLoggedOutUI() {
-      const userProfile = document.getElementById('userProfile');
-      const joinBtn = document.getElementById('joinBtn');
-      const loginNavBtn = document.querySelector<HTMLElement>('.nav-tab[data-tab="login"]');
-      if (userProfile) (userProfile as HTMLElement).style.display = 'none';
-      if (joinBtn) (joinBtn as HTMLElement).style.display = 'inline-flex';
-      if (loginNavBtn) loginNavBtn.style.display = 'inline-flex';
-    }
+      function applyLoggedOutUI() {
+        const userProfile = document.getElementById('userProfile');
+        const joinBtn = document.getElementById('joinBtn');
+        const themeToggle = document.getElementById('themeToggle');
+        const loginNavBtn = document.querySelector<HTMLElement>('.nav-tab[data-tab="login"]');
+        if (userProfile) (userProfile as HTMLElement).style.display = 'none';
+        if (joinBtn) (joinBtn as HTMLElement).style.display = 'inline-flex';
+        if (themeToggle) (themeToggle as HTMLElement).style.display = 'none';
+        if (loginNavBtn) loginNavBtn.style.display = 'inline-flex';
+      }
 
     // If session restored, apply UI now
     if (currentUserRef.current) {
@@ -215,12 +219,301 @@ export default function Home() {
 
     // Tab navigation
     const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.nav-tab'));
+    let eventsTabTimer: NodeJS.Timeout | null = null;
+    
+    // Newsletter popup state management
+    const NEWSLETTER_POPUP_SHOWN_KEY = 'newsletter_popup_shown';
+    let hasShownNewsletterPopup = false;
+    
+    // Modern Newsletter Popup (with restrictions)
+    function showNewsletterPopup() {
+      // Check if popup has already been shown in this session
+      if (hasShownNewsletterPopup) {
+        console.log('Newsletter popup already shown in this session');
+        return;
+      }
+      
+      // Check localStorage to see if popup was shown before
+      try {
+        const popupShown = localStorage.getItem(NEWSLETTER_POPUP_SHOWN_KEY);
+        if (popupShown === 'true') {
+          console.log('Newsletter popup was shown before, skipping');
+          return;
+        }
+      } catch (error) {
+        console.log('Could not check localStorage:', error);
+      }
+      
+      createAndShowPopup();
+    }
+
+    // Newsletter Popup (always show - for manual button clicks)
+    function showNewsletterPopupAlways() {
+      console.log('Showing newsletter popup (always mode - manual trigger)');
+      createAndShowPopup(false); // Don't mark as shown
+    }
+
+    // Common function to create and show popup
+    function createAndShowPopup(markAsShown: boolean = true) {
+      
+      // Remove existing popup if any
+      const existingPopup = document.getElementById('newsletter-popup');
+      if (existingPopup) {
+        existingPopup.remove();
+      }
+
+      // Create new popup
+      const popup = document.createElement('div');
+      popup.id = 'newsletter-popup';
+      popup.innerHTML = `
+        <div class="newsletter-popup-overlay">
+          <div class="newsletter-popup">
+            <button class="newsletter-popup-close" onclick="closeNewsletterPopup()">
+              <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="newsletter-popup-content">
+              <div class="newsletter-popup-icon">
+                <i class="fas fa-envelope-open-text"></i>
+              </div>
+              
+              <h2 class="newsletter-popup-title">
+                📰 Đăng ký nhận tin tức mới
+              </h2>
+              
+              <p class="newsletter-popup-subtitle">
+                Nhận những tin tức công nghệ mới nhất về IoT, Embedded, AI và xu hướng công nghệ 
+                trực tiếp vào hộp thư của bạn!
+              </p>
+
+              <form class="newsletter-popup-form" onsubmit="handleNewsletterSubmit(event)">
+                <input
+                  type="email"
+                  id="newsletter-email"
+                  placeholder="Nhập email của bạn..."
+                  class="newsletter-popup-input"
+                  required
+                />
+                <button type="submit" class="newsletter-popup-submit" id="newsletter-submit">
+                  <i class="fas fa-paper-plane"></i>
+                  Đăng ký ngay
+                </button>
+              </form>
+
+              <div class="newsletter-popup-benefits">
+                <h4>🎯 Bạn sẽ nhận được:</h4>
+                <ul>
+                  <li>Tin tức IoT & Embedded mới nhất</li>
+                  <li>Xu hướng AI & Machine Learning</li>
+                  <li>Cơ hội nghề nghiệp trong tech</li>
+                  <li>Thông báo sự kiện & workshop</li>
+                </ul>
+              </div>
+
+              <div class="newsletter-popup-privacy">
+                <p>
+                  <i class="fas fa-shield-alt"></i>
+                  Chúng tôi cam kết bảo mật thông tin của bạn và chỉ gửi nội dung liên quan đến công nghệ.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(popup);
+      
+      // Show popup
+      const overlay = popup.querySelector('.newsletter-popup-overlay') as HTMLElement;
+      overlay.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      
+      // Mark popup as shown (only for automatic popups, not manual button clicks)
+      if (markAsShown) {
+        hasShownNewsletterPopup = true;
+        try {
+          localStorage.setItem(NEWSLETTER_POPUP_SHOWN_KEY, 'true');
+        } catch (error) {
+          console.log('Could not save to localStorage:', error);
+        }
+      }
+    }
+
+    function closeNewsletterPopup() {
+      const popup = document.getElementById('newsletter-popup');
+      if (popup) {
+        const overlay = popup.querySelector('.newsletter-popup-overlay') as HTMLElement;
+        overlay.style.animation = 'popupFadeIn 0.3s ease-out reverse';
+        setTimeout(() => {
+          popup.remove();
+          document.body.style.overflow = 'auto';
+        }, 300);
+      }
+    }
+
+    async function handleNewsletterSubmit(event: Event) {
+      event.preventDefault();
+      const email = (document.getElementById('newsletter-email') as HTMLInputElement)?.value;
+      const submitBtn = document.getElementById('newsletter-submit') as HTMLButtonElement;
+
+      if (!email) return;
+
+      // Show loading
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/newsletter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Show success message
+          const content = document.querySelector('.newsletter-popup-content');
+          if (content) {
+            content.innerHTML = `
+              <div class="newsletter-popup-success">
+                <div class="newsletter-popup-success-icon">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+                <h3>Cảm ơn bạn đã đăng ký! 🎉</h3>
+                <p>Chúng tôi sẽ gửi tin tức mới nhất đến email của bạn.</p>
+              </div>
+            `;
+          }
+
+          // Auto close after 3 seconds
+          setTimeout(closeNewsletterPopup, 3000);
+        } else {
+          throw new Error(data.error || 'Failed to subscribe');
+        }
+      } catch (error) {
+        console.error('Newsletter subscription error:', error);
+        alert('Có lỗi xảy ra. Vui lòng thử lại sau.');
+      } finally {
+        // Reset button
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Đăng ký ngay';
+        submitBtn.disabled = false;
+      }
+    }
+
+    // Function to reset newsletter popup state (for testing)
+    function resetNewsletterPopupState() {
+      hasShownNewsletterPopup = false;
+      try {
+        localStorage.removeItem(NEWSLETTER_POPUP_SHOWN_KEY);
+        console.log('Newsletter popup state reset');
+      } catch (error) {
+        console.log('Could not reset localStorage:', error);
+      }
+    }
+
+    // Make functions global
+    (window as any).closeNewsletterPopup = closeNewsletterPopup;
+    (window as any).handleNewsletterSubmit = handleNewsletterSubmit;
+    (window as any).showNewsletterPopup = showNewsletterPopup;
+    (window as any).showNewsletterPopupAlways = showNewsletterPopupAlways;
+    (window as any).resetNewsletterPopupState = resetNewsletterPopupState;
+    
+    // Debug function to test newsletter popup
+    (window as any).testNewsletterPopup = () => {
+      console.log('Testing newsletter popup...');
+      resetNewsletterPopupState(); // Reset first
+      showNewsletterPopup();
+    };
+    
+    // Debug function to check popup state
+    (window as any).debugPopupState = () => {
+      console.log('=== Newsletter Popup Debug ===');
+      console.log('hasShownNewsletterPopup:', hasShownNewsletterPopup);
+      console.log('NEWSLETTER_POPUP_SHOWN_KEY:', NEWSLETTER_POPUP_SHOWN_KEY);
+      try {
+        const popupShown = localStorage.getItem(NEWSLETTER_POPUP_SHOWN_KEY);
+        console.log('localStorage value:', popupShown);
+      } catch (error) {
+        console.log('localStorage error:', error);
+      }
+      console.log('eventsTabTimer:', eventsTabTimer);
+      console.log('=============================');
+    };
+    
+    // Debug function to test popup with short timer
+    (window as any).testPopupTimer = () => {
+      console.log('Testing popup timer with 3 seconds...');
+      resetNewsletterPopupState();
+      hasShownNewsletterPopup = false;
+      
+      eventsTabTimer = setTimeout(() => {
+        console.log('Test timer triggered!');
+        showNewsletterPopup();
+      }, 3000); // 3 seconds for testing
+      
+      console.log('Test timer set for 3 seconds');
+    };
+    
+    
     function switchTab(tabName: string) {
       const tabContents = Array.from(document.querySelectorAll<HTMLElement>('.tab-content'));
       tabs.forEach(t => t.classList.remove('active'));
       tabContents.forEach(c => c.classList.remove('active'));
       document.querySelector<HTMLButtonElement>(`.nav-tab[data-tab="${tabName}"]`)?.classList.add('active');
       document.getElementById(tabName)?.classList.add('active');
+      
+      // Newsletter popup logic for events, courses, and news tabs
+      if (tabName === 'events' || tabName === 'courses' || tabName === 'news') {
+        console.log(`Debug: ${tabName} tab activated`);
+        console.log(`Debug: hasShownNewsletterPopup = ${hasShownNewsletterPopup}`);
+        
+        // Only set timer if popup hasn't been shown yet
+        if (!hasShownNewsletterPopup) {
+          try {
+            const popupShown = localStorage.getItem(NEWSLETTER_POPUP_SHOWN_KEY);
+            console.log(`Debug: localStorage popupShown = ${popupShown}`);
+            if (popupShown !== 'true') {
+              console.log(`${tabName} tab activated, starting newsletter timer...`);
+              // Clear any existing timer
+              if (eventsTabTimer) {
+                clearTimeout(eventsTabTimer);
+              }
+
+              // Set timer to show newsletter popup after 10 seconds
+              eventsTabTimer = setTimeout(() => {
+                console.log('Newsletter timer triggered, checking active tab...');
+                // Check if user is still on events, courses, or news tab
+                const activeTab = document.querySelector('.nav-tab.active');
+                const activeTabName = activeTab?.getAttribute('data-tab');
+                console.log('Active tab:', activeTabName);
+
+                if (activeTabName === 'events' || activeTabName === 'courses' || activeTabName === 'news') {
+                  console.log('Showing newsletter popup...');
+                  showNewsletterPopup();
+                } else {
+                  console.log('User switched tabs, not showing newsletter popup');
+                }
+              }, 10000); // 10 seconds
+
+              console.log('Newsletter timer set for 10 seconds');
+            } else {
+              console.log('Newsletter popup already shown before, skipping timer');
+            }
+          } catch (error) {
+            console.log('Error checking popup state:', error);
+          }
+        } else {
+          console.log('Newsletter popup already shown in this session, skipping timer');
+        }
+      } else {
+        // Clear timer if switching to other tabs
+        if (eventsTabTimer) {
+          console.log('Clearing newsletter timer...');
+          clearTimeout(eventsTabTimer);
+          eventsTabTimer = null;
+        }
+      }
     }
     tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab || 'home')));
 

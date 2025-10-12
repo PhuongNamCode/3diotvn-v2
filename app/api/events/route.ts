@@ -40,7 +40,10 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           updatedAt: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [
+          { date: 'desc' }, // Sắp xếp theo thời gian diễn ra sự kiện (xa nhất trong tương lai trước)
+          { time: 'asc' }   // Nếu cùng ngày thì sắp xếp theo giờ
+        ],
         skip,
         take: limit,
       }),

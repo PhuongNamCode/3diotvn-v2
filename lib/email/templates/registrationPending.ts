@@ -159,12 +159,7 @@ export function generateRegistrationPendingEmail(data: RegistrationPendingEmailD
                     <span class="detail-label">💰 Phí tham gia:</span>
                     <span class="detail-value">${eventPrice.toLocaleString('vi-VN')} VNĐ</span>
                 </div>
-                ${onlineLink ? `
-                <div class="detail-row">
-                    <span class="detail-label">🔗 Link online:</span>
-                    <span class="detail-value"><a href="${onlineLink}" style="color: #2563eb;">Tham gia trực tuyến</a></span>
-                </div>
-                ` : ''}
+                <!-- Link online sẽ được gửi sau khi admin duyệt -->
             </div>
 
             <div class="transaction-info">
@@ -178,7 +173,7 @@ export function generateRegistrationPendingEmail(data: RegistrationPendingEmailD
                 <h3 style="margin-top: 0; color: #1e40af;">📝 Lưu ý quan trọng</h3>
                 <ul style="margin-bottom: 0;">
                     <li>Chúng tôi sẽ xác thực thông tin thanh toán trong vòng <strong>24-48 giờ</strong></li>
-                    <li>Sau khi xác thực thành công, bạn sẽ nhận được email xác nhận cuối cùng</li>
+                    <li>Sau khi xác thực thành công, bạn sẽ nhận được email xác nhận cuối cùng <strong>kèm link tham gia online</strong></li>
                     <li>Nếu có vấn đề với giao dịch, chúng tôi sẽ liên hệ với bạn</li>
                     <li>Vui lòng giữ lại mã giao dịch để tham khảo</li>
                 </ul>
@@ -213,7 +208,7 @@ THÔNG TIN SỰ KIỆN:
 - Giờ: ${eventTime}
 - Địa điểm: ${eventLocation}
 - Phí tham gia: ${eventPrice.toLocaleString('vi-VN')} VNĐ
-${onlineLink ? `- Link online: ${onlineLink}` : ''}
+- Link online: Sẽ được gửi sau khi admin duyệt
 
 THÔNG TIN GIAO DỊCH:
 - Mã giao dịch: ${transactionId}

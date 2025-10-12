@@ -158,3 +158,16 @@ model CourseEnrollment {
 
   @@index([courseId])
 }
+
+model NewsletterSubscription {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  status       String   @default("active") // active, unsubscribed, bounced
+  subscribedAt DateTime @default(now())
+  source       String?  @default("website") // website, popup, admin, etc.
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+}

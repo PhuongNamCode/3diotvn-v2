@@ -188,7 +188,7 @@ export function generateRegistrationConfirmEmail(data: RegistrationEmailData): {
                             🚀 Tham gia sự kiện online
                         </a>
                         <p style="margin: 8px 0 0; font-size: 12px; color: rgba(255,255,255,0.8);">
-                            Vui lòng click vào link này vào thời gian sự kiện diễn ra
+                            ✅ Link này đã được admin duyệt và sẵn sàng sử dụng
                         </p>
                     </div>
                     ` : ''}
@@ -237,7 +237,7 @@ Thông tin sự kiện:
 - Ngày: ${formattedDate}
 - Thời gian: ${eventTime}
 - Địa điểm: ${eventLocation}${onlineLink ? `
-- Link tham gia online: ${onlineLink}` : ''}
+- Link tham gia online: ${onlineLink} (✅ Đã được admin duyệt)` : ''}
 - Phí tham gia: ${priceDisplay}
 
 Bước tiếp theo:

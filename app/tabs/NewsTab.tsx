@@ -88,8 +88,9 @@ export default function NewsTab() {
 
   function formatDate(dateString: string) {
     const d = new Date(dateString);
-    return d.toLocaleDateString("vi-VN", { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+    return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
   }
+
 
   return (
     <div className="container">
@@ -97,6 +98,10 @@ export default function NewsTab() {
       <section className="news-hero">
         <div className="news-hero-content">
           <div className="news-hero-text">
+            <div className="news-hero-badge">
+              <i className="fas fa-newspaper"></i>
+              <span>Cập nhật mới nhất</span>
+            </div>
             <h1>
               <span style={{ color: 'var(--accent)' }}>Tin tức</span> công nghệ
             </h1>
@@ -104,6 +109,22 @@ export default function NewsTab() {
               Cập nhật những tin tức mới nhất từ các trang báo uy tín về IoT, Embedded, AI và công nghệ. 
               Khám phá xu hướng mới và cơ hội phát triển trong lĩnh vực công nghệ.
             </p>
+            <div className="news-hero-actions">
+              <button 
+                className="btn-newsletter"
+                onClick={() => {
+                  // Call global newsletter popup function (always show mode)
+                  if ((window as any).showNewsletterPopupAlways) {
+                    (window as any).showNewsletterPopupAlways();
+                  } else {
+                    console.log('Newsletter popup function not available');
+                  }
+                }}
+              >
+                <i className="fas fa-envelope"></i>
+                Đăng ký nhận tin tức
+              </button>
+            </div>
           </div>
           <div className="news-hero-visual">
             <div className="news-categories">
@@ -208,49 +229,59 @@ export default function NewsTab() {
       {!loading && !error && (
         <div className="news-grid">
           {filtered.map((news, idx) => (
-            <div className="news-card" data-category={news.category} key={idx}>
+            <div className="news-card modern-news-card" data-category={news.category} key={idx}>
+        <div className="news-card-header">
+          <div className="news-badges">
+            <div className="news-category-badge">
+              <i className={`fas ${
+                news.category === 'IoT' ? 'fa-wifi' :
+                news.category === 'AI' ? 'fa-robot' :
+                news.category === 'Embedded' ? 'fa-microchip' :
+                news.category === 'Hardware' ? 'fa-cogs' :
+                news.category === 'Communications' ? 'fa-satellite-dish' :
+                'fa-newspaper'
+              }`}></i>
+              {news.category}
+            </div>
+            <div className="news-source-badge">
+              <i className="fas fa-globe"></i>
+              {news.source}
+            </div>
+          </div>
+        </div>
+              
               <div className="news-content">
-                <div className="news-header">
-                  <div className="news-badges">
-                    <span className="news-category-badge">
-                      {news.category}
-                    </span>
-                    <span className="news-source-badge">
-                      {news.source}
-                    </span>
-                  </div>
-                  <h3 className="news-title">
-                    {news.link && news.link !== "#" ? (
-                      <a href={news.link} target="_blank" rel="noreferrer">
-                        {news.title}
-                      </a>
-                    ) : (
-                      <span>{news.title}</span>
-                    )}
-                  </h3>
-                  <div className="news-date">
-                    <i className="fas fa-calendar"></i>
-                    {formatDate(news.date)}
-                  </div>
-                </div>
+                <h3 className="news-title">
+                  {news.link && news.link !== "#" ? (
+                    <a href={news.link} target="_blank" rel="noreferrer">
+                      {news.title}
+                    </a>
+                  ) : (
+                    <span>{news.title}</span>
+                  )}
+                </h3>
                 
                 <p className="news-summary">{news.summary}</p>
                 
                 <div className="news-actions">
+                  <div className="news-date">
+                    {formatDate(news.date)}
+                  </div>
                   {news.link && news.link !== "#" ? (
                     <a 
                       href={news.link} 
                       target="_blank" 
-                      className="btn-read-more" 
+                      className="btn-read-more modern-btn" 
                       rel="noreferrer"
                     >
+                      <i className="fas fa-arrow-right"></i>
+                      <span>Đọc bài viết</span>
                       <i className="fas fa-external-link-alt"></i>
-                      Đọc thêm
                     </a>
                   ) : (
-                    <span className="btn-read-more disabled">
+                    <span className="btn-read-more modern-btn disabled">
                       <i className="fas fa-info-circle"></i>
-                      Không có link
+                      <span>Không có link</span>
                     </span>
                   )}
                 </div>
@@ -259,6 +290,7 @@ export default function NewsTab() {
           ))}
         </div>
       )}
+
     </div>
   );
 }
