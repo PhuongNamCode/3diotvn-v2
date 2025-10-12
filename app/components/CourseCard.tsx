@@ -120,8 +120,9 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
     }
   };
 
-  const isNew = course.publishedAt ? 
-    (new Date().getTime() - new Date(course.publishedAt).getTime()) < (30 * 24 * 60 * 60 * 1000) : 
+  // Check if course is new (created within last 3 months)
+  const isNew = course.createdAt ? 
+    (new Date().getTime() - new Date(course.createdAt).getTime()) < (90 * 24 * 60 * 60 * 1000) : 
     false;
 
   const displayStudents = calculateFakeEnrollmentCount(course.enrolledCount, course.createdAt || course.updatedAt || new Date());
@@ -203,22 +204,39 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails }) => {
         }}>
           {isNew && (
             <span style={{
-              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+              background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
               color: 'white',
-              padding: '6px 12px',
-              borderRadius: '20px',
+              padding: '8px 14px',
+              borderRadius: '25px',
               fontSize: '11px',
-              fontWeight: '700',
+              fontWeight: '800',
               textTransform: 'uppercase',
-              letterSpacing: '0.8px',
+              letterSpacing: '1px',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
+              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(10px)',
+              position: 'relative',
+              overflow: 'hidden',
+              animation: 'newTagPulse 2s ease-in-out infinite'
             }}>
-              <i className="fas fa-sparkles" style={{ fontSize: '10px' }}></i>
+              <i className="fas fa-star" style={{ 
+                fontSize: '10px',
+                animation: 'starTwinkle 1.5s ease-in-out infinite alternate'
+              }}></i>
               Mới
+              {/* Shine effect */}
+              <div style={{
+                position: 'absolute',
+                top: '0',
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
+                animation: 'shine 2s ease-in-out infinite'
+              }}></div>
             </span>
           )}
           {isPopular && (

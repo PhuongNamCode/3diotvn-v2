@@ -538,6 +538,31 @@ npx prisma db push
 npm run dev
 ```
 
+### Courses API troubleshooting:
+```bash
+# Nếu gặp lỗi "Failed to create course" hoặc "Failed to fetch courses":
+# 1. Sync database schema
+npx prisma db push
+
+# 2. Kiểm tra API courses có hoạt động không
+curl -X GET "http://localhost:3000/api/courses" | jq
+
+# 3. Nếu vẫn lỗi, restart server
+npm run dev
+
+# 4. Test với khóa học đơn giản trước
+curl -X POST "http://localhost:3000/api/courses" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test Course",
+    "description": "Test course description",
+    "level": "beginner",
+    "price": 0,
+    "status": "published",
+    "category": "Test"
+  }' | jq
+```
+
 ### Debug commands:
 ```bash
 # Kiểm tra server có chạy không

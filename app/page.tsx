@@ -227,12 +227,41 @@ export default function Home() {
     // Expose tab switcher globally for components
     (window as any).switchToTab = (tabName: string) => switchTab(tabName);
 
+    // Footer navigation handlers
+    function setupFooterNavigation() {
+      // Learning section - all courses
+      const learningLinks = document.querySelectorAll('.footer-section:nth-child(2) .footer-links a');
+      learningLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          switchTab('courses');
+        });
+      });
+
+      // About section navigation
+      const aboutLinks = document.querySelectorAll('.footer-section:nth-child(4) .footer-links a');
+      aboutLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const text = link.textContent?.toLowerCase();
+          if (text?.includes('cộng tác') || text?.includes('partners') || text?.includes('liên hệ')) {
+            switchTab('contact');
+          } else if (text?.includes('events')) {
+            switchTab('events');
+          }
+        });
+      });
+    }
+
     // Events and News are now handled inside their respective tabs as React components
 
     // Header scroll effect
     const header = document.getElementById('header');
     function onScroll() { if (!header) return; if (window.scrollY > 100) header.classList.add('scrolled'); else header.classList.remove('scrolled'); }
     window.addEventListener('scroll', onScroll);
+
+    // Setup footer navigation
+    setupFooterNavigation();
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -348,37 +377,50 @@ export default function Home() {
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="action-buttons">
-                  <button class="btn-modern btn-primary-modern" id="goEvents">
-                    <div class="btn-icon">
+                <div class="action-buttons-grid">
+                  <button class="btn-grid btn-events" id="goEvents">
+                    <div class="btn-grid-icon">
                       <i class="fas fa-calendar-alt"></i>
                     </div>
-                    <div class="btn-content">
-                      <span class="btn-title">Xem sự kiện</span>
-                      <span class="btn-subtitle">Khám phá các sự kiện sắp tới</span>
-                    </div>
-                    <div class="btn-arrow">
-                      <i class="fas fa-arrow-right"></i>
-                    </div>
+                    <span class="btn-grid-title">Sự kiện</span>
                   </button>
                   
-                  <button class="btn-modern btn-secondary-modern" id="logoutInline">
-                    <div class="btn-icon">
-                      <i class="fas fa-sign-out-alt"></i>
+                  <button class="btn-grid btn-courses" id="goCourses">
+                    <div class="btn-grid-icon">
+                      <i class="fas fa-graduation-cap"></i>
                     </div>
-                    <div class="btn-content">
-                      <span class="btn-title">Đăng xuất</span>
-                      <span class="btn-subtitle">Thoát khỏi tài khoản</span>
+                    <span class="btn-grid-title">Khóa học</span>
+                  </button>
+                  
+                  <button class="btn-grid btn-news" id="goNews">
+                    <div class="btn-grid-icon">
+                      <i class="fas fa-newspaper"></i>
                     </div>
-                    <div class="btn-arrow">
-                      <i class="fas fa-arrow-right"></i>
+                    <span class="btn-grid-title">Tin tức</span>
+                  </button>
+                  
+                  <button class="btn-grid btn-contact" id="goContact">
+                    <div class="btn-grid-icon">
+                      <i class="fas fa-envelope"></i>
                     </div>
+                    <span class="btn-grid-title">Liên hệ</span>
+                  </button>
+                </div>
+                
+                <!-- Logout Button -->
+                <div class="logout-section">
+                  <button class="btn-logout" id="logoutInline">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>`;
         document.getElementById('goEvents')?.addEventListener('click', () => switchTab('events'));
+        document.getElementById('goCourses')?.addEventListener('click', () => switchTab('courses'));
+        document.getElementById('goNews')?.addEventListener('click', () => switchTab('news'));
+        document.getElementById('goContact')?.addEventListener('click', () => switchTab('contact'));
         document.getElementById('logoutInline')?.addEventListener('click', signOut);
         // Apply robust avatar fallback for the login tab preview avatar as well
         const loginAvatarImg = document.getElementById('loginAvatarImg') as HTMLImageElement | null;
@@ -641,7 +683,7 @@ export default function Home() {
                 <li><a href="https://www.tiktok.com/@3diot_laptrinhnhungiot" target="_blank" rel="noopener noreferrer">TikTok</a></li>
                 <li><a href="#">GitHub Repos</a></li>
                 <li><a href="https://www.youtube.com/@3DIoT.LapTrinhNhungIoT" target="_blank" rel="noopener noreferrer">YouTube Channel</a></li>
-                <li><a href="#">Zalo Group</a></li>
+                <li><a href="https://zalo.me/g/hejjkl289" target="_blank" rel="noopener noreferrer">Zalo Group</a></li>
                 <li><a href="#">LinkedIn Page</a></li>
               </ul>
             </div>
