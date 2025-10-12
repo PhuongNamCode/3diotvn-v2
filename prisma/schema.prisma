@@ -162,7 +162,7 @@ model CourseEnrollment {
 model NewsletterSubscription {
   id           String   @id @default(cuid())
   email        String   @unique
-  status       String   @default("active") // active, unsubscribed, bounced
+  status       String   @default("active") // active, inactive
   subscribedAt DateTime @default(now())
   source       String?  @default("website") // website, popup, admin, etc.
   createdAt    DateTime @default(now())

@@ -12,7 +12,7 @@ export async function PATCH(request: NextRequest) {
       }, { status: 400 });
     }
 
-    if (!action || !['activate', 'unsubscribe', 'delete'].includes(action)) {
+    if (!action || !['activate', 'deactivate', 'delete'].includes(action)) {
       return NextResponse.json({
         success: false,
         error: 'Invalid action'
@@ -32,11 +32,11 @@ export async function PATCH(request: NextRequest) {
         });
         break;
       
-      case 'unsubscribe':
+      case 'deactivate':
         result = await prisma.newsletterSubscription.updateMany({
           where: { id: { in: ids } },
           data: { 
-            status: 'unsubscribed',
+            status: 'inactive',
             updatedAt: new Date()
           }
         });

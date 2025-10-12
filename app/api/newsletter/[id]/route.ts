@@ -9,7 +9,7 @@ export async function PATCH(
     const { status } = await request.json();
     const { id } = await params;
     
-    if (!status || !['active', 'unsubscribed', 'bounced'].includes(status)) {
+    if (!status || !['active', 'inactive'].includes(status)) {
       return NextResponse.json({
         success: false,
         error: 'Invalid status value'

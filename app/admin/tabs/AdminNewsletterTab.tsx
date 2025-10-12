@@ -15,8 +15,7 @@ interface NewsletterSubscription {
 interface NewsletterStats {
   total: number;
   active: number;
-  unsubscribed: number;
-  bounced: number;
+  inactive: number;
   todaySubscriptions: number;
   weekSubscriptions: number;
 }
@@ -26,8 +25,7 @@ export default function AdminNewsletterTab() {
   const [stats, setStats] = useState<NewsletterStats>({
     total: 0,
     active: 0,
-    unsubscribed: 0,
-    bounced: 0,
+    inactive: 0,
     todaySubscriptions: 0,
     weekSubscriptions: 0,
   });
@@ -152,8 +150,7 @@ export default function AdminNewsletterTab() {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       active: { text: 'Hoạt động', class: 'status-active' },
-      unsubscribed: { text: 'Hủy đăng ký', class: 'status-unsubscribed' },
-      bounced: { text: 'Bounced', class: 'status-bounced' },
+      inactive: { text: 'Không hoạt động', class: 'status-inactive' },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
@@ -222,21 +219,12 @@ export default function AdminNewsletterTab() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon unsubscribed">
-            <i className="fas fa-times-circle"></i>
+          <div className="stat-icon inactive">
+            <i className="fas fa-pause-circle"></i>
           </div>
           <div className="stat-content">
-            <div className="stat-number">{stats.unsubscribed}</div>
-            <div className="stat-label">Hủy đăng ký</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon bounced">
-            <i className="fas fa-exclamation-triangle"></i>
-          </div>
-          <div className="stat-content">
-            <div className="stat-number">{stats.bounced}</div>
-            <div className="stat-label">Bounced</div>
+            <div className="stat-number">{stats.inactive}</div>
+            <div className="stat-label">Không hoạt động</div>
           </div>
         </div>
         <div className="stat-card">
@@ -278,8 +266,7 @@ export default function AdminNewsletterTab() {
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="active">Hoạt động</option>
-            <option value="unsubscribed">Hủy đăng ký</option>
-            <option value="bounced">Bounced</option>
+            <option value="inactive">Không hoạt động</option>
           </select>
         </div>
         <div className="filters-right">
@@ -292,7 +279,7 @@ export default function AdminNewsletterTab() {
               >
                 <option value="">Chọn thao tác</option>
                 <option value="activate">Kích hoạt</option>
-                <option value="unsubscribe">Hủy đăng ký</option>
+                <option value="deactivate">Hủy kích hoạt</option>
                 <option value="delete">Xóa</option>
               </select>
               <button
@@ -398,8 +385,7 @@ export default function AdminNewsletterTab() {
                         className="status-select"
                       >
                         <option value="active">Hoạt động</option>
-                        <option value="unsubscribed">Hủy đăng ký</option>
-                        <option value="bounced">Bounced</option>
+                        <option value="inactive">Không hoạt động</option>
                       </select>
                     </div>
                   </td>

@@ -7,16 +7,20 @@ import { newsletterWelcomeTemplate } from '@/lib/email/templates/newsletterWelco
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
+  secure: process.env.SMTP_SECURE === 'true',
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.SMTP_USERNAME,
+    pass: process.env.SMTP_PASSWORD,
   },
 });
 
 async function sendWelcomeEmail(email: string, subscriptionId: string) {
   try {
-    const websiteUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002';
+    console.log(`📧 Attempting to send welcome email to: ${email}`);
+    console.log(`🔧 SMTP Config: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`);
+    console.log(`👤 From: ${process.env.SMTP_USERNAME}`);
+    
+    const websiteUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const unsubscribeUrl = `${websiteUrl}/unsubscribe?token=${subscriptionId}`;
     
     const html = newsletterWelcomeTemplate.html
@@ -29,17 +33,32 @@ async function sendWelcomeEmail(email: string, subscriptionId: string) {
       .replace(/\{\{websiteUrl\}\}/g, websiteUrl)
       .replace(/\{\{unsubscribeUrl\}\}/g, unsubscribeUrl);
 
-    await transporter.sendMail({
-      from: `"3DIoT" <${process.env.SMTP_USER}>`,
+    const mailOptions = {
+      from: `"3DIoT" <${process.env.SMTP_USERNAME}>`,
       to: email,
       subject: newsletterWelcomeTemplate.subject,
       html,
       text,
+    };
+
+    console.log(`📤 Sending email with options:`, {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
     });
+
+    const result = await transporter.sendMail(mailOptions);
     
-    console.log(`Welcome email sent to ${email}`);
+    console.log(`✅ Welcome email sent successfully to ${email}`);
+    console.log(`📧 Message ID: ${result.messageId}`);
+    console.log(`📨 Response: ${result.response}`);
   } catch (error) {
-    console.error('Error sending welcome email:', error);
+    console.error('❌ Error sending welcome email:', error);
+    console.error('❌ Full error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      code: error instanceof Error && 'code' in error ? (error as any).code : undefined,
+      stack: error instanceof Error ? error.stack : undefined
+    });
     // Don't throw error - subscription should still succeed even if email fails
   }
 }
@@ -71,10 +90,35 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingSubscription) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Email already subscribed' 
-      }, { status: 409 });
+      if (existingSubscription.status === 'active') {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Email already subscribed' 
+        }, { status: 409 });
+      } else {
+        // If status is inactive, reactivate it
+        const updatedSubscription = await prisma.newsletterSubscription.update({
+          where: { email: email.toLowerCase() },
+          data: { 
+            status: 'active',
+            subscribedAt: new Date(),
+            updatedAt: new Date()
+          }
+        });
+        
+        // Send welcome email
+        sendWelcomeEmail(email.toLowerCase(), updatedSubscription.id);
+        
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Successfully re-subscribed to newsletter',
+          data: {
+            id: updatedSubscription.id,
+            email: updatedSubscription.email,
+            subscribedAt: updatedSubscription.subscribedAt
+          }
+        }, { status: 200 });
+      }
     }
 
     // Create new subscription

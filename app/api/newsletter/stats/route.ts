@@ -10,15 +10,13 @@ export async function GET() {
     const [
       total,
       active,
-      unsubscribed,
-      bounced,
+      inactive,
       todaySubscriptions,
       weekSubscriptions,
     ] = await Promise.all([
       prisma.newsletterSubscription.count(),
       prisma.newsletterSubscription.count({ where: { status: 'active' } }),
-      prisma.newsletterSubscription.count({ where: { status: 'unsubscribed' } }),
-      prisma.newsletterSubscription.count({ where: { status: 'bounced' } }),
+      prisma.newsletterSubscription.count({ where: { status: 'inactive' } }),
       prisma.newsletterSubscription.count({
         where: {
           subscribedAt: { gte: today }
@@ -36,8 +34,7 @@ export async function GET() {
       data: {
         total,
         active,
-        unsubscribed,
-        bounced,
+        inactive,
         todaySubscriptions,
         weekSubscriptions,
       }

@@ -2985,6 +2985,16 @@
   text-transform: uppercase;
 }
 
+.status-active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.status-inactive {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
 .status-published {
   background: rgba(52, 211, 153, 0.1);
   color: #059669;
@@ -3987,12 +3997,8 @@
   background: linear-gradient(135deg, #10b981, #059669);
 }
 
-.stat-icon.unsubscribed {
+.stat-icon.inactive {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-}
-
-.stat-icon.bounced {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
 .stat-icon.today {
