@@ -229,7 +229,6 @@ export default function Home() {
     function showNewsletterPopup() {
       // Check if popup has already been shown in this session
       if (hasShownNewsletterPopup) {
-        console.log('Newsletter popup already shown in this session');
         return;
       }
       
@@ -237,11 +236,10 @@ export default function Home() {
       try {
         const popupShown = localStorage.getItem(NEWSLETTER_POPUP_SHOWN_KEY);
         if (popupShown === 'true') {
-          console.log('Newsletter popup was shown before, skipping');
           return;
         }
       } catch (error) {
-        console.log('Could not check localStorage:', error);
+        // Silent error handling
       }
       
       createAndShowPopup();
@@ -249,7 +247,6 @@ export default function Home() {
 
     // Newsletter Popup (always show - for manual button clicks)
     function showNewsletterPopupAlways() {
-      console.log('Showing newsletter popup (always mode - manual trigger)');
       createAndShowPopup(false); // Don't mark as shown
     }
 
@@ -334,7 +331,7 @@ export default function Home() {
         try {
           localStorage.setItem(NEWSLETTER_POPUP_SHOWN_KEY, 'true');
         } catch (error) {
-          console.log('Could not save to localStorage:', error);
+          // Silent error handling
         }
       }
     }
@@ -363,7 +360,7 @@ export default function Home() {
       submitBtn.disabled = true;
 
       try {
-        const response = await fetch('/api/newsletter', {
+        const response = await fetch(`${window.location.origin}/api/newsletter`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
@@ -380,20 +377,71 @@ export default function Home() {
                 <div class="newsletter-popup-success-icon">
                   <i class="fas fa-check-circle"></i>
                 </div>
-                <h3>Cảm ơn bạn đã đăng ký! 🎉</h3>
-                <p>Chúng tôi sẽ gửi tin tức mới nhất đến email của bạn.</p>
+                <h3>Đăng ký thành công! 🎉</h3>
+                <p>Chúng tôi đã gửi email xác nhận đến <strong>${email}</strong></p>
+                <p>Bạn sẽ nhận được tin tức mới nhất từ 3DIoT.</p>
+                <div class="newsletter-popup-success-actions">
+                  <button onclick="closeNewsletterPopup()" class="btn-primary-modern">
+                    <i class="fas fa-times"></i>
+                    Đóng
+                  </button>
+                </div>
               </div>
             `;
           }
 
-          // Auto close after 3 seconds
-          setTimeout(closeNewsletterPopup, 3000);
+          // Auto close after 5 seconds
+          setTimeout(closeNewsletterPopup, 5000);
         } else {
-          throw new Error(data.error || 'Failed to subscribe');
+          // Show error message in popup
+          const content = document.querySelector('.newsletter-popup-content');
+          if (content) {
+            content.innerHTML = `
+              <div class="newsletter-popup-error">
+                <div class="newsletter-popup-error-icon">
+                  <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3>Đăng ký thất bại</h3>
+                <p>${data.error || 'Có lỗi xảy ra. Vui lòng thử lại sau.'}</p>
+                <div class="newsletter-popup-error-actions">
+                  <button onclick="location.reload()" class="btn-secondary-modern">
+                    <i class="fas fa-redo"></i>
+                    Thử lại
+                  </button>
+                  <button onclick="closeNewsletterPopup()" class="btn-primary-modern">
+                    <i class="fas fa-times"></i>
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            `;
+          }
         }
       } catch (error) {
         console.error('Newsletter subscription error:', error);
-        alert('Có lỗi xảy ra. Vui lòng thử lại sau.');
+        // Show error message in popup
+        const content = document.querySelector('.newsletter-popup-content');
+        if (content) {
+          content.innerHTML = `
+            <div class="newsletter-popup-error">
+              <div class="newsletter-popup-error-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <h3>Lỗi kết nối</h3>
+              <p>Không thể kết nối đến server. Vui lòng kiểm tra kết nối internet và thử lại.</p>
+              <div class="newsletter-popup-error-actions">
+                <button onclick="location.reload()" class="btn-secondary-modern">
+                  <i class="fas fa-redo"></i>
+                  Thử lại
+                </button>
+                <button onclick="closeNewsletterPopup()" class="btn-primary-modern">
+                  <i class="fas fa-times"></i>
+                  Đóng
+                </button>
+              </div>
+            </div>
+          `;
+        }
       } finally {
         // Reset button
         submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Đăng ký ngay';
@@ -419,41 +467,6 @@ export default function Home() {
     (window as any).showNewsletterPopupAlways = showNewsletterPopupAlways;
     (window as any).resetNewsletterPopupState = resetNewsletterPopupState;
     
-    // Debug function to test newsletter popup
-    (window as any).testNewsletterPopup = () => {
-      console.log('Testing newsletter popup...');
-      resetNewsletterPopupState(); // Reset first
-      showNewsletterPopup();
-    };
-    
-    // Debug function to check popup state
-    (window as any).debugPopupState = () => {
-      console.log('=== Newsletter Popup Debug ===');
-      console.log('hasShownNewsletterPopup:', hasShownNewsletterPopup);
-      console.log('NEWSLETTER_POPUP_SHOWN_KEY:', NEWSLETTER_POPUP_SHOWN_KEY);
-      try {
-        const popupShown = localStorage.getItem(NEWSLETTER_POPUP_SHOWN_KEY);
-        console.log('localStorage value:', popupShown);
-      } catch (error) {
-        console.log('localStorage error:', error);
-      }
-      console.log('eventsTabTimer:', eventsTabTimer);
-      console.log('=============================');
-    };
-    
-    // Debug function to test popup with short timer
-    (window as any).testPopupTimer = () => {
-      console.log('Testing popup timer with 3 seconds...');
-      resetNewsletterPopupState();
-      hasShownNewsletterPopup = false;
-      
-      eventsTabTimer = setTimeout(() => {
-        console.log('Test timer triggered!');
-        showNewsletterPopup();
-      }, 3000); // 3 seconds for testing
-      
-      console.log('Test timer set for 3 seconds');
-    };
     
     
     function switchTab(tabName: string) {
@@ -465,16 +478,11 @@ export default function Home() {
       
       // Newsletter popup logic for events, courses, and news tabs
       if (tabName === 'events' || tabName === 'courses' || tabName === 'news') {
-        console.log(`Debug: ${tabName} tab activated`);
-        console.log(`Debug: hasShownNewsletterPopup = ${hasShownNewsletterPopup}`);
-        
         // Only set timer if popup hasn't been shown yet
         if (!hasShownNewsletterPopup) {
           try {
             const popupShown = localStorage.getItem(NEWSLETTER_POPUP_SHOWN_KEY);
-            console.log(`Debug: localStorage popupShown = ${popupShown}`);
             if (popupShown !== 'true') {
-              console.log(`${tabName} tab activated, starting newsletter timer...`);
               // Clear any existing timer
               if (eventsTabTimer) {
                 clearTimeout(eventsTabTimer);
@@ -482,34 +490,22 @@ export default function Home() {
 
               // Set timer to show newsletter popup after 10 seconds
               eventsTabTimer = setTimeout(() => {
-                console.log('Newsletter timer triggered, checking active tab...');
                 // Check if user is still on events, courses, or news tab
                 const activeTab = document.querySelector('.nav-tab.active');
                 const activeTabName = activeTab?.getAttribute('data-tab');
-                console.log('Active tab:', activeTabName);
 
                 if (activeTabName === 'events' || activeTabName === 'courses' || activeTabName === 'news') {
-                  console.log('Showing newsletter popup...');
                   showNewsletterPopup();
-                } else {
-                  console.log('User switched tabs, not showing newsletter popup');
                 }
               }, 10000); // 10 seconds
-
-              console.log('Newsletter timer set for 10 seconds');
-            } else {
-              console.log('Newsletter popup already shown before, skipping timer');
             }
           } catch (error) {
-            console.log('Error checking popup state:', error);
+            // Silent error handling
           }
-        } else {
-          console.log('Newsletter popup already shown in this session, skipping timer');
         }
       } else {
         // Clear timer if switching to other tabs
         if (eventsTabTimer) {
-          console.log('Clearing newsletter timer...');
           clearTimeout(eventsTabTimer);
           eventsTabTimer = null;
         }

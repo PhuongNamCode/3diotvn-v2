@@ -7959,6 +7959,73 @@ body {
   line-height: 1.6;
 }
 
+.newsletter-popup-success p strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.newsletter-popup-success-actions {
+  margin-top: 2rem;
+}
+
+.newsletter-popup-success-actions button {
+  margin: 0 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+/* Newsletter Popup Error State */
+.newsletter-popup-error {
+  text-align: center;
+  padding: 2rem;
+}
+
+.newsletter-popup-error-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 2rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: white;
+  animation: successBounce 0.6s ease-out;
+}
+
+.newsletter-popup-error h3 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.newsletter-popup-error p {
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.newsletter-popup-error-actions {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.newsletter-popup-error-actions button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
 /* Popup Animations */
 @keyframes popupFadeIn {
   from { opacity: 0; }

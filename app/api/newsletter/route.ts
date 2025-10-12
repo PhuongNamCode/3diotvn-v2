@@ -1,5 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import nodemailer from 'nodemailer';
+import { newsletterWelcomeTemplate } from '@/lib/email/templates/newsletterWelcome';
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+async function sendWelcomeEmail(email: string, subscriptionId: string) {
+  try {
+    const websiteUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002';
+    const unsubscribeUrl = `${websiteUrl}/unsubscribe?token=${subscriptionId}`;
+    
+    const html = newsletterWelcomeTemplate.html
+      .replace(/\{\{email\}\}/g, email)
+      .replace(/\{\{websiteUrl\}\}/g, websiteUrl)
+      .replace(/\{\{unsubscribeUrl\}\}/g, unsubscribeUrl);
+    
+    const text = newsletterWelcomeTemplate.text
+      .replace(/\{\{email\}\}/g, email)
+      .replace(/\{\{websiteUrl\}\}/g, websiteUrl)
+      .replace(/\{\{unsubscribeUrl\}\}/g, unsubscribeUrl);
+
+    await transporter.sendMail({
+      from: `"3DIoT" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: newsletterWelcomeTemplate.subject,
+      html,
+      text,
+    });
+    
+    console.log(`Welcome email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    // Don't throw error - subscription should still succeed even if email fails
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +87,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Send welcome email (async, don't wait for it)
+    sendWelcomeEmail(email.toLowerCase(), subscription.id);
+
     return NextResponse.json({ 
       success: true, 
       message: 'Successfully subscribed to newsletter',
@@ -69,12 +115,20 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
     const status = searchParams.get('status') || 'active';
+    const search = searchParams.get('search') || '';
     
     const skip = (page - 1) * limit;
     
     const where: any = {};
     if (status !== 'all') {
       where.status = status;
+    }
+    
+    if (search) {
+      where.email = {
+        contains: search.toLowerCase(),
+        mode: 'insensitive'
+      };
     }
 
     const [subscriptions, total] = await Promise.all([

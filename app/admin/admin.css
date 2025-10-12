@@ -3941,3 +3941,239 @@
   color: #16a34a;
   font-size: 12px;
 }
+
+/* Newsletter Tab Specific Styles */
+.admin-newsletter-tab {
+  padding: 0;
+}
+
+.newsletter-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.stat-icon.active {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-icon.unsubscribed {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-icon.bounced {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.stat-icon.today {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.stat-icon.week {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.newsletter-table th:first-child,
+.newsletter-table td:first-child {
+  width: 50px;
+  text-align: center;
+}
+
+.newsletter-table th:nth-child(2),
+.newsletter-table td:nth-child(2) {
+  width: 60px;
+  text-align: center;
+}
+
+.newsletter-table th:nth-child(3),
+.newsletter-table td:nth-child(3) {
+  width: 250px;
+}
+
+.newsletter-table th:nth-child(4),
+.newsletter-table td:nth-child(4) {
+  width: 120px;
+}
+
+.newsletter-table th:nth-child(5),
+.newsletter-table td:nth-child(5) {
+  width: 120px;
+}
+
+.newsletter-table th:nth-child(6),
+.newsletter-table td:nth-child(6) {
+  width: 150px;
+}
+
+.newsletter-table th:nth-child(7),
+.newsletter-table td:nth-child(7) {
+  width: 150px;
+}
+
+.email-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.email-cell i {
+  color: var(--accent);
+  font-size: 0.875rem;
+}
+
+.source-badge {
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  color: #374151;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  min-width: 120px;
+  transition: all 0.2s ease;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg-secondary);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.bulk-select {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  min-width: 140px;
+}
+
+/* Export Modal Styles */
+.export-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.export-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.export-options input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+/* Newsletter Responsive Design */
+@media (max-width: 768px) {
+  .newsletter-stats {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1rem;
+  }
+  
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .bulk-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .newsletter-table {
+    font-size: 0.875rem;
+  }
+  
+  .newsletter-table th,
+  .newsletter-table td {
+    padding: 0.75rem 0.5rem;
+  }
+}
