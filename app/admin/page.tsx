@@ -10,7 +10,6 @@ import AdminRegistrationsTab from "./tabs/AdminRegistrationsTab";
 import AdminCourseEnrollmentsTab from "./tabs/AdminCourseEnrollmentsTab";
 import AdminContactsTab from "./tabs/AdminContactsTab";
 import AdminNewsletterTab from "./tabs/AdminNewsletterTab";
-import AdminNotificationsTab from "./tabs/AdminNotificationsTab";
 import AdminSettingsTab from "./tabs/AdminSettingsTab";
 import AdminSecurityTab from "./tabs/AdminSecurityTab";
 import { websocketManager } from "@/lib/websocket";
@@ -27,7 +26,7 @@ type AdminUser = {
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
-  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'newsletter' | 'notifications' | 'settings' | 'security'>('overview');
+  const [currentTab, setCurrentTab] = useState<'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'newsletter' | 'settings' | 'security'>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -148,7 +147,7 @@ export default function AdminDashboard() {
     (window as any).showNotification('Đã đăng xuất admin!', 'info');
   };
 
-  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'newsletter' | 'notifications' | 'settings' | 'security') => {
+  const switchTab = (tabName: 'overview' | 'events' | 'registrations' | 'course_enrollments' | 'contacts' | 'users' | 'courses' | 'newsletter' | 'settings' | 'security') => {
     setCurrentTab(tabName);
     // Close mobile menu if open
     const sidebar = document.getElementById('sidebar');
@@ -243,19 +242,12 @@ export default function AdminDashboard() {
                 <i className="fas fa-users"></i>
                 <span>Người dùng</span>
               </button>
-              <button
+              <button 
                 className={`nav-item ${currentTab === 'newsletter' ? 'active' : ''}`}
                 onClick={() => switchTab('newsletter')}
               >
                 <i className="fas fa-envelope"></i>
                 <span>Newsletter</span>
-              </button>
-              <button
-                className={`nav-item ${currentTab === 'notifications' ? 'active' : ''}`}
-                onClick={() => switchTab('notifications')}
-              >
-                <i className="fas fa-bullhorn"></i>
-                <span>Thông báo</span>
               </button>
             </div>
 
@@ -297,7 +289,6 @@ export default function AdminDashboard() {
                   {currentTab === 'events' && 'Quản lý sự kiện'}
                   {currentTab === 'users' && 'Quản lý người dùng'}
                   {currentTab === 'newsletter' && 'Quản lý Newsletter'}
-                  {currentTab === 'notifications' && 'Quản lý Thông báo'}
                   {currentTab === 'courses' && 'Quản lý khóa học'}
                   {currentTab === 'registrations' && 'Đăng ký Sự kiện'}
                   {currentTab === 'course_enrollments' && 'Đăng ký Khóa học'}
@@ -346,7 +337,6 @@ export default function AdminDashboard() {
             {currentTab === 'contacts' && <AdminContactsTab />}
             {currentTab === 'users' && <AdminUsersTab />}
             {currentTab === 'newsletter' && <AdminNewsletterTab />}
-            {currentTab === 'notifications' && <AdminNotificationsTab />}
             {currentTab === 'courses' && <AdminCoursesTab />}
             {currentTab === 'settings' && <AdminSettingsTab />}
             {currentTab === 'security' && <AdminSecurityTab />}
