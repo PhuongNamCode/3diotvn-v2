@@ -165,64 +165,22 @@ export default function MyCoursesPage() {
         {/* Header */}
         <div className="page-header">
           <div className="header-content">
-            <h1>Khóa học của tôi</h1>
-            <p>Quản lý và tiếp tục học tập các khóa học đã đăng ký</p>
-          </div>
-          {user && (
-            <div className="user-info">
-              <img 
-                src={user.picture || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNmM2Y0ZjYiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik04IDhDOS4xMDQ1NyA4IDEwIDcuMTA0NTcgMTAgNkMxMCA0Ljg5NTQzIDkuMTA0NTcgNCA4IDRDNi44OTU0MyA0IDYgNC44OTU0MyA2IDZDNiA3LjEwNDU3IDYuODk1NDMgOCA4IDhaIiBmaWxsPSIjNjY3Nzg4Ii8+CjxwYXRoIGQ9Ik0xMiAxMkMxMiAxMC44OTU0IDExLjEwNDYgMTAgMTAgMTBINkM0Ljg5NTQzIDEwIDQgMTAuODk1NCA0IDEyVjEzSDEyVjEyWiIgZmlsbD0iIzY2Nzc4OCIvPgo8L3N2Zz4KPC9zdmc+"}
-                alt="User Avatar" 
-                className="user-avatar" 
-              />
-              <span className="user-name">{user.name}</span>
+            <div className="header-icon">
+              <i className="fas fa-graduation-cap"></i>
             </div>
-          )}
+            <div className="header-text">
+              <h1>Khóa học của tôi</h1>
+              <p>Quản lý và tiếp tục học tập các khóa học đã đăng ký</p>
+            </div>
+          </div>
+          <button 
+            className="back-to-home-btn"
+            onClick={() => router.push('/')}
+          >
+            <i className="fas fa-arrow-left"></i>
+            Quay lại
+          </button>
         </div>
-
-        {/* Stats */}
-        {stats && (
-          <div className="stats-section">
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <i className="fas fa-graduation-cap"></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{stats.totalCourses}</h3>
-                  <p>Tổng khóa học</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <i className="fas fa-trophy"></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{stats.completedCourses}</h3>
-                  <p>Đã hoàn thành</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <i className="fas fa-clock"></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{enrollments.filter(e => e.status === 'in-progress').length}</h3>
-                  <p>Đang học</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <i className="fas fa-wallet"></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{formatPrice(stats.totalSpent)}</h3>
-                  <p>Tổng đầu tư</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Courses List */}
         <div className="courses-section">
@@ -242,63 +200,63 @@ export default function MyCoursesPage() {
               </button>
             </div>
           ) : (
-            <div className="courses-grid">
+            <div className="elegant-courses-grid">
               {enrollments.map((enrollment) => (
-                <div 
-                  key={enrollment.id} 
-                  className="course-card"
-                  onClick={() => handleCourseClick(enrollment.course.id)}
-                >
-                  <div className="course-image">
-                    {enrollment.course.image ? (
-                      <img src={enrollment.course.image} alt={enrollment.course.title} />
-                    ) : (
-                      <div className="course-placeholder">
+                <div key={enrollment.id} className="elegant-course-ticket">
+                  {/* Course Ticket Header */}
+                  <div className="ticket-header-elegant">
+                    <div className="header-left">
+                      <div className="course-icon">
                         <i className="fas fa-graduation-cap"></i>
                       </div>
-                    )}
-                    <div className="course-overlay">
+                      <div className="header-info">
+                        <h3 className="course-title">{enrollment.course.title}</h3>
+                        <span className="course-category">{enrollment.course.category}</span>
+                      </div>
+                    </div>
+                    <div className="header-right">
                       {getStatusBadge(enrollment.status)}
                     </div>
                   </div>
-                  
-                  <div className="course-content">
-                    <div className="course-header">
-                      <h3 className="course-title">{enrollment.course.title}</h3>
-                      <span className="course-category">{enrollment.course.category}</span>
-                    </div>
-                    
-                    <p className="course-description">
-                      {enrollment.course.description.length > 120 
-                        ? `${enrollment.course.description.substring(0, 120)}...`
-                        : enrollment.course.description
-                      }
-                    </p>
-                    
-                    <div className="course-meta">
-                      <div className="meta-item">
-                        <i className="fas fa-user"></i>
-                        <span>{enrollment.course.instructorName || '3DIoT Team'}</span>
+
+                  {/* Course Ticket Body */}
+                  <div className="ticket-body-elegant">
+                    <div className="course-details">
+                      <div className="instructor-section">
+                        <div className="instructor-label">Giảng viên</div>
+                        <div className="instructor-name">{enrollment.course.instructorName || '3DIoT Team'}</div>
                       </div>
-                      <div className="meta-item">
-                        <i className="fas fa-play-circle"></i>
-                        <span>{enrollment.course.lessonsCount} bài học</span>
-                      </div>
-                      <div className="meta-item">
-                        <i className="fas fa-clock"></i>
-                        <span>{formatDuration(enrollment.course.durationMinutes)}</span>
+                      
+                      <div className="course-meta-section">
+                        <div className="meta-item">
+                          <i className="fas fa-play-circle"></i>
+                          <span>{enrollment.course.lessonsCount} bài học</span>
+                        </div>
+                        <div className="meta-item">
+                          <i className="fas fa-clock"></i>
+                          <span>{formatDuration(enrollment.course.durationMinutes)}</span>
+                        </div>
+                        <div className="meta-item">
+                          <i className="fas fa-wallet"></i>
+                          <span>{enrollment.amount ? formatPrice(enrollment.amount) : 'Miễn phí'}</span>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="course-footer">
-                      <div className="course-price">
-                        {enrollment.amount ? formatPrice(enrollment.amount) : 'Miễn phí'}
-                      </div>
-                      <button className="btn-continue">
-                        <i className="fas fa-play"></i>
-                        {enrollment.status === 'completed' ? 'Xem lại' : 'Tiếp tục học'}
-                      </button>
-                    </div>
+                  </div>
+
+                  {/* Course Ticket Footer */}
+                  <div className="ticket-footer-elegant">
+                    <button 
+                      className="study-now-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCourseClick(enrollment.course.id);
+                      }}
+                    >
+                      <i className="fas fa-play"></i>
+                      Vào học ngay
+                    </button>
+                    <div className="footer-pattern"></div>
                   </div>
                 </div>
               ))}

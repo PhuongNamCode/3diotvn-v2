@@ -29,6 +29,7 @@ interface VideoListProps {
   email?: string;
   showStats?: boolean;
   className?: string;
+  onVideoSelect?: (video: Video) => void;
 }
 
 const VideoList: React.FC<VideoListProps> = ({
@@ -36,7 +37,8 @@ const VideoList: React.FC<VideoListProps> = ({
   userId,
   email,
   showStats = false,
-  className = ''
+  className = '',
+  onVideoSelect
 }) => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,11 @@ const VideoList: React.FC<VideoListProps> = ({
    * Handle video selection
    */
   const handleVideoSelect = (video: Video) => {
-    setSelectedVideo(video);
+    if (onVideoSelect) {
+      onVideoSelect(video);
+    } else {
+      setSelectedVideo(video);
+    }
   };
 
   /**
