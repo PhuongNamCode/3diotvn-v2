@@ -171,3 +171,20 @@ model NewsletterSubscription {
   @@index([email])
   @@index([status])
 }
+
+model NotificationLog {
+  id            String   @id @default(cuid())
+  type          String   // course, event
+  title         String
+  description   String   @db.Text
+  recipientCount Int     // Tổng số người nhận
+  successCount  Int      // Số email gửi thành công
+  failureCount  Int      // Số email gửi thất bại
+  courseId      String?  // ID khóa học (nếu là thông báo khóa học)
+  eventId       String?  // ID sự kiện (nếu là thông báo sự kiện)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([type])
+  @@index([createdAt])
+}
