@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface User {
   name: string;
@@ -26,7 +27,9 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
   const [isOpen, setIsOpen] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Fetch user stats
   const fetchUserStats = async () => {
@@ -43,6 +46,21 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
       setLoading(false);
     }
   };
+
+  // Check dark theme on mount
+  useEffect(() => {
+    const checkDarkTheme = () => {
+      setIsDarkTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    };
+    
+    checkDarkTheme();
+    
+    // Listen for theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkDarkTheme);
+    
+    return () => mediaQuery.removeEventListener('change', checkDarkTheme);
+  }, []);
 
   // Fetch stats when dropdown opens
   useEffect(() => {
@@ -70,10 +88,10 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
     
     switch (action) {
       case 'my-courses':
-        window.location.href = '/my-courses';
+        router.push('/my-courses');
         break;
       case 'my-events':
-        window.location.href = '/my-events';
+        router.push('/my-events');
         break;
       case 'logout':
         onLogout();
@@ -93,7 +111,14 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
           alt="User Avatar" 
           className="user-avatar" 
         />
-        <span className="user-name">{user.name}</span>
+        <span 
+          className="user-name"
+          style={{
+            color: isDarkTheme ? '#ffffff' : 'var(--text-primary)'
+          }}
+        >
+          {user.name}
+        </span>
         <i className={`fas fa-chevron-down dropdown-arrow ${isOpen ? 'open' : ''}`}></i>
       </div>
 

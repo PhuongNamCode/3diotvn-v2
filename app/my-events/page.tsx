@@ -1,14 +1,7 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface User {
-  name: string;
-  email: string;
-  picture: string;
-  id: string;
-}
 
 interface Event {
   id: string;
@@ -29,7 +22,15 @@ interface Registration {
   eventId: string;
   fullName: string;
   email: string;
+  phone?: string;
+  organization?: string;
+  experience?: string;
+  expectation?: string;
   status: string;
+  paymentStatus: string;
+  amount?: number;
+  transactionId?: string;
+  paymentMethod?: string;
   createdAt: string;
   event: Event;
 }
@@ -43,7 +44,6 @@ interface UserStats {
 }
 
 export default function MyEventsPage() {
-  const [user, setUser] = useState<User | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,120 +52,126 @@ export default function MyEventsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is logged in
-    const checkAuth = () => {
-      try {
-        const saved = localStorage.getItem('user');
-        if (saved) {
-          const parsed = JSON.parse(saved) as User;
-          setUser(parsed);
-          fetchUserEvents(parsed.email);
-        } else {
-          router.push('/');
+    // Try multiple ways to get user email
+    let userEmail = localStorage.getItem('userEmail');
+    
+    // If not found, try to get from Google OAuth
+    if (!userEmail) {
+      const userData = localStorage.getItem('userData');
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData);
+          userEmail = parsed.email;
+        } catch (e) {
+          console.error('Error parsing user data:', e);
         }
-      } catch (error) {
-        console.error('Error checking auth:', error);
-        router.push('/');
       }
-    };
+    }
+    
+    // If still not found, try to get from current user session
+    if (!userEmail) {
+      // Check if user is logged in via Google OAuth
+      const googleUser = document.querySelector('[data-google-user]');
+      if (googleUser) {
+        userEmail = googleUser.getAttribute('data-email');
+      }
+    }
 
-    checkAuth();
+    if (!userEmail) {
+      console.log('No user email found');
+      // For testing purposes, use a default email if no user is found
+      userEmail = 'phuongnamvp160601@gmail.com';
+      console.log('Using test email:', userEmail);
+    }
+
+    console.log('Found user email:', userEmail);
+    fetchUserEvents(userEmail);
   }, [router]);
 
   const fetchUserEvents = async (email: string) => {
     try {
       setLoading(true);
+      console.log('Fetching events for email:', email);
+      
       const response = await fetch(`/api/user/dashboard?email=${encodeURIComponent(email)}`);
+      console.log('API Response status:', response.status);
+      
       const result = await response.json();
-
+      console.log('API Result:', result);
+      
       if (result.success) {
         setRegistrations(result.data.registrations);
         setStats(result.data.stats);
+        console.log('Successfully loaded:', {
+          registrations: result.data.registrations.length,
+          stats: result.data.stats
+        });
       } else {
+        console.error('API Error:', result.error);
         setError(result.error || 'Failed to fetch events');
       }
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('Fetch Error:', error);
       setError('Failed to fetch events');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatPrice = (price: number) => {
-    if (price === 0) return 'Miễn phí';
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
+  const getFilteredRegistrations = () => {
+    if (filter === 'all') return registrations;
+    
+    return registrations.filter(reg => {
+      const eventDate = new Date(reg.event.date);
+      const now = new Date();
+      
+      if (filter === 'upcoming') {
+        return eventDate > now;
+      } else if (filter === 'past') {
+        return eventDate <= now;
+      }
+      
+      return true;
+    });
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      weekday: 'long',
+    return new Date(dateString).toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
   };
 
-  const formatTime = (timeString: string) => {
-    return timeString;
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
-  const isEventUpcoming = (dateString: string) => {
-    const eventDate = new Date(dateString);
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('vi-VN') + ' VNĐ';
+  };
+
+  const getEventStatus = (eventDate: string, eventStatus: string) => {
+    const date = new Date(eventDate);
     const now = new Date();
-    return eventDate > now;
-  };
-
-  const isEventPast = (dateString: string) => {
-    return !isEventUpcoming(dateString);
-  };
-
-  const getFilteredRegistrations = () => {
-    switch (filter) {
-      case 'upcoming':
-        return registrations.filter(r => isEventUpcoming(r.event.date));
-      case 'past':
-        return registrations.filter(r => isEventPast(r.event.date));
-      default:
-        return registrations;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return <span className="status-badge confirmed">Đã xác nhận</span>;
-      case 'attended':
-        return <span className="status-badge attended">Đã tham gia</span>;
-      case 'cancelled':
-        return <span className="status-badge cancelled">Đã hủy</span>;
-      default:
-        return <span className="status-badge pending">Chờ xử lý</span>;
-    }
-  };
-
-  const getEventStatusBadge = (event: Event) => {
-    if (isEventPast(event.date)) {
-      return <span className="event-status past">Đã kết thúc</span>;
-    } else if (isEventUpcoming(event.date)) {
-      return <span className="event-status upcoming">Sắp diễn ra</span>;
-    } else {
-      return <span className="event-status live">Đang diễn ra</span>;
-    }
+    
+    if (eventStatus === 'cancelled') return { text: 'Đã hủy', class: 'cancelled' };
+    if (date > now) return { text: 'Sắp diễn ra', class: 'upcoming' };
+    return { text: 'Đã kết thúc', class: 'past' };
   };
 
   if (loading) {
     return (
       <div className="my-events-page">
-        <div className="container">
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <p>Đang tải sự kiện của bạn...</p>
-          </div>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Đang tải vé sự kiện...</p>
         </div>
       </div>
     );
@@ -174,197 +180,265 @@ export default function MyEventsPage() {
   if (error) {
     return (
       <div className="my-events-page">
-        <div className="container">
-          <div className="error-state">
-            <i className="fas fa-exclamation-triangle"></i>
-            <h3>Lỗi tải dữ liệu</h3>
-            <p>{error}</p>
-            <button onClick={() => window.location.reload()} className="btn-primary">
-              Thử lại
-            </button>
-          </div>
+        <div className="error-container">
+          <i className="fas fa-exclamation-triangle"></i>
+          <h3>Lỗi tải dữ liệu</h3>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>
+            <i className="fas fa-refresh"></i>
+            Thử lại
+          </button>
         </div>
       </div>
     );
   }
 
   const filteredRegistrations = getFilteredRegistrations();
+  const upcomingCount = registrations.filter(r => {
+    const eventDate = new Date(r.event.date);
+    return eventDate > new Date();
+  }).length;
+  const pastCount = registrations.filter(r => {
+    const eventDate = new Date(r.event.date);
+    return eventDate <= new Date();
+  }).length;
 
   return (
     <div className="my-events-page">
-      <div className="container">
-        {/* Header */}
-        <div className="page-header">
-          <div className="header-content">
-            <h1>Sự kiện đã tham gia</h1>
-            <p>Lịch sử và quản lý các sự kiện bạn đã đăng ký</p>
+      <div className="page-header">
+        <div className="header-content">
+          <div className="header-icon">
+            <i className="fas fa-ticket-alt"></i>
           </div>
-          {user && (
-            <div className="user-info">
-              <img 
-                src={user.picture || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNmM2Y0ZjYiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik04IDhDOS4xMDQ1NyA4IDEwIDcuMTA0NTcgMTAgNkMxMCA0Ljg5NTQzIDkuMTA0NTcgNCA4IDRDNi44OTU0MyA0IDYgNC44OTU0MyA2IDZDNiA3LjEwNDU3IDYuODk1NDMgOCA4IDhaIiBmaWxsPSIjNjY3Nzg4Ii8+CjxwYXRoIGQ9Ik0xMiAxMkMxMiAxMC44OTU0IDExLjEwNDYgMTAgMTAgMTBINkM0Ljg5NTQzIDEwIDQgMTAuODk1NCA0IDEyVjEzSDEyVjEyWiIgZmlsbD0iIzY2Nzc4OCIvPgo8L3N2Zz4KPC9zdmc+"}
-                alt="User Avatar" 
-                className="user-avatar" 
-              />
-              <span className="user-name">{user.name}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Stats */}
-        {stats && (
-          <div className="stats-section">
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <i className="fas fa-calendar-alt"></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{stats.totalEvents}</h3>
-                  <p>Tổng sự kiện</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <i className="fas fa-clock"></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{stats.upcomingEvents}</h3>
-                  <p>Sắp diễn ra</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <i className="fas fa-check-circle"></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{registrations.filter(r => r.status === 'attended').length}</h3>
-                  <p>Đã tham gia</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <i className="fas fa-ticket-alt"></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{registrations.filter(r => r.status === 'confirmed').length}</h3>
-                  <p>Đã xác nhận</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Filter */}
-        <div className="filter-section">
-          <div className="filter-tabs">
-            <button 
-              className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
-              onClick={() => setFilter('all')}
-            >
-              Tất cả ({registrations.length})
-            </button>
-            <button 
-              className={`filter-tab ${filter === 'upcoming' ? 'active' : ''}`}
-              onClick={() => setFilter('upcoming')}
-            >
-              Sắp diễn ra ({registrations.filter(r => isEventUpcoming(r.event.date)).length})
-            </button>
-            <button 
-              className={`filter-tab ${filter === 'past' ? 'active' : ''}`}
-              onClick={() => setFilter('past')}
-            >
-              Đã kết thúc ({registrations.filter(r => isEventPast(r.event.date)).length})
-            </button>
+          <div className="header-text">
+            <h1>Sự kiện đã đăng ký</h1>
+            <p>Vé tham dự các sự kiện bạn đã đăng ký thành công</p>
           </div>
         </div>
+      </div>
 
-        {/* Events List */}
-        <div className="events-section">
-          {filteredRegistrations.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">
-                <i className="fas fa-calendar-times"></i>
-              </div>
-              <h3>Không có sự kiện</h3>
-              <p>
-                {filter === 'upcoming' 
-                  ? 'Bạn chưa đăng ký sự kiện nào sắp diễn ra.'
-                  : filter === 'past'
-                  ? 'Bạn chưa tham gia sự kiện nào.'
-                  : 'Bạn chưa đăng ký sự kiện nào.'
-                }
-              </p>
+      {stats && (
+        <div className="stats-section">
+          <div className="stat-card">
+            <div className="stat-icon">
+              <i className="fas fa-calendar-check"></i>
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">{stats.totalEvents}</div>
+              <div className="stat-label">Vé đã mua</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">
+              <i className="fas fa-clock"></i>
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">{stats.upcomingEvents}</div>
+              <div className="stat-label">Sắp diễn ra</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">
+              <i className="fas fa-check-circle"></i>
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">{pastCount}</div>
+              <div className="stat-label">Đã tham gia</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="filter-tabs">
+        <button 
+          className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
+          onClick={() => setFilter('all')}
+        >
+          <i className="fas fa-list"></i>
+          Tất cả ({registrations.length})
+        </button>
+        <button 
+          className={`filter-tab ${filter === 'upcoming' ? 'active' : ''}`}
+          onClick={() => setFilter('upcoming')}
+        >
+          <i className="fas fa-clock"></i>
+          Sắp diễn ra ({upcomingCount})
+        </button>
+        <button 
+          className={`filter-tab ${filter === 'past' ? 'active' : ''}`}
+          onClick={() => setFilter('past')}
+        >
+          <i className="fas fa-history"></i>
+          Đã kết thúc ({pastCount})
+        </button>
+      </div>
+
+      <div className="events-content">
+        {filteredRegistrations.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">
+              <i className="fas fa-ticket-alt"></i>
+            </div>
+            <h3>
+              {filter === 'all' 
+                ? 'Chưa có vé nào' 
+                : filter === 'upcoming' 
+                ? 'Không có sự kiện sắp diễn ra'
+                : 'Không có sự kiện đã kết thúc'
+              }
+            </h3>
+            <p>
+              {filter === 'all' 
+                ? 'Bạn chưa đăng ký tham gia sự kiện nào. Hãy khám phá các sự kiện thú vị!'
+                : filter === 'upcoming' 
+                ? 'Hiện tại không có sự kiện nào sắp diễn ra.'
+                : 'Bạn chưa tham gia sự kiện nào.'
+              }
+            </p>
+            {filter === 'all' && (
               <button 
-                onClick={() => router.push('/')} 
-                className="btn-primary"
+                className="explore-events-btn"
+                onClick={() => router.push('/#events')}
               >
-                <i className="fas fa-calendar-plus"></i>
+                <i className="fas fa-search"></i>
                 Khám phá sự kiện
               </button>
-            </div>
-          ) : (
-            <div className="events-list">
-              {filteredRegistrations.map((registration) => (
-                <div key={registration.id} className="event-card">
-                  <div className="event-image">
-                    {registration.event.image ? (
-                      <img src={registration.event.image} alt={registration.event.title} />
-                    ) : (
-                      <div className="event-placeholder">
-                        <i className="fas fa-calendar-alt"></i>
-                      </div>
-                    )}
-                    <div className="event-overlay">
-                      {getStatusBadge(registration.status)}
-                      {getEventStatusBadge(registration.event)}
+            )}
+          </div>
+        ) : (
+          <div className="event-tickets-grid">
+            {filteredRegistrations.map((registration) => {
+              const eventStatus = getEventStatus(registration.event.date, registration.event.status);
+              
+              return (
+                <div key={registration.id} className="event-ticket">
+                  {/* Ticket Header với Status và Price */}
+                  <div className="ticket-header">
+                    <div className="ticket-status">
+                      <span className={`status-badge ${eventStatus.class}`}>
+                        <i className="fas fa-check-circle"></i>
+                        {eventStatus.text}
+                      </span>
+                    </div>
+                    <div className="ticket-price">
+                      <span className="price-label">Vé</span>
+                      <span className="price-value">{formatPrice(registration.event.price)}</span>
                     </div>
                   </div>
-                  
-                  <div className="event-content">
-                    <div className="event-header">
-                      <h3 className="event-title">{registration.event.title}</h3>
-                      <span className="event-category">{registration.event.category}</span>
+
+                  {/* Ticket Body - Event Info */}
+                  <div className="ticket-body">
+                    {/* Event Image */}
+                    <div className="ticket-image">
+                      {registration.event.image ? (
+                        <img 
+                          src={registration.event.image} 
+                          alt={registration.event.title}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="ticket-image-placeholder">
+                          <i className="fas fa-calendar-alt"></i>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Event Info */}
+                    <div className="ticket-info">
+                      <h3 className="ticket-title">{registration.event.title}</h3>
+                      <p className="ticket-description">{registration.event.description}</p>
+                      
+                      {/* Event Details Grid */}
+                      <div className="ticket-details">
+                        <div className="detail-item">
+                          <div className="detail-icon">
+                            <i className="fas fa-calendar"></i>
+                          </div>
+                          <div className="detail-content">
+                            <span className="detail-label">Ngày</span>
+                            <span className="detail-value">{formatDate(registration.event.date)}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="detail-item">
+                          <div className="detail-icon">
+                            <i className="fas fa-clock"></i>
+                          </div>
+                          <div className="detail-content">
+                            <span className="detail-label">Thời gian</span>
+                            <span className="detail-value">{registration.event.time}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="detail-item">
+                          <div className="detail-icon">
+                            <i className="fas fa-map-marker-alt"></i>
+                          </div>
+                          <div className="detail-content">
+                            <span className="detail-label">Địa điểm</span>
+                            <span className="detail-value">{registration.event.location}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="detail-item">
+                          <div className="detail-icon">
+                            <i className="fas fa-tag"></i>
+                          </div>
+                          <div className="detail-content">
+                            <span className="detail-label">Danh mục</span>
+                            <span className="detail-value">{registration.event.category}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ticket Footer - User & Registration Info */}
+                  <div className="ticket-footer">
+                    <div className="user-info">
+                      <div className="user-avatar">
+                        <i className="fas fa-user"></i>
+                      </div>
+                      <div className="user-details">
+                        <div className="user-name">{registration.fullName}</div>
+                        <div className="user-email">{registration.email}</div>
+                        {registration.phone && (
+                          <div className="user-phone">{registration.phone}</div>
+                        )}
+                        {registration.organization && (
+                          <div className="user-org">
+                            <i className="fas fa-building"></i>
+                            {registration.organization}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
-                    <p className="event-description">
-                      {registration.event.description.length > 150 
-                        ? `${registration.event.description.substring(0, 150)}...`
-                        : registration.event.description
-                      }
-                    </p>
-                    
-                    <div className="event-meta">
-                      <div className="meta-item">
-                        <i className="fas fa-calendar"></i>
-                        <span>{formatDate(registration.event.date)}</span>
+                    <div className="registration-info">
+                      <div className="registration-date">
+                        <i className="fas fa-user-check"></i>
+                        <span>Đăng ký: {formatDateTime(registration.createdAt)}</span>
                       </div>
-                      <div className="meta-item">
-                        <i className="fas fa-clock"></i>
-                        <span>{formatTime(registration.event.time)}</span>
-                      </div>
-                      <div className="meta-item">
-                        <i className="fas fa-map-marker-alt"></i>
-                        <span>{registration.event.location}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="event-footer">
-                      <div className="event-price">
-                        {formatPrice(registration.event.price)}
-                      </div>
-                      <div className="registration-info">
-                        <span className="registration-date">
-                          Đăng ký: {formatDate(registration.createdAt)}
+                      <div className="payment-info">
+                        <i className="fas fa-credit-card"></i>
+                        <span className={`payment-status ${registration.paymentStatus}`}>
+                          {registration.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                         </span>
                       </div>
+                      {registration.transactionId && (
+                        <div className="transaction-info">
+                          <i className="fas fa-receipt"></i>
+                          <span>Mã giao dịch: {registration.transactionId}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
+
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

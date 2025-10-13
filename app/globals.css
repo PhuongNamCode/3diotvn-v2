@@ -440,6 +440,46 @@ body {
   white-space: nowrap;
 }
 
+/* Force white color for user name in dark theme */
+@media (prefers-color-scheme: dark) {
+  .user-name {
+    color: #ffffff !important;
+  }
+  
+  /* More specific selector for profile dropdown */
+  .user-profile-dropdown .user-profile-trigger .user-name {
+    color: #ffffff !important;
+  }
+  
+  /* Even more specific for any user name in dark theme */
+  body.dark .user-name,
+  html.dark .user-name,
+  [data-theme="dark"] .user-name {
+    color: #ffffff !important;
+  }
+}
+
+/* Dark theme support for user name in profile trigger */
+@media (prefers-color-scheme: dark) {
+  .user-profile-trigger .user-name {
+    color: #ffffff !important;
+  }
+  
+  .user-profile-trigger {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(51, 65, 85, 0.8) !important;
+  }
+  
+  .user-profile-trigger:hover {
+    background: rgba(30, 41, 59, 1) !important;
+    border-color: rgba(51, 65, 85, 1) !important;
+  }
+  
+  .dropdown-arrow {
+    color: #ffffff !important;
+  }
+}
+
 .logout-btn {
   background: none;
   border: none;
@@ -683,10 +723,434 @@ body {
 
 /* My Courses & My Events Pages */
 .my-courses-page,
+/* ========================================
+   EVENT TICKETS DESIGN - COMPACT & PROFESSIONAL
+   ======================================== */
+
 .my-events-page {
   min-height: 100vh;
   background: var(--background);
   padding: 2rem 0;
+}
+
+/* Compact Ticket Grid Layout */
+.event-tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .event-tickets-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
+}
+
+/* Compact Ticket Card */
+.event-ticket {
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border);
+  max-height: 280px;
+}
+
+.event-ticket:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent);
+}
+
+/* Compact Ticket Header */
+.ticket-header {
+  background: var(--gradient-accent);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.ticket-status {
+  z-index: 1;
+  position: relative;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.status-badge.upcoming {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+}
+
+.status-badge.past {
+  background: rgba(107, 114, 128, 0.9);
+  color: white;
+}
+
+.status-badge.cancelled {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+.ticket-price {
+  z-index: 1;
+  position: relative;
+  text-align: right;
+}
+
+.price-label {
+  display: block;
+  font-size: 0.65rem;
+  opacity: 0.8;
+  margin-bottom: 0.1rem;
+}
+
+.price-value {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Compact Ticket Body */
+.ticket-body {
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  height: 140px;
+}
+
+.ticket-image {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ticket-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ticket-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.ticket-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.ticket-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ticket-description {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Compact Ticket Details */
+.ticket-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--surface-variant);
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.detail-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.6rem;
+  flex-shrink: 0;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.detail-label {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.detail-value {
+  font-size: 0.7rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Compact Ticket Footer */
+.ticket-footer {
+  background: var(--surface-variant);
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  height: 60px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gradient-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-phone {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.user-org {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.registration-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: right;
+  min-width: 0;
+}
+
+.registration-date,
+.payment-info,
+.transaction-info {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.payment-status {
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.payment-status.paid {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.payment-status.pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+/* Responsive Design for Compact Tickets */
+@media (max-width: 768px) {
+  .event-tickets-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .event-ticket {
+    max-height: none;
+  }
+  
+  .ticket-body {
+    flex-direction: column;
+    height: auto;
+    gap: 0.75rem;
+  }
+  
+  .ticket-image {
+    width: 100%;
+    height: 120px;
+  }
+  
+  .ticket-details {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .ticket-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    height: auto;
+    padding: 1rem;
+  }
+  
+  .registration-info {
+    text-align: left;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .registration-date,
+  .payment-info,
+  .transaction-info {
+    justify-content: flex-start;
+  }
+}
+
+/* Dark Theme Support for Compact Tickets */
+@media (prefers-color-scheme: dark) {
+  .event-ticket {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+  
+  .ticket-title {
+    color: var(--text-primary);
+  }
+  
+  .ticket-description {
+    color: var(--text-secondary);
+  }
+  
+  .detail-item {
+    background: var(--surface-variant);
+    border-color: var(--border);
+  }
+  
+  .detail-value {
+    color: var(--text-primary);
+  }
+  
+  .ticket-footer {
+    background: var(--surface-variant);
+    border-color: var(--border);
+  }
+  
+  .user-name {
+    color: var(--text-primary);
+  }
+  
+  .user-email,
+  .user-phone,
+  .user-org {
+    color: var(--text-muted);
+  }
+  
+  .registration-date,
+  .payment-info,
+  .transaction-info {
+    color: var(--text-muted);
+  }
 }
 
 /* My Events Page Specific Styles - Compact & Professional Design */
