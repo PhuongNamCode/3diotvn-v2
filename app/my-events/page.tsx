@@ -217,37 +217,6 @@ export default function MyEventsPage() {
         </div>
       </div>
 
-      {stats && (
-        <div className="stats-section">
-          <div className="stat-card">
-            <div className="stat-icon">
-              <i className="fas fa-calendar-check"></i>
-            </div>
-            <div className="stat-content">
-              <div className="stat-number">{stats.totalEvents}</div>
-              <div className="stat-label">Vé đã mua</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">
-              <i className="fas fa-clock"></i>
-            </div>
-            <div className="stat-content">
-              <div className="stat-number">{stats.upcomingEvents}</div>
-              <div className="stat-label">Sắp diễn ra</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">
-              <i className="fas fa-check-circle"></i>
-            </div>
-            <div className="stat-content">
-              <div className="stat-number">{pastCount}</div>
-              <div className="stat-label">Đã tham gia</div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="filter-tabs">
         <button 
@@ -306,134 +275,84 @@ export default function MyEventsPage() {
             )}
           </div>
         ) : (
-          <div className="event-tickets-grid">
+          <div className="elegant-tickets-grid">
             {filteredRegistrations.map((registration) => {
               const eventStatus = getEventStatus(registration.event.date, registration.event.status);
+              const eventDate = new Date(registration.event.date);
+              const isUpcoming = eventDate > new Date();
               
               return (
-                <div key={registration.id} className="event-ticket">
-                  {/* Ticket Header với Status và Price */}
-                  <div className="ticket-header">
-                    <div className="ticket-status">
-                      <span className={`status-badge ${eventStatus.class}`}>
-                        <i className="fas fa-check-circle"></i>
-                        {eventStatus.text}
-                      </span>
-                    </div>
-                    <div className="ticket-price">
-                      <span className="price-label">Vé</span>
-                      <span className="price-value">{formatPrice(registration.event.price)}</span>
+                <div key={registration.id} className="elegant-ticket">
+                  {/* Ticket Header - Gradient Background */}
+                  <div className="ticket-header-elegant">
+                    <div className="header-pattern"></div>
+                    <div className="header-content">
+                      <div className="ticket-number">
+                        <span className="ticket-id">#{registration.id.slice(-8).toUpperCase()}</span>
+                      </div>
+                      <div className={`ticket-status-elegant ${eventStatus.class}`}>
+                        <div className="status-indicator"></div>
+                        <span className="status-text">{eventStatus.text}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Ticket Body - Event Info */}
-                  <div className="ticket-body">
-                    {/* Event Image */}
-                    <div className="ticket-image">
-                      {registration.event.image ? (
-                        <img 
-                          src={registration.event.image} 
-                          alt={registration.event.title}
-                          loading="lazy"
-                        />
+                  {/* Ticket Body - Main Content */}
+                  <div className="ticket-body-elegant">
+                    {/* Event Title */}
+                    <div className="event-title-section">
+                      <h3 className="event-title">{registration.event.title}</h3>
+                      <div className="event-category">{registration.event.category}</div>
+                    </div>
+
+                    {/* Participant Info */}
+                    <div className="participant-section">
+                      <div className="participant-label">Người tham dự</div>
+                      <div className="participant-name">{registration.fullName}</div>
+                    </div>
+
+                    {/* Event Date */}
+                    <div className="event-date-section">
+                      <div className="date-label">Ngày tổ chức</div>
+                      <div className="date-content">
+                        <div className="date-main">{formatDate(registration.event.date)}</div>
+                        <div className="time-main">{registration.event.time}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ticket Footer - Join Link Button */}
+                  <div className="ticket-footer-elegant">
+                    <div className="footer-pattern"></div>
+                    <div className="footer-content">
+                      {/* Join Link Button - Only for Online events */}
+                      {registration.event.category && registration.event.category.toLowerCase().includes('online') ? (
+                        <button 
+                          className="join-link-btn"
+                          onClick={() => {
+                            // For demo purposes, show alert. In real app, this would open the actual meeting link
+                            alert(`Link tham gia sự kiện: ${registration.event.title}\n\nLink sẽ được gửi qua email trước ngày diễn ra!`);
+                          }}
+                        >
+                          <i className="fas fa-link"></i>
+                          Link tham gia
+                        </button>
                       ) : (
-                        <div className="ticket-image-placeholder">
-                          <i className="fas fa-calendar-alt"></i>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Event Info */}
-                    <div className="ticket-info">
-                      <h3 className="ticket-title">{registration.event.title}</h3>
-                      <p className="ticket-description">{registration.event.description}</p>
-                      
-                      {/* Event Details Grid */}
-                      <div className="ticket-details">
-                        <div className="detail-item">
-                          <div className="detail-icon">
-                            <i className="fas fa-calendar"></i>
-                          </div>
-                          <div className="detail-content">
-                            <span className="detail-label">Ngày</span>
-                            <span className="detail-value">{formatDate(registration.event.date)}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="detail-item">
-                          <div className="detail-icon">
-                            <i className="fas fa-clock"></i>
-                          </div>
-                          <div className="detail-content">
-                            <span className="detail-label">Thời gian</span>
-                            <span className="detail-value">{registration.event.time}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="detail-item">
-                          <div className="detail-icon">
-                            <i className="fas fa-map-marker-alt"></i>
-                          </div>
-                          <div className="detail-content">
-                            <span className="detail-label">Địa điểm</span>
-                            <span className="detail-value">{registration.event.location}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="detail-item">
-                          <div className="detail-icon">
-                            <i className="fas fa-tag"></i>
-                          </div>
-                          <div className="detail-content">
-                            <span className="detail-label">Danh mục</span>
-                            <span className="detail-value">{registration.event.category}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ticket Footer - User & Registration Info */}
-                  <div className="ticket-footer">
-                    <div className="user-info">
-                      <div className="user-avatar">
-                        <i className="fas fa-user"></i>
-                      </div>
-                      <div className="user-details">
-                        <div className="user-name">{registration.fullName}</div>
-                        <div className="user-email">{registration.email}</div>
-                        {registration.phone && (
-                          <div className="user-phone">{registration.phone}</div>
-                        )}
-                        {registration.organization && (
-                          <div className="user-org">
-                            <i className="fas fa-building"></i>
-                            {registration.organization}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="registration-info">
-                      <div className="registration-date">
-                        <i className="fas fa-user-check"></i>
-                        <span>Đăng ký: {formatDateTime(registration.createdAt)}</span>
-                      </div>
-                      <div className="payment-info">
-                        <i className="fas fa-credit-card"></i>
-                        <span className={`payment-status ${registration.paymentStatus}`}>
-                          {registration.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
-                        </span>
-                      </div>
-                      {registration.transactionId && (
-                        <div className="transaction-info">
-                          <i className="fas fa-receipt"></i>
-                          <span>Mã giao dịch: {registration.transactionId}</span>
+                        <div className="offline-event-badge">
+                          <i className="fas fa-map-marker-alt"></i>
+                          Sự kiện Offline
                         </div>
                       )}
                     </div>
                   </div>
 
+                  {/* Decorative Elements */}
+                  <div className="ticket-decoration">
+                    <div className="corner-decoration top-left"></div>
+                    <div className="corner-decoration top-right"></div>
+                    <div className="corner-decoration bottom-left"></div>
+                    <div className="corner-decoration bottom-right"></div>
+                  </div>
                 </div>
               );
             })}

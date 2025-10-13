@@ -565,6 +565,10 @@ export default function Home() {
     async function handleSuccessfulLogin(user: User) {
       try { localStorage.setItem('user', JSON.stringify(user)); } catch {}
       setCurrentUser(user);
+      
+      // Dispatch custom event to notify UserProfileWrapper
+      window.dispatchEvent(new CustomEvent('userUpdated'));
+      
       // Upsert minimal user record in DB (name, email)
       try {
         await fetch('/api/users', {
@@ -729,6 +733,10 @@ export default function Home() {
       const email = currentUserRef.current?.email || '';
       try { localStorage.removeItem('user'); } catch {}
       setCurrentUser(null);
+      
+      // Dispatch custom event to notify UserProfileWrapper
+      window.dispatchEvent(new CustomEvent('userLoggedOut'));
+      
       applyLoggedOutUI();
       // Restore original login tab content and re-bind Google button
       const loginTabEl = document.getElementById('login');
@@ -872,7 +880,7 @@ export default function Home() {
               <div className="theme-icon" id="lightIcon"><i className="fas fa-sun"></i></div>
               <div className="theme-icon active" id="darkIcon"><i className="fas fa-moon"></i></div>
             </div>
-            <UserProfileWrapper />
+            <UserProfileWrapper currentUser={currentUser} />
             
             <a href="https://www.facebook.com/groups/3diot.laptrinhnhungiot" className="btn-primary" id="joinBtn" target="_blank" rel="noopener noreferrer"><i className="fas fa-rocket"></i> Tham gia ngay</a>
             <button className="mobile-menu-btn" id="mobileMenuBtn"><i className="fas fa-bars"></i></button>

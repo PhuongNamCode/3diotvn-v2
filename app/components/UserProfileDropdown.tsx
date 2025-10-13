@@ -10,13 +10,6 @@ interface User {
   id: string;
 }
 
-interface UserStats {
-  totalCourses: number;
-  totalEvents: number;
-  totalSpent: number;
-  completedCourses: number;
-  upcomingEvents: number;
-}
 
 interface UserProfileDropdownProps {
   user: User;
@@ -25,27 +18,9 @@ interface UserProfileDropdownProps {
 
 export default function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  // Fetch user stats
-  const fetchUserStats = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/user/dashboard?email=${encodeURIComponent(user.email)}`);
-      const result = await response.json();
-      if (result.success) {
-        setStats(result.data.stats);
-      }
-    } catch (error) {
-      console.error('Error fetching user stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Check dark theme on mount
   useEffect(() => {
@@ -62,12 +37,6 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
     return () => mediaQuery.removeEventListener('change', checkDarkTheme);
   }, []);
 
-  // Fetch stats when dropdown opens
-  useEffect(() => {
-    if (isOpen && !stats && !loading) {
-      fetchUserStats();
-    }
-  }, [isOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -94,6 +63,7 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
         router.push('/my-events');
         break;
       case 'logout':
+        console.log('Logout clicked'); // Debug log
         onLogout();
         break;
     }
@@ -140,38 +110,6 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
             </div>
           </div>
 
-          {/* Stats Section */}
-          {stats && (
-            <div className="dropdown-stats">
-              <div className="stat-item">
-                <div className="stat-icon">
-                  <i className="fas fa-graduation-cap"></i>
-                </div>
-                <div className="stat-info">
-                  <span className="stat-number">{stats.totalCourses}</span>
-                  <span className="stat-label">Khóa học</span>
-                </div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-icon">
-                  <i className="fas fa-calendar-alt"></i>
-                </div>
-                <div className="stat-info">
-                  <span className="stat-number">{stats.totalEvents}</span>
-                  <span className="stat-label">Sự kiện</span>
-                </div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-icon">
-                  <i className="fas fa-trophy"></i>
-                </div>
-                <div className="stat-info">
-                  <span className="stat-number">{stats.completedCourses}</span>
-                  <span className="stat-label">Hoàn thành</span>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Menu Items */}
           <div className="dropdown-items">
@@ -186,9 +124,6 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
                 <span className="item-title">Khóa học của tôi</span>
                 <span className="item-subtitle">Quản lý và học tập</span>
               </div>
-              <div className="item-badge">
-                {stats ? stats.totalCourses : 0}
-              </div>
             </div>
 
             <div 
@@ -199,11 +134,8 @@ export default function UserProfileDropdown({ user, onLogout }: UserProfileDropd
                 <i className="fas fa-calendar-check"></i>
               </div>
               <div className="item-content">
-                <span className="item-title">Sự kiện đã tham gia</span>
-                <span className="item-subtitle">Lịch sử sự kiện</span>
-              </div>
-              <div className="item-badge">
-                {stats ? stats.totalEvents : 0}
+                <span className="item-title">Sự kiện đã đăng ký</span>
+                <span className="item-subtitle">Tất cả sự kiện đã đăng ký thành công</span>
               </div>
             </div>
 
