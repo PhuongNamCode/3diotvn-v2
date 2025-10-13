@@ -139,6 +139,7 @@ model Course {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   enrollments     CourseEnrollment[]
+  videos          CourseVideo[]
 }
 
 model CourseEnrollment {
@@ -170,4 +171,79 @@ model NewsletterSubscription {
 
   @@index([email])
   @@index([status])
+}
+
+model NotificationLog {
+  id            String   @id @default(cuid())
+  type          String   // course, event
+  title         String
+  description   String   @db.Text
+  recipientCount Int     // Tổng số người nhận
+  successCount  Int      // Số email gửi thành công
+  failureCount  Int      // Số email gửi thất bại
+  courseId      String?  // ID khóa học (nếu là thông báo khóa học)
+  eventId       String?  // ID sự kiện (nếu là thông báo sự kiện)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+model CourseVideo {
+  id               String   @id @default(cuid())
+  courseId         String
+  youtubeVideoId   String   @unique
+  title            String
+  description      String?
+  thumbnailUrl     String?
+  duration         Int?     // seconds
+  videoOrder       Int      @default(0)
+  isPreview        Boolean  @default(false)
+  status           String   @default("active") // active, inactive
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  videoAccessTokens VideoAccessToken[]
+  videoViewLogs    VideoViewLog[]
+
+  @@index([courseId])
+  @@index([youtubeVideoId])
+}
+
+model VideoAccessToken {
+  id                String   @id @default(cuid())
+  userId            String?
+  videoId           String
+  accessToken       String   @unique
+  expiresAt         DateTime
+  maxViews          Int      @default(3)
+  currentViews      Int      @default(0)
+  ipAddress         String?
+  deviceFingerprint String?
+  createdAt         DateTime @default(now())
+  video             CourseVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoViewLogs     VideoViewLog[]
+
+  @@index([accessToken])
+  @@index([videoId])
+  @@index([expiresAt])
+}
+
+model VideoViewLog {
+  id                    String   @id @default(cuid())
+  accessTokenId         String?
+  userId                String?
+  videoId               String
+  viewDuration          Int?     // seconds watched
+  completionPercentage  Float?   // 0-100
+  ipAddress             String?
+  userAgent             String?
+  timestamp             DateTime @default(now())
+  video                 CourseVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  accessToken           VideoAccessToken? @relation(fields: [accessTokenId], references: [id], onDelete: SetNull)
+
+  @@index([videoId])
+  @@index([timestamp])
+  @@index([userId])
 }

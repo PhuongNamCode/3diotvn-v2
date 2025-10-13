@@ -490,8 +490,8 @@ export default function AdminEventsTab() {
             <i className="fas fa-plus"></i>
             Thêm sự kiện
           </button>
+          </div>
         </div>
-      </div>
 
       <div className="table-container" style={{
         background: 'var(--surface)',
@@ -747,10 +747,10 @@ export default function AdminEventsTab() {
                           color: 'var(--primary)',
                           fontSize: '16px'
                         }}>
-                          {event.status === 'past' && event.actualParticipants !== undefined 
-                            ? `${event.actualParticipants}/${event.capacity}` 
-                            : `${event.registrations}/${event.capacity}`
-                          }
+                      {event.status === 'past' && event.actualParticipants !== undefined 
+                        ? `${event.actualParticipants}/${event.capacity}` 
+                        : `${event.registrations}/${event.capacity}`
+                      }
                         </span>
                         <div style={{
                           width: '60px',
@@ -789,10 +789,10 @@ export default function AdminEventsTab() {
                         gap: '8px',
                         justifyContent: 'center'
                       }}>
-                        <button 
-                          className="btn btn-sm btn-secondary"
-                          onClick={() => handleViewRegistrations(event.id)}
-                          title="Xem đăng ký"
+                      <button 
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => handleViewRegistrations(event.id)}
+                        title="Xem đăng ký"
                           style={{
                             background: 'linear-gradient(135deg, #6b7280, #9ca3af)',
                             color: 'white',
@@ -812,13 +812,13 @@ export default function AdminEventsTab() {
                             e.currentTarget.style.transform = 'translateY(0)';
                             e.currentTarget.style.boxShadow = '0 2px 8px rgba(107, 114, 128, 0.3)';
                           }}
-                        >
-                          <i className="fas fa-eye"></i>
-                        </button>
-                        <button 
-                          className="btn btn-sm btn-primary"
-                          onClick={() => handleEditEvent(event)}
-                          title="Chỉnh sửa"
+                      >
+                        <i className="fas fa-eye"></i>
+                      </button>
+                      <button 
+                        className="btn btn-sm btn-primary"
+                        onClick={() => handleEditEvent(event)}
+                        title="Chỉnh sửa"
                           style={{
                             background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
                             color: 'white',
@@ -838,14 +838,14 @@ export default function AdminEventsTab() {
                             e.currentTarget.style.transform = 'translateY(0)';
                             e.currentTarget.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)';
                           }}
-                        >
-                          <i className="fas fa-edit"></i>
-                        </button>
-                        {event.status === 'past' ? (
-                          <button 
-                            className="btn btn-sm btn-success"
-                            onClick={() => handleExportData(event.id)}
-                            title="Xuất dữ liệu"
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      {event.status === 'past' ? (
+                        <button 
+                          className="btn btn-sm btn-success"
+                          onClick={() => handleExportData(event.id)}
+                          title="Xuất dữ liệu"
                             style={{
                               background: 'linear-gradient(135deg, #10b981, #34d399)',
                               color: 'white',
@@ -865,9 +865,9 @@ export default function AdminEventsTab() {
                               e.currentTarget.style.transform = 'translateY(0)';
                               e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
                             }}
-                          >
-                            <i className="fas fa-download"></i>
-                          </button>
+                        >
+                          <i className="fas fa-download"></i>
+                        </button>
                       ) : (
                         <button 
                           className="btn btn-sm btn-danger"

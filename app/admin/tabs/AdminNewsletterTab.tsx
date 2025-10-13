@@ -37,6 +37,10 @@ export default function AdminNewsletterTab() {
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
 
   const limit = 20;
 
@@ -147,6 +151,80 @@ export default function AdminNewsletterTab() {
     }
   };
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+      setImportResult(null);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      alert('Vui lòng chọn file Excel');
+      return;
+    }
+
+    try {
+      setImporting(true);
+      const formData = new FormData();
+      formData.append('file', importFile);
+
+      const response = await fetch('/api/newsletter/import-simple', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setImportResult(result.data);
+        // Refresh subscriptions list
+        fetchSubscriptions();
+        fetchStats();
+        alert(`Import thành công!\n\n📊 Kết quả:\n• Tổng dòng: ${result.data.totalRows}\n• Email hợp lệ: ${result.data.validEmails}\n• Email mới: ${result.data.newEmails}\n• Email trùng: ${result.data.duplicateEmails}\n• Đã thêm: ${result.data.insertedCount}`);
+      } else {
+        alert(`Lỗi: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Có lỗi xảy ra khi import file');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const resetImport = () => {
+    setImportFile(null);
+    setImportResult(null);
+    setShowImportModal(false);
+  };
+
+  const handleDeleteSubscription = async (id: string, email: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa email "${email}" khỏi danh sách newsletter?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/newsletter/${id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('✅ Xóa email thành công!');
+        fetchSubscriptions();
+        fetchStats();
+      } else {
+        alert(`❌ Lỗi: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting subscription:', error);
+      alert('❌ Có lỗi xảy ra khi xóa email');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       active: { text: 'Hoạt động', class: 'status-active' },
@@ -180,6 +258,13 @@ export default function AdminNewsletterTab() {
             <p>Theo dõi và quản lý đăng ký newsletter</p>
           </div>
           <div className="admin-header-actions">
+            <button
+              className="btn-secondary"
+              onClick={() => setShowImportModal(true)}
+            >
+              <i className="fas fa-upload"></i>
+              Import Excel
+            </button>
             <button
               className="btn-secondary"
               onClick={() => setShowExportModal(true)}
@@ -387,6 +472,13 @@ export default function AdminNewsletterTab() {
                         <option value="active">Hoạt động</option>
                         <option value="inactive">Không hoạt động</option>
                       </select>
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDeleteSubscription(subscription.id, subscription.email)}
+                        title="Xóa email"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -464,6 +556,150 @@ export default function AdminNewsletterTab() {
               >
                 <i className="fas fa-download"></i>
                 Xuất CSV
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Excel Modal */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={resetImport}>
+          <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <i className="fas fa-upload"></i>
+                Import Email từ Excel
+              </h3>
+              <button
+                className="modal-close"
+                onClick={resetImport}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="import-instructions">
+                <h4>
+                  <i className="fas fa-info-circle"></i>
+                  Hướng dẫn Import
+                </h4>
+                <ul>
+                  <li>📊 File Excel phải có cột đầu tiên chứa địa chỉ email</li>
+                  <li>📧 Email phải đúng định dạng (ví dụ: example@gmail.com)</li>
+                  <li>📁 Hỗ trợ định dạng: .xlsx, .xls, .csv</li>
+                  <li>📏 Kích thước file tối đa: 5MB</li>
+                  <li>🔄 Email trùng lặp sẽ được bỏ qua</li>
+                </ul>
+              </div>
+
+              <div className="file-upload-section">
+                <div className="file-input-wrapper">
+                  <input
+                    type="file"
+                    id="excel-file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleFileSelect}
+                    className="file-input"
+                  />
+                  <label htmlFor="excel-file" className="file-input-label">
+                    <i className="fas fa-cloud-upload-alt"></i>
+                    <span>{importFile ? importFile.name : 'Chọn file Excel...'}</span>
+                  </label>
+                </div>
+              </div>
+
+              {importFile && (
+                <div className="file-preview">
+                  <h4>
+                    <i className="fas fa-file-excel"></i>
+                    File đã chọn
+                  </h4>
+                  <div className="file-info">
+                    <p><strong>Tên file:</strong> {importFile.name}</p>
+                    <p><strong>Kích thước:</strong> {(importFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p><strong>Định dạng:</strong> {importFile.type}</p>
+                  </div>
+                </div>
+              )}
+
+              {importResult && (
+                <div className="import-results">
+                  <h4>
+                    <i className="fas fa-chart-bar"></i>
+                    Kết quả Import
+                  </h4>
+                  <div className="result-stats">
+                    <div className="stat-item">
+                      <span className="stat-label">Tổng dòng:</span>
+                      <span className="stat-value">{importResult.totalRows}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Email hợp lệ:</span>
+                      <span className="stat-value success">{importResult.validEmails}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Email mới:</span>
+                      <span className="stat-value primary">{importResult.newEmails}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Email trùng:</span>
+                      <span className="stat-value warning">{importResult.duplicateEmails}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Đã thêm:</span>
+                      <span className="stat-value success">{importResult.insertedCount}</span>
+                    </div>
+                  </div>
+
+                  {importResult.errors.length > 0 && (
+                    <div className="import-errors">
+                      <h5>Lỗi phát hiện:</h5>
+                      <ul>
+                        {importResult.errors.map((error: string, index: number) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {importResult.duplicateEmailList.length > 0 && (
+                    <div className="duplicate-emails">
+                      <h5>Email trùng lặp (10 đầu tiên):</h5>
+                      <ul>
+                        {importResult.duplicateEmailList.map((email: string, index: number) => (
+                          <li key={index}>{email}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-secondary"
+                onClick={resetImport}
+                disabled={importing}
+              >
+                Hủy
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleImport}
+                disabled={!importFile || importing}
+              >
+                {importing ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    Đang import...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-upload"></i>
+                    Import Email
+                  </>
+                )}
               </button>
             </div>
           </div>

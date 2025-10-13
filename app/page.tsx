@@ -7,6 +7,7 @@ import ContactTab from "./tabs/ContactTab";
 import NewsTab from "./tabs/NewsTab";
 import LoginTab from "./tabs/LoginTab";
 import CoursesTab from "./tabs/CoursesTab";
+import UserProfileWrapper from "./components/UserProfileWrapper";
 import { jwtDecode } from "jwt-decode";
 // Removed static data fallbacks; data now comes from DB via API/hooks
 import Link from "next/link";
@@ -871,16 +872,7 @@ export default function Home() {
               <div className="theme-icon" id="lightIcon"><i className="fas fa-sun"></i></div>
               <div className="theme-icon active" id="darkIcon"><i className="fas fa-moon"></i></div>
             </div>
-            <div className="user-profile" id="userProfile">
-              <img 
-                src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNmM2Y0ZjYiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik04IDhDOS4xMDQ1NyA4IDEwIDcuMTA0NTcgMTAgNkMxMCA0Ljg5NTQzIDkuMTA0NTcgNCA4IDRDNi44OTU0MyA0IDYgNC44OTU0MyA2IDZDNiA3LjEwNDU3IDYuODk1NDMgOCA4IDhaIiBmaWxsPSIjNjY3Nzg4Ii8+CjxwYXRoIGQ9Ik0xMiAxMkMxMiAxMC44OTU0IDExLjEwNDYgMTAgMTAgMTBINkM0Ljg5NTQzIDEwIDQgMTAuODk1NCA0IDEyVjEzSDEyVjEyWiIgZmlsbD0iIzY2Nzc4OCIvPgo8L3N2Zz4KPC9zdmc+" 
-                alt="User Avatar" 
-                className="user-avatar" 
-                id="userAvatar" 
-              />
-              <span className="user-name" id="userName">User Name</span>
-              <button className="logout-btn" id="logoutBtn" title="Đăng xuất"><i className="fas fa-sign-out-alt"></i></button>
-            </div>
+            <UserProfileWrapper />
             
             <a href="https://www.facebook.com/groups/3diot.laptrinhnhungiot" className="btn-primary" id="joinBtn" target="_blank" rel="noopener noreferrer"><i className="fas fa-rocket"></i> Tham gia ngay</a>
             <button className="mobile-menu-btn" id="mobileMenuBtn"><i className="fas fa-bars"></i></button>
