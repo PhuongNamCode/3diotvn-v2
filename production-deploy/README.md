@@ -1,5 +1,14 @@
 # 3DIoT Production Deployment
 
+# Login Docker Hub
+docker login
+
+# Build image
+docker build -t phuongnamdocker/3diot-app:latest .
+
+# Push image
+docker push phuongnamdocker/3diot-app:latest
+
 ## Files in this folder:
 - `docker-compose.yml` - Docker services configuration
 - `Caddyfile` - Caddy reverse proxy configuration
