@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userEmail = searchParams.get('email');
 
+    console.log('🔍 Dashboard API called with email:', userEmail);
+
     if (!userEmail) {
       return NextResponse.json({
         success: false,
@@ -15,10 +17,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Lấy thông tin khóa học đã đăng ký
+    console.log('🔍 Querying enrollments for email:', userEmail);
+    
+    // First, try simple query without include
+    const simpleEnrollments = await prisma.courseEnrollment.findMany({
+      where: { 
+        email: userEmail,
+        status: 'confirmed'
+      }
+    });
+    
+    console.log('🔍 Simple query found:', simpleEnrollments.length);
+    
+    // Then try with include
     const enrollments = await prisma.courseEnrollment.findMany({
       where: { 
         email: userEmail,
-        status: 'enrolled' // Chỉ lấy những khóa học đã đăng ký thành công
+        status: 'confirmed' // Chỉ lấy những khóa học đã đăng ký thành công
       },
       include: {
         course: {
@@ -41,6 +56,8 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { createdAt: 'desc' }
     });
+
+    console.log('🔍 Found enrollments with include:', enrollments.length);
 
     // Lấy thông tin sự kiện đã đăng ký
     const registrations = await prisma.registration.findMany({
