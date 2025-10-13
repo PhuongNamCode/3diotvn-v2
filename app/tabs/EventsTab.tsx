@@ -176,6 +176,10 @@ export default function EventsTab() {
     setSuccess(false);
     setError(null);
     try {
+      // Determine status based on event price
+      const isPaidEvent = selected.price && selected.price > 0;
+      const hasTransactionId = payload.transactionId && payload.transactionId.trim() !== "";
+      
       const registrationData = {
         eventId: payload.eventId.toString(),
         fullName: payload.fullName,
@@ -184,8 +188,8 @@ export default function EventsTab() {
         organization: payload.organization || "",
         experience: payload.experience || "",
         expectation: payload.expectation || "",
-        status: "pending" as const,
-        paymentStatus: selected.price && selected.price > 0 ? "pending" : "paid",
+        status: isPaidEvent ? "pending" : "confirmed", // Sự kiện miễn phí tự động confirmed
+        paymentStatus: isPaidEvent ? (hasTransactionId ? "pending_verification" : "pending") : "paid",
         paymentMethod: payload.paymentMethod || null,
         transactionId: payload.transactionId || null,
         amount: selected.price || null

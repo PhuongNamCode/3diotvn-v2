@@ -321,29 +321,9 @@ export default function MyEventsPage() {
                     </div>
                   </div>
 
-                  {/* Ticket Footer - Join Link Button */}
+                  {/* Ticket Footer - Simple */}
                   <div className="ticket-footer-elegant">
                     <div className="footer-pattern"></div>
-                    <div className="footer-content">
-                      {/* Join Link Button - Only for Online events */}
-                      {registration.event.category && registration.event.category.toLowerCase().includes('online') ? (
-                        <button 
-                          className="join-link-btn"
-                          onClick={() => {
-                            // For demo purposes, show alert. In real app, this would open the actual meeting link
-                            alert(`Link tham gia sự kiện: ${registration.event.title}\n\nLink sẽ được gửi qua email trước ngày diễn ra!`);
-                          }}
-                        >
-                          <i className="fas fa-link"></i>
-                          Link tham gia
-                        </button>
-                      ) : (
-                        <div className="offline-event-badge">
-                          <i className="fas fa-map-marker-alt"></i>
-                          Sự kiện Offline
-                        </div>
-                      )}
-                    </div>
                   </div>
 
                   {/* Decorative Elements */}

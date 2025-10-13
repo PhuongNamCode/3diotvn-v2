@@ -39,16 +39,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Event not found' }, { status: 400 });
     }
 
-    // Determine payment status based on event price and transaction ID
+    // Determine payment status and registration status based on event price and transaction ID
     let paymentStatus = 'pending';
+    let registrationStatus = 'pending';
+    
     if (event.price && event.price > 0) {
       if (body.transactionId) {
         paymentStatus = 'pending_verification'; // Cần admin xác thực
+        registrationStatus = 'pending'; // Chờ admin xác nhận
       } else {
         paymentStatus = 'pending'; // Chưa thanh toán
+        registrationStatus = 'pending'; // Chờ thanh toán
       }
     } else {
       paymentStatus = 'paid'; // Sự kiện miễn phí
+      registrationStatus = 'confirmed'; // Tự động xác nhận cho sự kiện miễn phí
     }
 
     const created = await prisma.registration.create({
@@ -61,7 +66,7 @@ export async function POST(request: NextRequest) {
         organization: body.organization || null,
         experience: body.experience || null,
         expectation: body.expectation || null,
-        status: body.status || 'pending',
+        status: body.status || registrationStatus, // Sử dụng logic status đã tính toán
         paymentStatus: paymentStatus,
         paymentMethod: body.paymentMethod || null,
         transactionId: body.transactionId || null,
@@ -73,12 +78,12 @@ export async function POST(request: NextRequest) {
     const count = await prisma.registration.count({ where: { eventId: created.eventId, NOT: { status: 'cancelled' } } });
     await prisma.event.update({ where: { id: created.eventId }, data: { registrationsCount: count } });
 
-    // Send appropriate email based on payment status
+    // Send appropriate email based on registration status
     try {
       let emailSubject = '';
       let emailData;
 
-      if (paymentStatus === 'pending_verification') {
+      if (registrationStatus === 'pending') {
         emailSubject = `⏳ Đang xử lý đăng ký: ${event.title}`;
         emailData = generateRegistrationPendingEmail({
           userName: created.fullName,
@@ -113,9 +118,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (!emailSent) {
-        console.warn(`Failed to send ${paymentStatus === 'pending_verification' ? 'pending' : 'confirmation'} email to ${created.email}`);
+        console.warn(`Failed to send ${registrationStatus === 'pending' ? 'pending' : 'confirmation'} email to ${created.email}`);
       } else {
-        console.log(`${paymentStatus === 'pending_verification' ? 'Pending' : 'Confirmation'} email sent successfully to ${created.email}`);
+        console.log(`${registrationStatus === 'pending' ? 'Pending' : 'Confirmation'} email sent successfully to ${created.email}`);
       }
     } catch (emailError) {
       console.error('Error sending email:', emailError);

@@ -974,52 +974,6 @@ body {
   gap: 1rem;
 }
 
-.join-link-btn {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark, #4c63d2) 100%);
-  color: white;
-  border: none;
-  padding: 0.6rem 1.5rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.join-link-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.join-link-btn:hover::before {
-  left: 100%;
-}
-
-.join-link-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-.join-link-btn:active {
-  transform: translateY(0);
-}
-
-.join-link-btn i {
-  font-size: 0.7rem;
-}
 
 /* ========================================
    ELEGANT TICKET DESIGN
@@ -1200,10 +1154,10 @@ body {
 /* Elegant Ticket Footer */
 .ticket-footer-elegant {
   background: var(--surface-variant);
-  padding: 1rem 1.5rem;
+  padding: 0.5rem 1.5rem;
   border-top: 1px solid var(--border);
   position: relative;
-  min-height: 60px;
+  min-height: 20px;
 }
 
 .footer-pattern {
@@ -1215,37 +1169,6 @@ body {
   background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark, #4c63d2) 100%);
 }
 
-.footer-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  gap: 1rem;
-}
-
-.offline-event-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: var(--surface);
-  color: var(--text-secondary);
-  padding: 0.6rem 1.25rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: 1px solid var(--border);
-  transition: all 0.3s ease;
-}
-
-.offline-event-badge i {
-  color: var(--accent);
-  font-size: 0.7rem;
-}
-
-.offline-event-badge:hover {
-  background: var(--surface-variant);
-  color: var(--text-primary);
-}
 
 /* Decorative Elements */
 .ticket-decoration {
@@ -1319,24 +1242,7 @@ body {
   }
   
   .ticket-footer-elegant {
-    padding: 0.75rem 1rem;
-  }
-  
-  .footer-content {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .join-link-btn {
-    width: 100%;
-    justify-content: center;
-    padding: 0.75rem 1.5rem;
-  }
-  
-  .offline-event-badge {
-    width: 100%;
-    justify-content: center;
-    padding: 0.75rem 1.5rem;
+    padding: 0.25rem 1rem;
   }
 }
 
