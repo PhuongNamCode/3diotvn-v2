@@ -215,6 +215,13 @@ export default function MyEventsPage() {
             <p>Vé tham dự các sự kiện bạn đã đăng ký thành công</p>
           </div>
         </div>
+        <button 
+          className="back-to-home-btn"
+          onClick={() => router.push('/')}
+        >
+          <i className="fas fa-arrow-left"></i>
+          Quay lại
+        </button>
       </div>
 
 

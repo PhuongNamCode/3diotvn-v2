@@ -1616,7 +1616,7 @@ body {
 
 .page-header {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
   padding: 2rem 0;
@@ -1640,6 +1640,33 @@ body {
   color: var(--text-secondary);
   margin: 0;
   text-align: left;
+}
+
+.back-to-home-btn {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.back-to-home-btn:hover {
+  background: var(--surface-variant);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.back-to-home-btn i {
+  font-size: 0.8rem;
 }
 
 .user-info {
@@ -2154,6 +2181,10 @@ body {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
+  }
+  
+  .back-to-home-btn {
+    align-self: center;
   }
   
   .header-content h1 {
