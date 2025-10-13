@@ -96,7 +96,7 @@ export default function CourseLearnPage() {
       }
 
       const enrollment = enrollmentResult.data.enrollments.find(
-        (e: any) => e.course.id === courseId && e.status === 'enrolled'
+        (e: any) => e.course.id === courseId && (e.status === 'enrolled' || e.status === 'confirmed')
       );
 
       if (!enrollment) {

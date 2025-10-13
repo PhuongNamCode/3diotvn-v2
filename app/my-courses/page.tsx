@@ -119,11 +119,14 @@ export default function MyCoursesPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'enrolled':
+      case 'confirmed': // Thêm case cho confirmed
         return <span className="status-badge enrolled">Đã đăng ký</span>;
       case 'completed':
         return <span className="status-badge completed">Hoàn thành</span>;
       case 'in-progress':
         return <span className="status-badge in-progress">Đang học</span>;
+      case 'pending':
+        return <span className="status-badge pending">Chờ xử lý</span>;
       default:
         return <span className="status-badge pending">Chờ xử lý</span>;
     }
