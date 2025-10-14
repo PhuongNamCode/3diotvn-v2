@@ -168,9 +168,6 @@ export default function MyCoursesPage() {
         {/* Header */}
         <div className="page-header">
           <div className="header-content">
-            <div className="header-icon">
-              <i className="fas fa-graduation-cap"></i>
-            </div>
             <div className="header-text">
               <h1>Khóa học của tôi</h1>
               <p>Quản lý và tiếp tục học tập các khóa học đã đăng ký</p>

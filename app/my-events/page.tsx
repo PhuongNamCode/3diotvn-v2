@@ -207,9 +207,6 @@ export default function MyEventsPage() {
     <div className="my-events-page">
       <div className="page-header">
         <div className="header-content">
-          <div className="header-icon">
-            <i className="fas fa-ticket-alt"></i>
-          </div>
           <div className="header-text">
             <h1>Sự kiện đã đăng ký</h1>
             <p>Vé tham dự các sự kiện bạn đã đăng ký thành công</p>

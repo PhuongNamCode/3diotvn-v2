@@ -2053,10 +2053,11 @@ body {
   border-radius: 20px;
   padding: 2rem;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(96, 165, 250, 0.12);
   border: 1px solid var(--border);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
 .welcome-header {
@@ -2111,13 +2112,32 @@ body {
 .welcome-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-variant));
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 2rem;
-  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.3);
+  box-shadow: 0 8px 24px rgba(96, 165, 250, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.welcome-icon:hover::before {
+  opacity: 1;
 }
 
 .welcome-icon i {
@@ -2155,7 +2175,7 @@ body {
 }
 
 .stat-card {
-  background: var(--surface-variant);
+  background: var(--surface);
   border-radius: 16px;
   padding: 1.5rem 1rem;
   border: 1px solid var(--border);
@@ -2164,6 +2184,7 @@ body {
   overflow: hidden;
   min-width: 0;
   flex: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .stat-card::before {
@@ -2173,7 +2194,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
+  background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -2184,18 +2205,39 @@ body {
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 28px rgba(96, 165, 250, 0.15);
+  border-color: var(--accent);
 }
 
 .stat-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-variant));
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 1rem;
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-icon:hover::before {
+  opacity: 1;
 }
 
 .stat-icon i {
@@ -2231,12 +2273,13 @@ body {
   background: var(--surface);
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(96, 165, 250, 0.12);
   border: 1px solid var(--border);
   position: sticky;
   top: 2rem;
   max-height: calc(100vh - 4rem);
   overflow-y: auto;
+  backdrop-filter: blur(10px);
 }
 
 .video-list-section {
@@ -8616,7 +8659,7 @@ body {
 }
 
 .lesson-number {
-  background: linear-gradient(135deg, var(--primary), var(--primary-variant));
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
   color: white;
   width: 48px;
   height: 48px;
@@ -8626,15 +8669,34 @@ body {
   justify-content: center;
   font-weight: 700;
   font-size: 1.2rem;
-  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.4);
-  border: 3px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 16px rgba(96, 165, 250, 0.4);
+  border: 3px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.lesson-number::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .lesson-number:hover {
   transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.5);
+  box-shadow: 0 8px 20px rgba(96, 165, 250, 0.5);
   flex-shrink: 0;
+}
+
+.lesson-number:hover::before {
+  opacity: 1;
 }
 
 .lesson-content {
@@ -8750,21 +8812,40 @@ body {
 }
 
 .lesson-number {
-  background: linear-gradient(135deg, var(--primary), var(--primary-variant));
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 25px;
   font-size: 0.9rem;
   font-weight: 700;
   width: fit-content;
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.lesson-number::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 25px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .lesson-number:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.4);
+  box-shadow: 0 6px 16px rgba(96, 165, 250, 0.4);
+}
+
+.lesson-number:hover::before {
+  opacity: 1;
 }
 
 .lesson-title {
