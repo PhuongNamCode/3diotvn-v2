@@ -42,13 +42,55 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Check if video exists and belongs to course
-    const video = await prisma.courseVideo.findFirst({
+    // First try to find in CourseVideo table (old system)
+    let video = await prisma.courseVideo.findFirst({
       where: {
         id: videoId,
         courseId,
         status: 'active'
       }
     });
+
+    // If not found in CourseVideo, check in curriculum JSON (new system)
+    if (!video) {
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        select: { curriculum: true }
+      });
+
+      if (course?.curriculum && Array.isArray(course.curriculum)) {
+        // Look for the video in curriculum array
+        const lesson = course.curriculum.find((item: any) => {
+          if (item.type === 'youtube' && item.url) {
+            // Extract video ID from URL
+            const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
+            const match = item.url.match(regex);
+            const lessonVideoId = match ? match[1] : null;
+            return lessonVideoId === videoId;
+          }
+          return false;
+        });
+
+        if (lesson) {
+          // Create a virtual video object for curriculum-based videos
+          const lessonData = lesson as any;
+          video = {
+            id: videoId,
+            courseId: courseId,
+            youtubeVideoId: videoId,
+            title: lessonData.title || 'Video Lesson',
+            description: lessonData.description || '',
+            thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+            duration: lessonData.duration || null,
+            videoOrder: 0,
+            isPreview: false,
+            status: 'active',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+        }
+      }
+    }
 
     if (!video) {
       return NextResponse.json({
@@ -57,30 +99,11 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
 
-    // 3. Check if user has YouTube OAuth credentials
-    const hasYouTubeAuth = await youtubeAccessManager.checkUserYouTubeAuth(email);
-    if (!hasYouTubeAuth) {
-      return NextResponse.json({
-        success: false,
-        error: 'YouTube authentication required',
-        requiresAuth: true,
-        authUrl: await generateYouTubeAuthUrl(courseId, videoId, email)
-      }, { status: 403 });
-    }
+    // 3. For unlisted videos, no OAuth needed - just verify enrollment
+    console.log('Using unlisted video access - enrollment verified');
 
-    // 4. Check video access whitelist (if using database-driven approach)
-    const hasAccess = await checkVideoAccessWhitelist(videoId, email);
-    if (!hasAccess) {
-      // Try to grant access automatically
-      const accessGranted = await youtubeAccessManager.grantVideoAccess(video.youtubeVideoId, email);
-      
-      if (!accessGranted) {
-        return NextResponse.json({
-          success: false,
-          error: 'Unable to grant access to video. Please contact support.'
-        }, { status: 403 });
-      }
-    }
+    // 4. For unlisted videos, no additional access checks needed
+    console.log('Unlisted video access granted');
 
     // 5. Generate secure access token
     const accessToken = jwt.sign(
@@ -115,7 +138,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        accessToken,
+        redirectUrl: `https://youtube.com/watch?v=${video.youtubeVideoId}`,
         video: {
           id: video.id,
           title: video.title,
@@ -153,7 +176,18 @@ async function generateYouTubeAuthUrl(courseId: string, videoId: string, email: 
       timestamp: Date.now()
     });
 
-    return youtubeOAuthService.generateAuthUrl(state);
+    // Generate OAuth URL manually
+    const params = new URLSearchParams({
+      client_id: process.env.YOUTUBE_CLIENT_ID || '',
+      redirect_uri: process.env.YOUTUBE_REDIRECT_URI || 'http://localhost:3000/api/auth/youtube/callback',
+      scope: process.env.GOOGLE_SCOPES || 'https://www.googleapis.com/auth/youtube.readonly',
+      response_type: 'code',
+      access_type: 'offline',
+      prompt: 'consent',
+      state: state
+    });
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   } catch (error) {
     console.error('Error generating YouTube auth URL:', error);
     return '';

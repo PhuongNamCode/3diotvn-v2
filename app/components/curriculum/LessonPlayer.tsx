@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import YouTubeOAuthButton from '@/app/components/auth/YouTubeOAuthButton';
 
 interface Lesson {
   title: string;
@@ -30,7 +29,6 @@ export default function LessonPlayer({
   className = ""
 }: LessonPlayerProps) {
   const [loading, setLoading] = useState(false);
-  const [requiresYouTubeAuth, setRequiresYouTubeAuth] = useState(false);
   const [accessError, setAccessError] = useState<string | null>(null);
 
   const extractYouTubeVideoId = (url: string): string | null => {
@@ -54,7 +52,6 @@ export default function LessonPlayer({
     try {
       setLoading(true);
       setAccessError(null);
-      setRequiresYouTubeAuth(false);
 
       // Extract video ID from URL
       const videoId = extractYouTubeVideoId(lesson.url);
@@ -80,15 +77,11 @@ export default function LessonPlayer({
       const data = await response.json();
 
       if (!data.success) {
-        if (data.requiresAuth) {
-          setRequiresYouTubeAuth(true);
-          return;
-        }
         throw new Error(data.error || 'Access denied');
       }
 
-      // Open YouTube video in new tab with secure access
-      window.open(lesson.url, '_blank', 'noopener,noreferrer');
+      // Redirect to YouTube private video
+      window.open(data.data.redirectUrl, '_blank', 'noopener,noreferrer');
       
     } catch (error) {
       console.error('Error accessing YouTube video:', error);
@@ -164,8 +157,8 @@ export default function LessonPlayer({
                 </div>
               </div>
               <div className="lesson-details">
-                <h3>Video YouTube Private</h3>
-                <p>Nhấn vào nút bên dưới để xem video. Tài khoản Gmail của bạn đã được cấp quyền truy cập video này.</p>
+                <h3>Video Khóa Học</h3>
+                <p>Nhấn vào nút bên dưới để xem video. Video được bảo vệ và chỉ dành cho học viên đã đăng ký.</p>
                 <div className="lesson-meta">
                   <span className="duration">
                     <i className="fas fa-clock"></i>
@@ -175,28 +168,7 @@ export default function LessonPlayer({
               </div>
             </div>
             <div className="lesson-actions">
-              {requiresYouTubeAuth ? (
-                <div className="auth-required">
-                  <div className="auth-message">
-                    <i className="fas fa-lock"></i>
-                    <h4>Cần xác thực YouTube</h4>
-                    <p>Bạn cần đăng nhập YouTube để xem video này. Video là private và chỉ dành cho học viên đã đăng ký.</p>
-                  </div>
-                  <YouTubeOAuthButton
-                    courseId={courseId}
-                    videoId={extractYouTubeVideoId(lesson.url) || undefined}
-                    email={email}
-                    onSuccess={() => {
-                      setRequiresYouTubeAuth(false);
-                      handleYouTubeClick();
-                    }}
-                    onError={(error) => setAccessError(error)}
-                    className="btn-youtube-auth"
-                  >
-                    Đăng nhập YouTube để xem video
-                  </YouTubeOAuthButton>
-                </div>
-              ) : accessError ? (
+              {accessError ? (
                 <div className="access-error">
                   <div className="error-message">
                     <i className="fas fa-exclamation-triangle"></i>
