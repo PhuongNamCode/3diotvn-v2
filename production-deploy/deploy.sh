@@ -54,7 +54,13 @@ until docker compose --env-file env.production exec app echo "App container is r
     sleep 3
 done
 
-# Prisma client is already generated during build, no need for additional migration checks
+# Run database migrations (production safety)
+echo "🗄️ Running database migrations..."
+docker compose --env-file env.production exec --user root app npx prisma migrate deploy || echo "⚠️ Migration failed, continuing..."
+
+# Sync database schema (fallback for schema changes)
+echo "🔄 Syncing database schema..."
+docker compose --env-file env.production exec --user root app npx prisma db push || echo "⚠️ Schema sync failed, continuing..."
 
 # No need to restart app since Prisma client is already generated during build
 

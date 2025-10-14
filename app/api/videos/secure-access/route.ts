@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { youtubeAccessManager } from '@/lib/services/youtubeAccessManager';
 import { youtubeOAuthService } from '@/lib/auth/youtube-oauth';
-import jwt from 'jsonwebtoken';
 
 /**
  * POST /api/videos/secure-access
@@ -94,19 +93,7 @@ export async function POST(request: NextRequest) {
     // 4. For unlisted videos, no additional access checks needed
     console.log('Unlisted video access granted');
 
-    // 5. Generate secure access token
-    const accessToken = jwt.sign(
-      {
-        videoId,
-        courseId,
-        email,
-        userId,
-        enrollmentId: enrollment.id,
-        exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour expiry
-      },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { algorithm: 'HS256' }
-    );
+    // 5. Access granted - no JWT needed for YouTube private videos
 
     // 6. Log access attempt
     await prisma.videoAccessLog.create({
@@ -207,60 +194,3 @@ async function checkVideoAccessWhitelist(videoId: string, email: string): Promis
   }
 }
 
-/**
- * GET /api/videos/secure-access
- * Validate existing access token
- */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const token = searchParams.get('token');
-
-    if (!token) {
-      return NextResponse.json({
-        success: false,
-        error: 'Access token required'
-      }, { status: 400 });
-    }
-
-    // Verify JWT token
-    const payload = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
-
-    // Check if token is still valid (not expired and enrollment still active)
-    const enrollment = await prisma.courseEnrollment.findFirst({
-      where: {
-        id: payload.enrollmentId,
-        email: payload.email,
-        status: { in: ['confirmed', 'enrolled'] },
-        paymentStatus: 'paid'
-      }
-    });
-
-    if (!enrollment) {
-      return NextResponse.json({
-        success: false,
-        error: 'Access token invalid or enrollment expired'
-      }, { status: 403 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        valid: true,
-        payload: {
-          videoId: payload.videoId,
-          courseId: payload.courseId,
-          email: payload.email,
-          enrollmentId: payload.enrollmentId
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Error validating access token:', error);
-    return NextResponse.json({
-      success: false,
-      error: 'Invalid access token'
-    }, { status: 403 });
-  }
-}

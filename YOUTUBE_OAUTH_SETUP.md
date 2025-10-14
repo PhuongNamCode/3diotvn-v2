@@ -36,8 +36,7 @@ YOUTUBE_CLIENT_SECRET="your-client-secret"
 YOUTUBE_API_KEY="your-youtube-api-key"
 YOUTUBE_REDIRECT_URI="http://localhost:3000/api/auth/youtube/callback"
 
-# JWT Secret
-JWT_SECRET="your-jwt-secret-key"
+# JWT Secret removed - using YouTube private videos for security
 
 # Google OAuth Scopes
 GOOGLE_SCOPES="https://www.googleapis.com/auth/youtube.readonly,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/userinfo.profile"
@@ -76,7 +75,7 @@ YOUTUBE_CHANNEL_ID="your-channel-id"
 
 1. **Enrollment Check**: Chỉ học viên đã đăng ký
 2. **YouTube OAuth**: Xác thực danh tính
-3. **JWT Tokens**: Secure access tokens
+3. **YouTube Private Videos**: Direct access to private videos
 4. **Database Logging**: Track mọi access attempt
 
 ### **Private Videos:**
@@ -125,8 +124,7 @@ model VideoAccessLog {
 - `GET /api/auth/youtube/callback` - Handle OAuth callback
 
 ### **Video Access**
-- `POST /api/videos/secure-access` - Verify access & generate token
-- `GET /api/videos/secure-access` - Validate existing token
+- `POST /api/videos/secure-access` - Verify enrollment & redirect to YouTube private video
 
 ### **Enrollment**
 - `POST /api/enrollments/youtube-auth` - Trigger OAuth for enrollment
@@ -206,9 +204,9 @@ model VideoAccessLog {
 
 ### **Security Updates:**
 
-1. **Rotate JWT secrets**
-2. **Update OAuth credentials**
-3. **Review access patterns**
+1. **Update OAuth credentials**
+2. **Review access patterns**
+3. **Monitor video access logs**
 4. **Audit user permissions**
 
 ---

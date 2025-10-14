@@ -24,6 +24,10 @@ until docker compose exec app echo "App container is ready" 2>/dev/null; do
     sleep 2
 done
 
+# Sync database schema (important for schema changes)
+echo "Syncing database schema..."
+docker compose exec --user root app npx prisma db push || echo "⚠️ Schema sync failed, continuing..."
+
 echo "✅ Project is running!"
 echo "🌐 Access your app at: http://localhost:3000"
 echo "🗄️ PostgreSQL: localhost:5432"

@@ -52,40 +52,25 @@ export default function MyEventsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Try multiple ways to get user email
-    let userEmail = localStorage.getItem('userEmail');
-    
-    // If not found, try to get from Google OAuth
-    if (!userEmail) {
-      const userData = localStorage.getItem('userData');
-      if (userData) {
-        try {
-          const parsed = JSON.parse(userData);
-          userEmail = parsed.email;
-        } catch (e) {
-          console.error('Error parsing user data:', e);
+    // Check if user is logged in (same as My Courses)
+    const checkAuth = () => {
+      try {
+        const saved = localStorage.getItem('user');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          console.log('Found user:', parsed.email);
+          fetchUserEvents(parsed.email);
+        } else {
+          console.log('No user found, redirecting to home');
+          router.push('/');
         }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        router.push('/');
       }
-    }
-    
-    // If still not found, try to get from current user session
-    if (!userEmail) {
-      // Check if user is logged in via Google OAuth
-      const googleUser = document.querySelector('[data-google-user]');
-      if (googleUser) {
-        userEmail = googleUser.getAttribute('data-email');
-      }
-    }
+    };
 
-    if (!userEmail) {
-      console.log('No user email found');
-      // For testing purposes, use a default email if no user is found
-      userEmail = 'phuongnamvp160601@gmail.com';
-      console.log('Using test email:', userEmail);
-    }
-
-    console.log('Found user email:', userEmail);
-    fetchUserEvents(userEmail);
+    checkAuth();
   }, [router]);
 
   const fetchUserEvents = async (email: string) => {

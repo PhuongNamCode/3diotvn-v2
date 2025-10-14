@@ -39,7 +39,6 @@ services:
       SMTP_SECURE: ${SMTP_SECURE}
       ADMIN_RESET_CODE: ${ADMIN_RESET_CODE}
       ENABLE_RATE_LIMITING: ${ENABLE_RATE_LIMITING}
-      JWT_SECRET: ${JWT_SECRET}
       NEXT_PUBLIC_BASE_URL: https://3diot.vn
     ports:
       - "3000:3000"

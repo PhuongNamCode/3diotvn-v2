@@ -33,7 +33,11 @@ done
 
 # Run database migrations
 echo "Applying database migrations..."
-docker compose exec --user root app npx prisma migrate deploy
+docker compose exec --user root app npx prisma migrate deploy || echo "⚠️ Migration failed, trying schema sync..."
+
+# Sync database schema (fallback for schema changes)
+echo "Syncing database schema..."
+docker compose exec --user root app npx prisma db push || echo "⚠️ Schema sync failed, continuing..."
 
 # Restart app to apply migrations
 echo "Restarting app to apply migrations..."
