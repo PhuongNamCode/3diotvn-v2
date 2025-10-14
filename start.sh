@@ -1,12 +1,15 @@
 #!/bin/bash
 
-echo "🚀 Starting 3DIoT Project..."
+# 3DIoT Project - Development Startup Script
+# For normal development with code changes - fast build and startup
+
+echo "🚀 Starting 3DIoT Project (Development Mode)..."
 
 # Stop existing containers
 echo "Stopping existing containers..."
 docker compose down
 
-# Build and start services
+# Build and start services (with build for code changes)
 echo "Building and starting services..."
 docker compose up -d --build
 
@@ -14,13 +17,12 @@ docker compose up -d --build
 echo "Waiting for database to be ready..."
 sleep 10
 
-# Run database migrations
-echo "Running database migrations..."
-docker compose exec --user root app npx prisma migrate deploy
-
-# Restart app to apply migrations
-echo "Restarting app..."
-docker compose restart app
+# Wait for app container to be ready
+echo "Waiting for app container to be ready..."
+until docker compose exec app echo "App container is ready" 2>/dev/null; do
+    echo "Waiting for app container..."
+    sleep 2
+done
 
 echo "✅ Project is running!"
 echo "🌐 Access your app at: http://localhost:3000"
@@ -31,3 +33,4 @@ echo "📋 Useful commands:"
 echo "  View logs: docker compose logs -f"
 echo "  Stop: docker compose down"
 echo "  Restart: docker compose restart"
+echo "  Deep fix: ./start-deep.sh"

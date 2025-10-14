@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# 3DIoT Production Deployment Script
+# This script rebuilds containers to avoid database authentication issues
+# that can occur when environment variables change or Prisma client is outdated
+
 # Exit on any error
 set -e
 
@@ -26,8 +30,10 @@ docker compose --env-file env.production pull
 echo "🧹 Cleaning up unused resources..."
 docker system prune -f
 
-# Deploy containers
-echo "📦 Deploying containers..."
+# Deploy containers with deep rebuild to ensure clean state
+echo "📦 Building containers from scratch (production deep fix)..."
+docker compose --env-file env.production build --no-cache
+echo "📦 Starting containers..."
 docker compose --env-file env.production up -d
 
 # Wait for database
@@ -41,13 +47,16 @@ until docker compose --env-file env.production exec -T db pg_isready -U postgres
     sleep 2
 done
 
-# Run migrations
-echo "🗄️ Running migrations..."
-docker compose --env-file env.production exec --user root app npx prisma migrate deploy
+# Wait for app container to be ready
+echo "⏳ Waiting for app container to be ready..."
+until docker compose --env-file env.production exec app echo "App container is ready" 2>/dev/null; do
+    echo "Waiting for app container..."
+    sleep 3
+done
 
-# Restart app
-echo "🔄 Restarting app..."
-docker compose --env-file env.production restart app
+# Prisma client is already generated during build, no need for additional migration checks
+
+# No need to restart app since Prisma client is already generated during build
 
 # Health check
 echo "🏥 Performing health check..."

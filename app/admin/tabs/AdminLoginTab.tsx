@@ -66,8 +66,8 @@ export default function AdminLoginTab({ onLogin }: AdminLoginTabProps) {
         </div>
 
         <div className="demo-credentials">
-          <h4><i className="fas fa-key"></i> Demo Credentials</h4>
-          <p><strong>Username:</strong> admin<br /><strong>Password:</strong> admin123</p>
+          <h4><i className="fas fa-key"></i> Admin Credentials</h4>
+          <p>Please use your configured admin credentials to log in.</p>
         </div>
 
         <form onSubmit={handleSubmit}>

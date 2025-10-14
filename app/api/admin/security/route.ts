@@ -51,9 +51,17 @@ async function saveAdminCredentials(credentials: AdminCredentials): Promise<bool
 
 // Initialize default admin credentials if not exists
 async function initializeDefaultCredentials(): Promise<AdminCredentials> {
+  // Get credentials from environment variables (SECURE)
+  const adminUsername = process.env.ADMIN_USERNAME;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  
+  if (!adminUsername || !adminPassword) {
+    throw new Error('ADMIN_USERNAME and ADMIN_PASSWORD environment variables must be set');
+  }
+  
   const defaultCredentials: AdminCredentials = {
-    username: 'admin',
-    password: await bcrypt.hash('admin123', 10) // Hash the default password
+    username: adminUsername,
+    password: await bcrypt.hash(adminPassword, 10) // Hash the secure password
   };
   
   await saveAdminCredentials(defaultCredentials);

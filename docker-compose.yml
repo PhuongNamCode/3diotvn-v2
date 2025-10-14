@@ -10,7 +10,7 @@ services:
     environment:
       POSTGRES_DB: web
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 3diot2025secure
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:3diot2025secure@postgres:5432/web?schema=public
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/web?schema=public
       REDIS_URL: redis://redis:6379
       # Add other env vars from your .env file
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
@@ -58,6 +58,9 @@ services:
       SMTP_SECURE: ${SMTP_SECURE}
       ADMIN_RESET_CODE: ${ADMIN_RESET_CODE}
       ENABLE_RATE_LIMITING: ${ENABLE_RATE_LIMITING}
+      # Admin Credentials (SECURE)
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     ports:
       - "3000:3000"
     depends_on:

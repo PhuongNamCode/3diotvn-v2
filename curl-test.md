@@ -445,8 +445,8 @@ curl -X POST "$BASE_URL/api/course-enrollments" \
 curl -X POST "$BASE_URL/api/admin/auth" \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "admin",
-    "password": "admin123"
+    "username": "YOUR_ADMIN_USERNAME",
+    "password": "YOUR_ADMIN_PASSWORD"
   }' | jq
 
 # Sử dụng token trong header
