@@ -98,10 +98,6 @@ export default function CurriculumList({
             <div className="lesson-content">
               <div className="lesson-header">
                 <h4 className="lesson-title">{lesson.title}</h4>
-                <div className="lesson-type-badge">
-                  <i className={getLessonIcon(lesson.type)}></i>
-                  <span>{getLessonTypeLabel(lesson.type)}</span>
-                </div>
               </div>
               
               <div className="lesson-meta">

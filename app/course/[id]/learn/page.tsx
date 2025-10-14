@@ -178,42 +178,15 @@ export default function CourseLearnPage() {
     );
   }
 
+  // Calculate actual curriculum stats
+  const actualLessonsCount = course?.curriculum?.length || 0;
+  const actualDuration = course?.curriculum?.reduce((total, lesson) => {
+    const duration = parseInt(lesson.duration) || 0;
+    return total + duration;
+  }, 0) || 0;
+
   return (
     <div className="course-learn-page">
-      {/* Header */}
-      <div className="course-header">
-        <div className="header-content">
-          <button 
-            className="back-btn"
-            onClick={() => router.push('/my-courses')}
-          >
-            <i className="fas fa-arrow-left"></i>
-            Quay lại
-          </button>
-          <div className="course-info">
-            <h1>{course.title}</h1>
-            <p>{course.description}</p>
-            <div className="course-meta">
-              <span className="meta-item">
-                <i className="fas fa-user"></i>
-                {course.instructorName || '3DIoT Team'}
-              </span>
-              <span className="meta-item">
-                <i className="fas fa-play-circle"></i>
-                {course.lessonsCount} bài học
-              </span>
-              <span className="meta-item">
-                <i className="fas fa-clock"></i>
-                {formatDuration(course.durationMinutes)}
-              </span>
-              <span className="meta-item">
-                <i className="fas fa-tag"></i>
-                {course.category}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Main Content */}
       <div className="course-content">
@@ -233,10 +206,42 @@ export default function CourseLearnPage() {
             </div>
           ) : (
             <div className="welcome-section">
+              <div className="welcome-header">
+                <button 
+                  className="back-btn"
+                  onClick={() => router.push('/my-courses')}
+                >
+                  <i className="fas fa-arrow-left"></i>
+                  Quay lại
+                </button>
+                <h1 className="course-title">{course.title}</h1>
+              </div>
               <div className="welcome-content">
-                <i className="fas fa-graduation-cap"></i>
+                <div className="welcome-icon">
+                  <i className="fas fa-graduation-cap"></i>
+                </div>
                 <h2>Chào mừng đến với khóa học!</h2>
                 <p>Chọn một bài học từ danh sách bên phải để bắt đầu học tập.</p>
+                <div className="course-stats">
+                  <div className="stat-card">
+                    <div className="stat-icon">
+                      <i className="fas fa-play-circle"></i>
+                    </div>
+                    <div className="stat-info">
+                      <span className="stat-number">{actualLessonsCount}</span>
+                      <span className="stat-label">Bài học</span>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-icon">
+                      <i className="fas fa-clock"></i>
+                    </div>
+                    <div className="stat-info">
+                      <span className="stat-number">{actualDuration}</span>
+                      <span className="stat-label">Phút</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

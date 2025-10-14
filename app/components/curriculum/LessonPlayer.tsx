@@ -127,10 +127,6 @@ export default function LessonPlayer({
             <span className="lesson-number">Buổi {lessonIndex + 1}</span>
             <h2 className="lesson-title">{lesson.title}</h2>
           </div>
-          <div className="lesson-type">
-            <i className={getLessonIcon(lesson.type)}></i>
-            <span>{getLessonTypeLabel(lesson.type)}</span>
-          </div>
         </div>
         <button 
           className="close-player-btn"
