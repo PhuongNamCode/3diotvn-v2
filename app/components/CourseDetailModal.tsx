@@ -539,27 +539,6 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose, 
                   )}
                 </div>
 
-                {/* Test content để force scroll */}
-                <div style={{ marginBottom: '30px', padding: '20px', background: 'var(--surface-variant)', borderRadius: '12px' }}>
-                  <h4 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '16px', color: 'var(--primary)' }}>
-                    Test Scroll Content
-                  </h4>
-                  <p style={{ marginBottom: '10px', color: 'var(--text-secondary)' }}>
-                    Đây là nội dung test để kiểm tra scrollbar. Nếu bạn thấy scrollbar ở bên phải modal, nghĩa là đã hoạt động đúng.
-                  </p>
-                  <p style={{ marginBottom: '10px', color: 'var(--text-secondary)' }}>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  </p>
-                  <p style={{ marginBottom: '10px', color: 'var(--text-secondary)' }}>
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                  </p>
-                  <p style={{ marginBottom: '10px', color: 'var(--text-secondary)' }}>
-                    Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-                  </p>
-                  <p style={{ marginBottom: '10px', color: 'var(--text-secondary)' }}>
-                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                  </p>
-                </div>
 
                 {course.tags && course.tags.length > 0 && (
                   <div>

@@ -24,6 +24,12 @@ interface Course {
   instructorImage?: string;
   status: string;
   createdAt: string;
+  curriculum?: Array<{
+    title: string;
+    duration: string;
+    type: string;
+    url: string;
+  }>;
 }
 
 interface Enrollment {
@@ -95,8 +101,14 @@ export default function MyCoursesPage() {
     }
   };
 
-  const handleCourseClick = (courseId: string) => {
-    // Navigate to course learning page
+  const handleCourseClick = (courseId: string, status: string) => {
+    // Check if course is pending approval
+    if (status === 'pending') {
+      alert('Khóa học của bạn đang trong trạng thái chờ xác nhận, vui lòng đợi hoặc liên hệ với 3DIoT để được hỗ trợ');
+      return;
+    }
+    
+    // Navigate to course learning page for confirmed courses
     router.push(`/course/${courseId}/learn`);
   };
 
@@ -116,6 +128,19 @@ export default function MyCoursesPage() {
     return `${mins}m`;
   };
 
+  const calculateCourseDuration = (curriculum: any[] | undefined) => {
+    if (!curriculum || !Array.isArray(curriculum)) {
+      return '0m';
+    }
+    
+    const totalMinutes = curriculum.reduce((total, lesson) => {
+      const duration = parseInt(lesson.duration) || 0;
+      return total + duration;
+    }, 0);
+    
+    return formatDuration(totalMinutes);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'enrolled':
@@ -126,9 +151,9 @@ export default function MyCoursesPage() {
       case 'in-progress':
         return <span className="status-badge in-progress">Đang học</span>;
       case 'pending':
-        return <span className="status-badge pending">Chờ xử lý</span>;
+        return <span className="status-badge pending">Chờ xác nhận</span>;
       default:
-        return <span className="status-badge pending">Chờ xử lý</span>;
+        return <span className="status-badge pending">Chờ xác nhận</span>;
     }
   };
 
@@ -230,15 +255,11 @@ export default function MyCoursesPage() {
                       <div className="course-meta-section">
                         <div className="meta-item">
                           <i className="fas fa-play-circle"></i>
-                          <span>{enrollment.course.lessonsCount} bài học</span>
+                          <span>{enrollment.course.curriculum?.length || 0} bài học</span>
                         </div>
                         <div className="meta-item">
                           <i className="fas fa-clock"></i>
-                          <span>{formatDuration(enrollment.course.durationMinutes)}</span>
-                        </div>
-                        <div className="meta-item">
-                          <i className="fas fa-wallet"></i>
-                          <span>{enrollment.amount ? formatPrice(enrollment.amount) : 'Miễn phí'}</span>
+                          <span>{calculateCourseDuration(enrollment.course.curriculum)}</span>
                         </div>
                       </div>
                     </div>
@@ -247,11 +268,12 @@ export default function MyCoursesPage() {
                   {/* Course Ticket Footer */}
                   <div className="ticket-footer-elegant">
                     <button 
-                      className="study-now-btn"
+                      className={`study-now-btn ${enrollment.status === 'pending' ? 'disabled' : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCourseClick(enrollment.course.id);
+                        handleCourseClick(enrollment.course.id, enrollment.status);
                       }}
+                      disabled={enrollment.status === 'pending'}
                     >
                       <i className="fas fa-play"></i>
                       Vào học ngay

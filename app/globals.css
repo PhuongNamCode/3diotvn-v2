@@ -1033,11 +1033,15 @@ body {
   align-items: center;
   position: relative;
   z-index: 1;
+  width: 100%;
+  gap: 1rem;
 }
 
 .ticket-number {
   font-size: 0.9rem;
   opacity: 0.9;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .ticket-id {
@@ -1053,6 +1057,8 @@ body {
   padding: 0.5rem 1rem;
   border-radius: 20px;
   backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .status-indicator {
@@ -1231,7 +1237,28 @@ body {
   .ticket-header-elegant {
     padding: 0.75rem 1rem;
   }
+
+  .header-content {
+    gap: 0.5rem;
+  }
+
+  .ticket-status-elegant {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
   
+  .elegant-courses-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 2rem;
+  }
+
+  .elegant-course-ticket {
+    width: 100%;
+    height: auto;
+    min-height: 336px;
+  }
+
   .ticket-body-elegant {
     padding: 1rem;
     gap: 0.75rem;
@@ -1672,22 +1699,27 @@ body {
 /* Elegant Course Tickets */
 .elegant-courses-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3rem;
   padding: 2rem 1rem;
   max-width: 1600px;
   margin: 0 auto;
+  justify-content: flex-start;
 }
 
 .elegant-course-ticket {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  min-height: 280px;
+  width: 100%;
+  height: auto;
+  min-height: 320px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .elegant-course-ticket:hover {
@@ -1699,7 +1731,7 @@ body {
 .ticket-header-elegant {
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: white;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1748,16 +1780,18 @@ body {
 }
 
 .ticket-body-elegant {
-  padding: 1.25rem 1.5rem;
-  gap: 1rem;
-  min-height: 140px;
+  padding: 1rem 1.25rem;
+  gap: 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .instructor-section {
   background: var(--surface-variant);
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .instructor-label {
@@ -1777,6 +1811,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: auto;
 }
 
 .course-meta-section .meta-item {
@@ -1794,7 +1829,7 @@ body {
 }
 
 .ticket-footer-elegant {
-  padding: 0.5rem 1.5rem;
+  padding: 0.75rem 1.25rem;
   min-height: 20px;
   background: var(--surface);
   border-top: 1px solid var(--border);
@@ -1820,10 +1855,27 @@ body {
   text-decoration: none;
 }
 
-.study-now-btn:hover {
+.study-now-btn:hover:not(:disabled) {
   background: var(--accent-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.3);
+}
+
+.study-now-btn.disabled,
+.study-now-btn:disabled {
+  background: var(--text-muted);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.study-now-btn.disabled:hover,
+.study-now-btn:disabled:hover {
+  background: var(--text-muted);
+  transform: none;
+  box-shadow: none;
 }
 
 .study-now-btn i {
@@ -2388,6 +2440,11 @@ body {
   .content-container {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+  
+  .elegant-courses-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
   }
   
   .curriculum-list-section {

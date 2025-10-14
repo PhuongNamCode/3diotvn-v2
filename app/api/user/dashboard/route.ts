@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const enrollments = await prisma.courseEnrollment.findMany({
       where: { 
         email: userEmail,
-        status: 'confirmed' // Chỉ lấy những khóa học đã đăng ký thành công
+        status: { in: ['confirmed', 'pending'] } // Lấy cả khóa học đã xác nhận và đang chờ
       },
       include: {
         course: {
@@ -50,7 +50,8 @@ export async function GET(request: NextRequest) {
             instructorName: true,
             instructorImage: true,
             status: true,
-            createdAt: true
+            createdAt: true,
+            curriculum: true
           }
         }
       },

@@ -236,8 +236,8 @@ export default function CoursesTab() {
       courseId: selected.id,
       fullName: String(formData.get('fullName') || ''),
       email: String(formData.get('email') || ''),
-      phone: String(formData.get('phone') || ''),
-      status: 'pending'
+      phone: String(formData.get('phone') || '')
+      // Don't set status - let API determine based on course price
     };
 
     // Thêm thông tin thanh toán nếu khóa học có phí

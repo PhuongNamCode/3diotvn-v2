@@ -33,16 +33,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Course not found' }, { status: 400 });
     }
 
-    // Determine payment status based on course price and transaction ID
+    // Determine payment status and enrollment status based on course price
     let paymentStatus = 'pending';
+    let enrollmentStatus = 'pending';
+    
     if (course.price && course.price > 0) {
       if (body.transactionId) {
         paymentStatus = 'pending_verification'; // Cần admin xác thực
+        enrollmentStatus = 'pending';
       } else {
         paymentStatus = 'pending'; // Chưa thanh toán
+        enrollmentStatus = 'pending';
       }
     } else {
       paymentStatus = 'paid'; // Khóa học miễn phí
+      enrollmentStatus = 'confirmed'; // Tự động xác nhận cho khóa học miễn phí
     }
 
     const created = await prisma.courseEnrollment.create({
@@ -52,7 +57,7 @@ export async function POST(request: NextRequest) {
         fullName: body.fullName || '',
         email: body.email || '',
         phone: body.phone || null,
-        status: body.status || 'pending',
+        status: body.status || enrollmentStatus,
         paymentStatus: paymentStatus,
         paymentMethod: body.paymentMethod || null,
         transactionId: body.transactionId || null,
