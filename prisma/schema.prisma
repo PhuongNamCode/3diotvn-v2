@@ -139,7 +139,6 @@ model Course {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   enrollments     CourseEnrollment[]
-  videos          CourseVideo[]
 }
 
 model CourseEnrollment {
@@ -190,63 +189,6 @@ model NotificationLog {
   @@index([createdAt])
 }
 
-model CourseVideo {
-  id               String   @id @default(cuid())
-  courseId         String
-  youtubeVideoId   String   @unique
-  title            String
-  description      String?
-  thumbnailUrl     String?
-  duration         Int?     // seconds
-  videoOrder       Int      @default(0)
-  isPreview        Boolean  @default(false)
-  status           String   @default("active") // active, inactive
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  videoAccessTokens VideoAccessToken[]
-  videoViewLogs    VideoViewLog[]
-
-  @@index([courseId])
-  @@index([youtubeVideoId])
-}
-
-model VideoAccessToken {
-  id                String   @id @default(cuid())
-  userId            String?
-  videoId           String
-  accessToken       String   @unique
-  expiresAt         DateTime
-  maxViews          Int      @default(3)
-  currentViews      Int      @default(0)
-  ipAddress         String?
-  deviceFingerprint String?
-  createdAt         DateTime @default(now())
-  video             CourseVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
-  videoViewLogs     VideoViewLog[]
-
-  @@index([accessToken])
-  @@index([videoId])
-  @@index([expiresAt])
-}
-
-model VideoViewLog {
-  id                    String   @id @default(cuid())
-  accessTokenId         String?
-  userId                String?
-  videoId               String
-  viewDuration          Int?     // seconds watched
-  completionPercentage  Float?   // 0-100
-  ipAddress             String?
-  userAgent             String?
-  timestamp             DateTime @default(now())
-  video                 CourseVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
-  accessToken           VideoAccessToken? @relation(fields: [accessTokenId], references: [id], onDelete: SetNull)
-
-  @@index([videoId])
-  @@index([timestamp])
-  @@index([userId])
-}
 
 model VideoAccessLog {
   id            String   @id @default(cuid())

@@ -24,7 +24,8 @@ export async function GET(
         id: true,
         title: true,
         status: true,
-        category: true
+        category: true,
+        curriculum: true
       }
     });
 
@@ -35,63 +36,79 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // Get videos for the course
-    const videos = await prisma.courseVideo.findMany({
-      where: {
-        courseId: id,
-        status: status as any
-      },
-      orderBy: [
-        { videoOrder: 'asc' },
-        { createdAt: 'asc' }
-      ],
-      select: {
-        id: true,
-        youtubeVideoId: true,
-        title: true,
-        description: true,
-        thumbnailUrl: true,
-        duration: true,
-        videoOrder: true,
-        isPreview: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    });
+    // Get videos from curriculum JSON (new system)
+    interface VideoData {
+      id: string | null;
+      youtubeVideoId: string | null;
+      title: string;
+      description: string;
+      thumbnailUrl: string | null;
+      duration: string | null;
+      videoOrder: number;
+      isPreview: boolean;
+      status: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }
 
-    // Get video statistics if requested
+    let videos: VideoData[] = [];
+    if (course.curriculum && Array.isArray(course.curriculum)) {
+      videos = course.curriculum
+        .filter((lesson: any) => lesson.type === 'youtube')
+        .map((lesson: any, index: number): VideoData => {
+          // Extract video ID from URL
+          const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
+          const match = lesson.url.match(regex);
+          const youtubeVideoId = match ? match[1] : null;
+          
+          return {
+            id: youtubeVideoId,
+            youtubeVideoId: youtubeVideoId,
+            title: lesson.title || 'Video Lesson',
+            description: lesson.description || '',
+            thumbnailUrl: youtubeVideoId ? `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg` : null,
+            duration: lesson.duration || null,
+            videoOrder: index,
+            isPreview: false,
+            status: 'active',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+        });
+    }
+
+    // Get video statistics if requested (using VideoAccessLog instead of VideoViewLog)
     let videosWithStats = videos;
     if (includeStats) {
       videosWithStats = await Promise.all(
         videos.map(async (video) => {
           try {
-            const [totalViews, uniqueUsers, avgDuration, completionRate] = await Promise.all([
-              // Total views
-              prisma.videoViewLog.count({
+            // Skip stats if video.id is null
+            if (!video.id) {
+              return {
+                ...video,
+                stats: {
+                  totalViews: 0,
+                  uniqueUsers: 0,
+                  avgDuration: 0,
+                  completionRate: 0
+                }
+              };
+            }
+
+            const [totalViews, uniqueUsers] = await Promise.all([
+              // Total views from VideoAccessLog
+              prisma.videoAccessLog.count({
                 where: { videoId: video.id }
               }),
               
-              // Unique users
-              prisma.videoViewLog.groupBy({
-                by: ['userId'],
+              // Unique users from VideoAccessLog
+              prisma.videoAccessLog.groupBy({
+                by: ['email'],
                 where: { 
-                  videoId: video.id,
-                  userId: { not: null }
+                  videoId: video.id
                 }
-              }).then(result => result.length),
-              
-              // Average view duration
-              prisma.videoViewLog.aggregate({
-                where: { videoId: video.id },
-                _avg: { viewDuration: true }
-              }),
-              
-              // Average completion rate
-              prisma.videoViewLog.aggregate({
-                where: { videoId: video.id },
-                _avg: { completionPercentage: true }
-              })
+              }).then(result => result.length)
             ]);
 
             return {
@@ -99,8 +116,8 @@ export async function GET(
               stats: {
                 totalViews,
                 uniqueUsers,
-                avgDuration: avgDuration._avg.viewDuration || 0,
-                completionRate: completionRate._avg.completionPercentage || 0
+                avgDuration: 0, // Not available in new system
+                completionRate: 0 // Not available in new system
               }
             };
           } catch (error) {
@@ -145,7 +162,7 @@ export async function GET(
 
 /**
  * POST /api/courses/[id]/videos
- * Add a video to a course
+ * Add a video to course curriculum (new system)
  */
 export async function POST(
   request: NextRequest,
@@ -155,25 +172,24 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
     const {
-      youtubeVideoId,
       title,
-      description,
-      videoOrder,
-      isPreview = false,
-      status = 'active'
+      duration,
+      type = 'youtube',
+      url
     } = body;
 
     // Validate required fields
-    if (!youtubeVideoId || !title) {
+    if (!title || !url) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: youtubeVideoId, title'
+        error: 'Missing required fields: title, url'
       }, { status: 400 });
     }
 
     // Check if course exists
     const course = await prisma.course.findUnique({
-      where: { id }
+      where: { id },
+      select: { curriculum: true }
     });
 
     if (!course) {
@@ -183,37 +199,47 @@ export async function POST(
       }, { status: 404 });
     }
 
-    // Check if video already exists in this course
-    const existingVideo = await prisma.courseVideo.findFirst({
-      where: {
-        courseId: id,
-        youtubeVideoId
-      }
-    });
+    // Get current curriculum
+    const currentCurriculum = course.curriculum && Array.isArray(course.curriculum) 
+      ? course.curriculum as any[]
+      : [];
 
-    if (existingVideo) {
+    // Check if video already exists in curriculum
+    const existingLesson = currentCurriculum.find((lesson: any) => 
+      lesson.url === url
+    );
+
+    if (existingLesson) {
       return NextResponse.json({
         success: false,
         error: 'Video already exists in this course'
       }, { status: 409 });
     }
 
-    // Create video record
-    const video = await prisma.courseVideo.create({
+    // Add new lesson to curriculum
+    const newLesson = {
+      title,
+      duration,
+      type,
+      url
+    };
+
+    const updatedCurriculum = [...currentCurriculum, newLesson];
+
+    // Update course with new curriculum
+    const updatedCourse = await prisma.course.update({
+      where: { id },
       data: {
-        courseId: id,
-        youtubeVideoId,
-        title,
-        description,
-        videoOrder: videoOrder || 0,
-        isPreview,
-        status
+        curriculum: updatedCurriculum
       }
     });
 
     return NextResponse.json({
       success: true,
-      data: video,
+      data: {
+        lesson: newLesson,
+        curriculum: updatedCurriculum
+      },
       message: 'Video added to course successfully'
     }, { status: 201 });
 

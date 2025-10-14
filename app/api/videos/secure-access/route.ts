@@ -41,54 +41,43 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // 2. Check if video exists and belongs to course
-    // First try to find in CourseVideo table (old system)
-    let video = await prisma.courseVideo.findFirst({
-      where: {
-        id: videoId,
-        courseId,
-        status: 'active'
-      }
+    // 2. Check if video exists in curriculum JSON (new system only)
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { curriculum: true }
     });
 
-    // If not found in CourseVideo, check in curriculum JSON (new system)
-    if (!video) {
-      const course = await prisma.course.findUnique({
-        where: { id: courseId },
-        select: { curriculum: true }
+    let video = null;
+    if (course?.curriculum && Array.isArray(course.curriculum)) {
+      // Look for the video in curriculum array
+      const lesson = course.curriculum.find((item: any) => {
+        if (item.type === 'youtube' && item.url) {
+          // Extract video ID from URL
+          const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
+          const match = item.url.match(regex);
+          const lessonVideoId = match ? match[1] : null;
+          return lessonVideoId === videoId;
+        }
+        return false;
       });
 
-      if (course?.curriculum && Array.isArray(course.curriculum)) {
-        // Look for the video in curriculum array
-        const lesson = course.curriculum.find((item: any) => {
-          if (item.type === 'youtube' && item.url) {
-            // Extract video ID from URL
-            const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
-            const match = item.url.match(regex);
-            const lessonVideoId = match ? match[1] : null;
-            return lessonVideoId === videoId;
-          }
-          return false;
-        });
-
-        if (lesson) {
-          // Create a virtual video object for curriculum-based videos
-          const lessonData = lesson as any;
-          video = {
-            id: videoId,
-            courseId: courseId,
-            youtubeVideoId: videoId,
-            title: lessonData.title || 'Video Lesson',
-            description: lessonData.description || '',
-            thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-            duration: lessonData.duration || null,
-            videoOrder: 0,
-            isPreview: false,
-            status: 'active',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
-        }
+      if (lesson) {
+        // Create a virtual video object for curriculum-based videos
+        const lessonData = lesson as any;
+        video = {
+          id: videoId,
+          courseId: courseId,
+          youtubeVideoId: videoId,
+          title: lessonData.title || 'Video Lesson',
+          description: lessonData.description || '',
+          thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+          duration: lessonData.duration || null,
+          videoOrder: 0,
+          isPreview: false,
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
       }
     }
 
