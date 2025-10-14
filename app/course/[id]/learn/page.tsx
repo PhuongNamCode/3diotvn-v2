@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import VideoList from '@/app/components/video/VideoList';
-import SecureVideoPlayer from '@/app/components/video/SecureVideoPlayer';
+import CurriculumList from '@/app/components/curriculum/CurriculumList';
+import LessonPlayer from '@/app/components/curriculum/LessonPlayer';
 
 interface User {
   name: string;
@@ -26,20 +26,14 @@ interface Course {
   instructorImage?: string;
   status: string;
   createdAt: string;
+  curriculum?: Lesson[];
 }
 
-interface Video {
-  id: string;
-  youtubeVideoId: string;
+interface Lesson {
   title: string;
-  description?: string;
-  thumbnailUrl?: string;
-  duration?: number;
-  videoOrder: number;
-  isPreview: boolean;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  duration: string;
+  type: 'youtube' | 'online-meeting';
+  url: string;
 }
 
 export default function CourseLearnPage() {
@@ -47,7 +41,9 @@ export default function CourseLearnPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [selectedLessonIndex, setSelectedLessonIndex] = useState<number | null>(null);
+  const [enrollmentEmail, setEnrollmentEmail] = useState<string | null>(null);
   const router = useRouter();
   const params = useParams();
   const courseId = params.id as string;
@@ -103,6 +99,9 @@ export default function CourseLearnPage() {
         throw new Error('You are not enrolled in this course');
       }
 
+      // Store enrollment email for video access
+      setEnrollmentEmail(enrollment.email);
+
     } catch (error) {
       console.error('Error fetching course data:', error);
       setError(error instanceof Error ? error.message : 'Failed to load course');
@@ -111,12 +110,14 @@ export default function CourseLearnPage() {
     }
   };
 
-  const handleVideoSelect = (video: Video) => {
-    setSelectedVideo(video);
+  const handleLessonSelect = (lesson: Lesson, index: number) => {
+    setSelectedLesson(lesson);
+    setSelectedLessonIndex(index);
   };
 
-  const handleVideoClose = () => {
-    setSelectedVideo(null);
+  const handleLessonClose = () => {
+    setSelectedLesson(null);
+    setSelectedLessonIndex(null);
   };
 
   const formatDuration = (minutes: number) => {
@@ -217,58 +218,38 @@ export default function CourseLearnPage() {
       {/* Main Content */}
       <div className="course-content">
         <div className="content-container">
-          {/* Video Player Section */}
-          {selectedVideo ? (
-            <div className="video-player-section">
-              <div className="player-header">
-                <h2>{selectedVideo.title}</h2>
-                <button 
-                  className="close-player-btn"
-                  onClick={handleVideoClose}
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-              <div className="video-player-container">
-                <SecureVideoPlayer
-                  videoId={selectedVideo.id}
-                  courseId={courseId}
-                  userId={user?.id || ''}
-                  email={user?.email || ''}
-                  title={selectedVideo.title}
-                  description={selectedVideo.description || ''}
-                  thumbnailUrl={selectedVideo.thumbnailUrl}
-                  duration={selectedVideo.duration}
-                  isPreview={selectedVideo.isPreview}
-                  className="course-video-player"
-                />
-              </div>
-              {selectedVideo.description && (
-                <div className="video-description">
-                  <h3>Mô tả bài học</h3>
-                  <p>{selectedVideo.description}</p>
-                </div>
-              )}
+          {/* Lesson Player Section */}
+          {selectedLesson ? (
+            <div className="lesson-player-section">
+              <LessonPlayer
+                lesson={selectedLesson}
+                lessonIndex={selectedLessonIndex || 0}
+                courseId={courseId}
+                userId={user?.id || ''}
+                email={enrollmentEmail || user?.email || ''}
+                onClose={handleLessonClose}
+                className="course-lesson-player"
+              />
             </div>
           ) : (
             <div className="welcome-section">
               <div className="welcome-content">
-                <i className="fas fa-play-circle"></i>
+                <i className="fas fa-graduation-cap"></i>
                 <h2>Chào mừng đến với khóa học!</h2>
                 <p>Chọn một bài học từ danh sách bên phải để bắt đầu học tập.</p>
               </div>
             </div>
           )}
 
-          {/* Video List Section */}
-          <div className="video-list-section">
-            <VideoList
+          {/* Curriculum List Section */}
+          <div className="curriculum-list-section">
+            <CurriculumList
               courseId={courseId}
+              curriculum={course?.curriculum || []}
               userId={user?.id || ''}
               email={user?.email || ''}
-              showStats={true}
-              className="course-video-list"
-              onVideoSelect={handleVideoSelect}
+              onLessonSelect={handleLessonSelect}
+              className="course-curriculum-list"
             />
           </div>
         </div>

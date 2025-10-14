@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useEvents, useRegistrations } from "@/lib/hooks/useData";
 import { paymentMethods, generatePaymentInstructions } from "@/lib/payment-config";
+import { useUserEmail } from "@/app/hooks/useUserEmail";
 // Removed QRCodeGenerator import - using static QR codes instead
 
 type EventItem = {
@@ -39,6 +40,7 @@ type RegistrationPayload = {
 
 export default function EventsTab() {
   const { events: apiEvents, loading: apiLoading, refetch: fetchEvents } = useEvents();
+  const { userEmail, isLoggedIn } = useUserEmail();
   const { createRegistration } = useRegistrations();
   const [items, setItems] = useState<EventItem[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -1224,21 +1226,43 @@ export default function EventsTab() {
                             }}>
                               Email *
                             </label>
-                            <input 
-                              type="email" 
-                              id="email" 
-                              name="email" 
-                              required 
-                              style={{
+                            {isLoggedIn && userEmail ? (
+                              <div style={{
                                 width: '100%',
                                 padding: '15px 20px',
                                 border: '2px solid var(--border)',
                                 borderRadius: '12px',
                                 fontSize: '16px',
-                                background: 'var(--background)'
-                              }}
-                              placeholder="email@example.com"
-                            />
+                                background: 'var(--surface-variant)',
+                                color: 'var(--text-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                              }}>
+                                <i className="fas fa-lock" style={{ color: 'var(--accent)' }}></i>
+                                <span>{userEmail}</span>
+                                <small style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                                  (Email từ tài khoản đã đăng nhập)
+                                </small>
+                              </div>
+                            ) : (
+                              <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                required 
+                                style={{
+                                  width: '100%',
+                                  padding: '15px 20px',
+                                  border: '2px solid var(--border)',
+                                  borderRadius: '12px',
+                                  fontSize: '16px',
+                                  background: 'var(--background)'
+                                }}
+                                placeholder="email@example.com"
+                              />
+                            )}
+                            <input type="hidden" id="email" name="email" value={userEmail || ''} />
                           </div>
                           <div>
                             <label htmlFor="phone" style={{ 

@@ -71,7 +71,7 @@ export async function POST(
         where: {
           courseId: video.courseId,
           email: email || undefined,
-          status: 'active',
+          status: { in: ['confirmed', 'enrolled'] },
           paymentStatus: 'paid'
         }
       });

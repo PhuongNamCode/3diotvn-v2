@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useUserEmail } from '@/app/hooks/useUserEmail';
 
 interface NewsletterModalProps {
   isOpen: boolean;
@@ -10,16 +11,18 @@ interface NewsletterModalProps {
 
 const NewsletterModal: React.FC<NewsletterModalProps> = ({ isOpen, onClose, onSubscribe }) => {
   const [email, setEmail] = useState('');
+  const { userEmail, isLoggedIn } = useUserEmail();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || isLoading) return;
+    const emailToUse = isLoggedIn && userEmail ? userEmail : email;
+    if (!emailToUse || isLoading) return;
 
     setIsLoading(true);
     try {
-      await onSubscribe(email);
+      await onSubscribe(emailToUse);
       setIsSuccess(true);
       setTimeout(() => {
         setIsSuccess(false);
@@ -67,22 +70,48 @@ const NewsletterModal: React.FC<NewsletterModalProps> = ({ isOpen, onClose, onSu
           ) : (
             <form className="newsletter-form" onSubmit={handleSubmit}>
               <div className="newsletter-input-group">
-                <div className="newsletter-input-wrapper">
-                  <i className="fas fa-envelope newsletter-input-icon"></i>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Nhập email của bạn..."
-                    className="newsletter-input"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
+                {isLoggedIn && userEmail ? (
+                  <div style={{ 
+                    padding: '15px 20px',
+                    border: '2px solid var(--border)',
+                    borderRadius: '12px',
+                    fontSize: '16px',
+                    background: 'var(--surface-variant)',
+                    color: 'var(--text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '15px'
+                  }}>
+                    <i className="fas fa-lock" style={{ color: 'var(--accent)' }}></i>
+                    <span>{userEmail}</span>
+                    <small style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                      (Email từ tài khoản đã đăng nhập)
+                    </small>
+                  </div>
+                ) : (
+                  <div className="newsletter-input-wrapper">
+                    <i className="fas fa-envelope newsletter-input-icon"></i>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Nhập email của bạn..."
+                      className="newsletter-input"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                )}
                 <button 
                   type="submit" 
                   className="newsletter-submit"
-                  disabled={isLoading || !email}
+                  disabled={isLoading || (!email && !userEmail)}
+                  onClick={() => {
+                    if (isLoggedIn && userEmail) {
+                      setEmail(userEmail);
+                    }
+                  }}
                 >
                   {isLoading ? (
                     <>

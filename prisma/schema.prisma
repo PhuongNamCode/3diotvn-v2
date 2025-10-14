@@ -247,3 +247,36 @@ model VideoViewLog {
   @@index([timestamp])
   @@index([userId])
 }
+
+model VideoAccessLog {
+  id            String   @id @default(cuid())
+  videoId       String
+  courseId      String
+  email         String
+  userId        String?
+  action        String   // 'access_granted', 'access_revoked', 'viewed', 'error'
+  status        String?  // 'granted', 'failed', 'revoked'
+  error         String?  // Error message if failed
+  ipAddress     String?
+  userAgent     String?
+  metadata      Json?    // Additional data (error codes, etc.)
+  timestamp     DateTime @default(now())
+
+  @@index([videoId])
+  @@index([email])
+  @@index([timestamp])
+  @@index([action])
+}
+
+model UserYouTubeCredentials {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  accessToken   String
+  refreshToken  String
+  expiryDate    DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([expiryDate])
+}

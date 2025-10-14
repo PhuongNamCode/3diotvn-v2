@@ -49,6 +49,29 @@ export default function AdminCoursesTab() {
     whatYouWillLearn: "",
   });
 
+  // Lessons state for curriculum
+  const [lessons, setLessons] = useState([
+    { id: 1, title: "", duration: "", type: "youtube", url: "" }
+  ]);
+
+  // Lessons management functions
+  const addLesson = () => {
+    const newId = Math.max(...lessons.map(l => l.id), 0) + 1;
+    setLessons([...lessons, { id: newId, title: "", duration: "", type: "youtube", url: "" }]);
+  };
+
+  const removeLesson = (id: number) => {
+    if (lessons.length > 1) {
+      setLessons(lessons.filter(l => l.id !== id));
+    }
+  };
+
+  const updateLesson = (id: number, field: string, value: string) => {
+    setLessons(lessons.map(l => 
+      l.id === id ? { ...l, [field]: value } : l
+    ));
+  };
+
   // Filtered courses
   const filteredCourses = useMemo(() => {
     return courses.filter(course => {
@@ -111,14 +134,18 @@ export default function AdminCoursesTab() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // Parse JSON fields safely
-      let curriculum = [];
+      // Convert lessons to curriculum format
+      const curriculum = lessons
+        .filter(lesson => lesson.title.trim() !== "")
+        .map(lesson => ({
+          title: lesson.title,
+          duration: lesson.duration,
+          type: lesson.type,
+          url: lesson.url
+        }));
+
+      // Parse whatYouWillLearn JSON safely
       let whatYouWillLearn = [];
-      try {
-        curriculum = form.curriculum ? JSON.parse(form.curriculum) : [];
-      } catch (e) {
-        console.warn('Invalid curriculum JSON, using empty array');
-      }
       try {
         whatYouWillLearn = form.whatYouWillLearn ? JSON.parse(form.whatYouWillLearn) : [];
       } catch (e) {
@@ -178,6 +205,7 @@ export default function AdminCoursesTab() {
       overview: "", curriculum: "", instructorName: "", instructorBio: "",
       instructorImage: "", instructorEmail: "", requirements: "", whatYouWillLearn: ""
     });
+    setLessons([{ id: 1, title: "", duration: "", type: "youtube", url: "" }]);
   };
 
   const onEdit = (id: string) => {
@@ -212,6 +240,20 @@ export default function AdminCoursesTab() {
       requirements: c.requirements || "",
       whatYouWillLearn: Array.isArray(c.whatYouWillLearn) ? JSON.stringify(c.whatYouWillLearn, null, 2) : (c.whatYouWillLearn || ""),
     });
+
+    // Load lessons from curriculum
+    if (Array.isArray(c.curriculum) && c.curriculum.length > 0) {
+      const loadedLessons = c.curriculum.map((lesson: any, index: number) => ({
+        id: index + 1,
+        title: lesson.title || "",
+        duration: lesson.duration || "",
+        type: lesson.type || "youtube",
+        url: lesson.url || ""
+      }));
+      setLessons(loadedLessons);
+    } else {
+      setLessons([{ id: 1, title: "", duration: "", type: "youtube", url: "" }]);
+    }
   };
 
   const onDelete = async (id: string) => {
@@ -766,16 +808,83 @@ export default function AdminCoursesTab() {
                   </div>
 
                   <div className="form-group">
-                    <label>Chương trình học (JSON array)</label>
-                    <textarea
-                      value={form.curriculum}
-                      onChange={(e) => setForm({ ...form, curriculum: e.target.value })}
-                      placeholder='[{"title": "Bài 1: Giới thiệu", "duration": "15 phút", "type": "video"}, {"title": "Bài 2: Thực hành", "duration": "30 phút", "type": "assignment"}]'
-                      rows={4}
-                      className="json-textarea"
-                    />
+                    <label>Chương trình học</label>
+                    <div className="curriculum-container">
+                      {lessons.map((lesson, index) => (
+                        <div key={lesson.id} className="lesson-item">
+                          <div className="lesson-header">
+                            <span className="lesson-number">Buổi {index + 1}</span>
+                            {lessons.length > 1 && (
+                              <button
+                                type="button"
+                                className="remove-lesson-btn"
+                                onClick={() => removeLesson(lesson.id)}
+                                title="Xóa buổi học"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            )}
+                          </div>
+                          <div className="lesson-fields">
+                            <div className="lesson-field">
+                              <input
+                                type="text"
+                                value={lesson.title}
+                                onChange={(e) => updateLesson(lesson.id, 'title', e.target.value)}
+                                placeholder="Nhập tiêu đề buổi học..."
+                                className="form-input lesson-title"
+                              />
+                            </div>
+                            <div className="lesson-field-row">
+                              <div className="lesson-field">
+                                <input
+                                  type="text"
+                                  value={lesson.duration}
+                                  onChange={(e) => updateLesson(lesson.id, 'duration', e.target.value)}
+                                  placeholder="Thời lượng (VD: 30 phút)"
+                                  className="form-input lesson-duration"
+                                />
+                              </div>
+                              <div className="lesson-field">
+                                <select
+                                  value={lesson.type}
+                                  onChange={(e) => updateLesson(lesson.id, 'type', e.target.value)}
+                                  className="form-input lesson-type"
+                                >
+                                  <option value="youtube">YouTube Video</option>
+                                  <option value="online-meeting">Online Meeting</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="lesson-field">
+                              <input
+                                type="url"
+                                value={lesson.url}
+                                onChange={(e) => updateLesson(lesson.id, 'url', e.target.value)}
+                                placeholder={lesson.type === 'youtube' ? 'https://www.youtube.com/watch?v=VIDEO_ID' : 'https://meet.google.com/xxx-xxxx-xxx'}
+                                className="form-input lesson-url"
+                              />
+                              <small className="lesson-url-help">
+                                {lesson.type === 'youtube' 
+                                  ? 'Nhập URL video YouTube (private video)' 
+                                  : 'Nhập link tham gia Online Meeting'
+                                }
+                              </small>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="add-lesson-btn"
+                        onClick={addLesson}
+                      >
+                        <i className="fas fa-plus"></i>
+                        Thêm buổi học
+                      </button>
+                    </div>
                     <small className="form-help">
-                      Định dạng: JSON array, mỗi item có: title, duration, type (video/assignment/project)
+                      Thêm các buổi học cho khóa học. Mỗi buổi có thể là video, bài tập, dự án hoặc quiz.
                     </small>
                   </div>
                 </div>

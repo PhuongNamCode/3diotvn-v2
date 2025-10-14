@@ -9,6 +9,7 @@ import CourseCard from "@/app/components/CourseCard";
 import CourseCardSkeleton from "@/app/components/CourseCardSkeleton";
 import EnhancedSearchBar from "@/app/components/EnhancedSearchBar";
 import CourseDetailModal from "@/app/components/CourseDetailModal";
+import { useUserEmail } from "@/app/hooks/useUserEmail";
 
 type CourseItem = {
   id: string;
@@ -55,6 +56,7 @@ type EnrollmentPayload = {
 
 export default function CoursesTab() {
   const { courses: apiCourses, loading: apiLoading, refetch: refetchCourses } = useCourses();
+  const { userEmail, isLoggedIn } = useUserEmail();
   const { createEnrollment } = useCourseEnrollments();
   const [items, setItems] = useState<CourseItem[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -536,7 +538,28 @@ export default function CoursesTab() {
                       </div>
                       <div className="form-group">
                         <label htmlFor="email">Email *</label>
-                        <input type="email" id="email" name="email" required placeholder="you@example.com" />
+                        {isLoggedIn && userEmail ? (
+                          <div style={{ 
+                            padding: '15px 20px',
+                            border: '2px solid var(--border)',
+                            borderRadius: '12px',
+                            fontSize: '16px',
+                            background: 'var(--surface-variant)',
+                            color: 'var(--text-primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px'
+                          }}>
+                            <i className="fas fa-lock" style={{ color: 'var(--accent)' }}></i>
+                            <span>{userEmail}</span>
+                            <small style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                              (Email từ tài khoản đã đăng nhập)
+                            </small>
+                          </div>
+                        ) : (
+                          <input type="email" id="email" name="email" required placeholder="you@example.com" />
+                        )}
+                        <input type="hidden" id="email" name="email" value={userEmail || ''} />
                       </div>
                       <div className="form-group">
                         <label htmlFor="phone">Số điện thoại</label>
