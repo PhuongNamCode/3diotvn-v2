@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { useContacts } from "@/lib/hooks/useData";
-import { useUserEmail } from "@/app/hooks/useUserEmail";
 
 export default function ContactTab() {
   const { createContact } = useContacts();
-  const { userEmail, isLoggedIn } = useUserEmail();
   const [activeForm, setActiveForm] = useState<'partnership' | 'support'>('partnership');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
@@ -148,28 +146,7 @@ export default function ContactTab() {
               </div>
               <div className="form-group">
                 <label htmlFor="email">Email *</label>
-                {isLoggedIn && userEmail ? (
-                  <div style={{ 
-                    padding: '15px 20px',
-                    border: '2px solid var(--border)',
-                    borderRadius: '12px',
-                    fontSize: '16px',
-                    background: 'var(--surface-variant)',
-                    color: 'var(--text-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                  }}>
-                    <i className="fas fa-lock" style={{ color: 'var(--accent)' }}></i>
-                    <span>{userEmail}</span>
-                    <small style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-                      (Email từ tài khoản đã đăng nhập)
-                    </small>
-                  </div>
-                ) : (
-                  <input type="email" id="email" name="email" placeholder="you@company.com" required />
-                )}
-                <input type="hidden" id="email" name="email" value={userEmail || ''} />
+                <input type="email" id="email" name="email" placeholder="you@company.com" required />
               </div>
               <div className="form-group">
                 <label htmlFor="phone">Số điện thoại *</label>

@@ -541,20 +541,69 @@ export default function CoursesTab() {
                         {isLoggedIn && userEmail ? (
                           <div style={{ 
                             padding: '15px 20px',
-                            border: '2px solid var(--border)',
+                            border: '2px solid var(--accent)',
                             borderRadius: '12px',
                             fontSize: '16px',
-                            background: 'var(--surface-variant)',
+                            background: 'linear-gradient(135deg, var(--surface-variant), var(--surface))',
                             color: 'var(--text-primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px'
+                            position: 'relative',
+                            overflow: 'hidden'
                           }}>
-                            <i className="fas fa-lock" style={{ color: 'var(--accent)' }}></i>
-                            <span>{userEmail}</span>
-                            <small style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-                              (Email từ tài khoản đã đăng nhập)
-                            </small>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              marginBottom: '8px'
+                            }}>
+                              <div style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                background: 'var(--accent)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                              }}>
+                                <i className="fas fa-lock" style={{ color: 'white', fontSize: '14px' }}></i>
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ 
+                                  fontWeight: '600',
+                                  fontSize: '16px',
+                                  color: 'var(--text-primary)'
+                                }}>
+                                  {userEmail}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              marginLeft: '44px'
+                            }}>
+                              <i className="fas fa-check-circle" style={{ 
+                                color: 'var(--success)', 
+                                fontSize: '12px' 
+                              }}></i>
+                              <small style={{ 
+                                color: 'var(--text-secondary)', 
+                                fontSize: '13px',
+                                fontWeight: '500'
+                              }}>
+                                Email từ tài khoản đã đăng nhập
+                              </small>
+                            </div>
+                            <div style={{
+                              position: 'absolute',
+                              top: 0,
+                              right: 0,
+                              width: '60px',
+                              height: '100%',
+                              background: 'linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1))',
+                              pointerEvents: 'none'
+                            }}></div>
                           </div>
                         ) : (
                           <input type="email" id="email" name="email" required placeholder="you@example.com" />
