@@ -74,7 +74,8 @@ export async function POST(request: NextRequest) {
       let emailSubject = '';
       let emailData;
 
-      if (paymentStatus === 'pending_verification') {
+      // Send pending email if: payment_verification needed OR payment pending
+      if (paymentStatus === 'pending_verification' || paymentStatus === 'pending') {
         emailSubject = `⏳ Đang xử lý đăng ký: ${course.title}`;
         emailData = generateCourseEnrollmentPendingEmail({
           userName: created.fullName,
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
           transactionId: created.transactionId || ''
         });
       } else {
+        // Send confirmation email only for free courses (auto-confirmed)
         emailSubject = `🎉 Xác nhận đăng ký khóa học: ${course.title}`;
         emailData = generateCourseEnrollmentConfirmEmail({
           userName: created.fullName,
@@ -101,9 +103,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (!emailSent) {
-        console.warn(`Failed to send ${paymentStatus === 'pending_verification' ? 'pending' : 'confirmation'} email to ${created.email}`);
+        console.warn(`Failed to send ${paymentStatus === 'paid' ? 'confirmation' : 'pending'} email to ${created.email}`);
       } else {
-        console.log(`${paymentStatus === 'pending_verification' ? 'Pending' : 'Confirmation'} email sent successfully to ${created.email}`);
+        console.log(`${paymentStatus === 'paid' ? 'Confirmation' : 'Pending'} email sent successfully to ${created.email}`);
       }
     } catch (emailError) {
       console.error('Error sending email:', emailError);
