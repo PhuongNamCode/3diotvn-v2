@@ -76,8 +76,8 @@ body {
    RESPONSIVE HEADER & NAVIGATION SYSTEM
    ======================================== */
 
-/* Import responsive utilities */
-@import './responsive.css';
+/* Import responsive utilities - REMOVED to prevent build issues */
+/* @import './responsive.css'; */
 
 /* Header & Navigation */
 .header {
@@ -5342,14 +5342,84 @@ body {
   }
 }
 
-/* Debug styles for mobile menu */
+/* ========================================
+   CRITICAL MOBILE MENU FIX
+   Override all previous styles with !important
+   ======================================== */
 @media (max-width: 768px) {
-  .nav-tabs {
-    border: 2px solid red !important; /* Debug border - remove in production */
+  /* Mobile menu button MUST be visible */
+  .mobile-menu-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
   
+  /* Mobile navigation menu */
+  .nav-tabs {
+    display: none !important;
+    position: fixed !important;
+    top: 70px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    background: var(--surface) !important;
+    flex-direction: column !important;
+    padding: 1rem !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+    border-top: 1px solid var(--border) !important;
+    z-index: 9999 !important;
+    border-radius: 0 !important;
+    backdrop-filter: blur(10px) !important;
+    margin: 0 !important;
+    max-height: calc(100vh - 70px) !important;
+    overflow-y: auto !important;
+    animation: none !important;
+  }
+  
+  /* Show menu when .show class is present */
   .nav-tabs.show {
-    border: 2px solid green !important; /* Debug border - remove in production */
+    display: flex !important;
+    animation: slideDown 0.3s ease-out !important;
+  }
+  
+  /* Individual tab styles */
+  .nav-tab {
+    padding: 14px 16px !important;
+    text-align: left !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    border-radius: 8px !important;
+    margin-bottom: 4px !important;
+    transition: all 0.3s ease !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-primary) !important;
+    font-size: 16px !important;
+    display: flex !important;
+    cursor: pointer !important;
+  }
+
+  .nav-tab i {
+    margin-right: 12px !important;
+    font-size: 16px !important;
+  }
+
+  .nav-tab:hover {
+    background: var(--surface-hover) !important;
+    transform: translateX(4px) !important;
+  }
+
+  .nav-tab.active {
+    background: var(--accent) !important;
+    color: white !important;
+  }
+  
+  /* Hide desktop navigation */
+  .nav-center {
+    display: none !important;
+    visibility: hidden !important;
   }
 }
 

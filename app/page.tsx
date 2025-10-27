@@ -96,19 +96,32 @@ export default function Home() {
     const themeToggle = document.getElementById('themeToggle');
     themeToggle?.addEventListener('click', toggleTheme);
 
-    // Mobile menu toggle
+    // Mobile menu toggle - Enhanced with debugging
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const navTabs = document.getElementById('navTabs');
     
-    function toggleMobileMenu() { 
+    function toggleMobileMenu(e: Event) { 
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('Mobile menu button clicked!'); // Debug log
+      
       if (navTabs) {
+        const isShowing = navTabs.classList.contains('show');
+        console.log('Current state:', isShowing ? 'showing' : 'hidden'); // Debug log
+        
         navTabs.classList.toggle('show');
+        
         // Prevent body scroll when menu is open
-        if (navTabs.classList.contains('show')) {
+        if (!isShowing) {
           document.body.style.overflow = 'hidden';
+          console.log('Menu opened, body scroll disabled'); // Debug log
         } else {
           document.body.style.overflow = 'auto';
+          console.log('Menu closed, body scroll enabled'); // Debug log
         }
+      } else {
+        console.error('navTabs element not found!'); // Debug log
       }
     }
     
@@ -119,11 +132,38 @@ export default function Home() {
           !mobileMenuBtn?.contains(e.target as Node)) {
         navTabs.classList.remove('show');
         document.body.style.overflow = 'auto';
+        console.log('Menu closed by outside click'); // Debug log
       }
     }
     
-    mobileMenuBtn?.addEventListener('click', toggleMobileMenu);
+    // Enhanced event listener with error handling
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+      console.log('Mobile menu event listener attached'); // Debug log
+    } else {
+      console.error('Mobile menu button not found!'); // Debug log
+    }
+    
     document.addEventListener('click', closeMobileMenuOnOutsideClick);
+    
+    // Fallback: Try to attach event listener after a delay
+    setTimeout(() => {
+      const retryMobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const retryNavTabs = document.getElementById('navTabs');
+      
+      if (retryMobileMenuBtn && !retryMobileMenuBtn.onclick) {
+        retryMobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        console.log('Fallback mobile menu event listener attached'); // Debug log
+      }
+      
+      // Debug: Log element states
+      console.log('Mobile menu button exists:', !!retryMobileMenuBtn);
+      console.log('Nav tabs exists:', !!retryNavTabs);
+      if (retryNavTabs) {
+        console.log('Nav tabs classes:', retryNavTabs.className);
+        console.log('Nav tabs computed display:', window.getComputedStyle(retryNavTabs).display);
+      }
+    }, 1000);
 
     // Helpers to apply UI state for login/logout
     function isValidUrl(maybeUrl: string | undefined | null) {
@@ -1055,3 +1095,4 @@ export default function Home() {
     </>
   );
 }
+
