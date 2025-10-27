@@ -74,7 +74,7 @@ export default function ContactTab() {
               <span style={{ color: 'var(--accent)' }}>Liên hệ</span> hỗ trợ & hợp tác
             </h1>
             <p className="contact-hero-description">
-              Chúng tôi luôn sẵn sàng hỗ trợ và hợp tác để phát triển cộng đồng IoT. 
+              Chúng tôi luôn sẵn sàng hỗ trợ và hợp tác để phát triển cộng đồng Lập trình nhúng & IoT. 
               Hãy kết nối với chúng tôi để cùng tạo ra những giá trị tuyệt vời.
             </p>
           </div>
