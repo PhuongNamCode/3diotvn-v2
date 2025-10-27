@@ -99,8 +99,31 @@ export default function Home() {
     // Mobile menu toggle
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const navTabs = document.getElementById('navTabs');
-    function toggleMobileMenu() { navTabs?.classList.toggle('show'); }
+    
+    function toggleMobileMenu() { 
+      if (navTabs) {
+        navTabs.classList.toggle('show');
+        // Prevent body scroll when menu is open
+        if (navTabs.classList.contains('show')) {
+          document.body.style.overflow = 'hidden';
+        } else {
+          document.body.style.overflow = 'auto';
+        }
+      }
+    }
+    
+    // Close mobile menu when clicking outside
+    function closeMobileMenuOnOutsideClick(e: Event) {
+      if (navTabs?.classList.contains('show') && 
+          !navTabs.contains(e.target as Node) && 
+          !mobileMenuBtn?.contains(e.target as Node)) {
+        navTabs.classList.remove('show');
+        document.body.style.overflow = 'auto';
+      }
+    }
+    
     mobileMenuBtn?.addEventListener('click', toggleMobileMenu);
+    document.addEventListener('click', closeMobileMenuOnOutsideClick);
 
     // Helpers to apply UI state for login/logout
     function isValidUrl(maybeUrl: string | undefined | null) {
@@ -823,6 +846,7 @@ export default function Home() {
     return () => {
       themeToggle?.removeEventListener('click', toggleTheme);
       mobileMenuBtn?.removeEventListener('click', toggleMobileMenu);
+      document.removeEventListener('click', closeMobileMenuOnOutsideClick);
       window.removeEventListener('scroll', onScroll);
       googleBtn?.replaceWith(googleBtn.cloneNode(true));
       (document.getElementById('logoutBtn') as HTMLButtonElement | null)?.removeEventListener('click', signOut);

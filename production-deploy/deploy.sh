@@ -30,9 +30,7 @@ docker compose --env-file env.production pull
 echo "🧹 Cleaning up unused resources..."
 docker system prune -f
 
-# Deploy containers with deep rebuild to ensure clean state
-echo "📦 Building containers from scratch (production deep fix)..."
-docker compose --env-file env.production build --no-cache
+# Start containers (using pre-built image from Docker Hub)
 echo "📦 Starting containers..."
 docker compose --env-file env.production up -d
 
@@ -42,7 +40,7 @@ sleep 15
 
 # Check database connection
 echo "🔍 Checking database connection..."
-until docker compose --env-file env.production exec -T db pg_isready -U postgres; do
+until docker compose --env-file env.production exec -T postgres pg_isready -U postgres; do
     echo "Waiting for database..."
     sleep 2
 done
